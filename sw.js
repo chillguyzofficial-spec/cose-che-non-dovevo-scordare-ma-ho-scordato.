@@ -1,5 +1,5 @@
 // Funziona anche senza rete: tiene una copia dei file dell'agenda, aggiornata a ogni apertura con la rete
-const CACHE = 'agenda-v8';
+const CACHE = 'agenda-v10';
 const BASE = ['./', 'index.html', 'manifest.webmanifest', 'assets/css/agenda.css', 'assets/css/caratteri.css', 'assets/js/dati.js', 'assets/js/illustrazioni.js', 'assets/js/extra.js', 'assets/js/agenda.js',
   'assets/img/icon-192.png', 'assets/img/icon-512.png', 'assets/fonts/dancing-script-500.woff2', 'assets/fonts/im-fell-english-400.woff2',
   'assets/fonts/im-fell-english-400-italic.woff2', 'assets/fonts/im-fell-english-sc-400.woff2', 'assets/fonts/special-elite-400.woff2'];

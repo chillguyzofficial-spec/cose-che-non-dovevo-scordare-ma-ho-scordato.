@@ -22,6 +22,7 @@
   };
   const CASELLA = /^\[( |x|X)\] /;
 
+  const touch = () => matchMedia('(pointer: coarse)').matches;
   const etichetta = (r, T) => (r.ora ? r.ora + ' · ' : '') + (r.label || T.n);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const leggi = (k, d) => { try { const v = localStorage.getItem('ccnds-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
@@ -328,9 +329,18 @@
   const nome = () => (S.imp.nome || '').trim(), tel = () => (S.imp.tel || '').trim();
   // uno scarabocchio a penna sul frontespizio: un ricciolo con una stellina
   const SCARABOCCHIO = `<svg class="p-scarabocchio" viewBox="0 0 120 70" aria-hidden="true"><path d="M8 52c10-2 18-12 16-20s-12-6-12 2 12 14 24 10 22-20 20-28-12-6-12 4 10 24 26 24 20-8 26-14"/><path d="M98 14l3 7 7 1-5 5 1 7-6-4-6 4 1-7-5-5 7-1z"/><path d="M14 62c22 3 50 2 78-3"/></svg>`;
+  // lo sfondo della prima pagina (e del retro della copertina): si sceglie, e prende i colori della carta
+  const SFONDI = { pallini: 'Pallini', righe: 'Righe', quadretti: 'Quadretti', scacchi: 'Scacchi', fiori: 'Fiorellini', liscio: 'Tinta unita' };
+  function sceltaSfondo() {
+    const ora = SFONDI[S.imp.sfondo] ? S.imp.sfondo : 'pallini';
+    $('#menu').innerHTML = `<div class="maniglia"></div><div class="dentro"><div class="h-foglio">Lo sfondo della prima pagina</div>` +
+      `<div class="sfondi" role="radiogroup" aria-label="Sfondo">${Object.keys(SFONDI).map(k => `<button data-act="sf" data-s="${k}" role="radio" aria-checked="${ora === k}"><span class="sf-${k}"></span>${SFONDI[k]}</button>`).join('')}</div>` +
+      `<div class="nota-p">I colori seguono la carta scelta: classica, nera o avorio.</div>` +
+      `<div class="fila" style="justify-content:flex-end"><button class="btn pieno" data-act="chiudi">Fatto</button></div></div>`;
+  }
   function paginaFissa(s, L) {
     // copertina interna: «Se ritrovata» e il taschino con la copia delle note
-    if (s === 0 && L) return `<div class="p-retro"><div class="p-cartiglio"><div class="p-ritrovata">Se ritrovata</div><div class="p-piccolo">restituire a</div><button class="p-riga" data-act="nome"><small>nome</small><span>${nome() ? esc(nome()) : ''}</span></button><button class="p-riga" data-act="nome"><small>tel.</small><span>${tel() ? esc(tel()) : ''}</span></button><div class="p-grazie">Grazie. Non sapevo più di averla.</div></div>${SCARABOCCHIO}` +
+    if (s === 0 && L) return `<div class="p-retro"><button class="p-sfondo" data-act="sfondo">◐ Sfondo</button><div class="p-cartiglio"><div class="p-ritrovata">Se ritrovata</div><div class="p-piccolo">restituire a</div><button class="p-riga" data-act="nome"><small>nome</small><span>${nome() ? esc(nome()) : ''}</span></button><button class="p-riga" data-act="nome"><small>tel.</small><span>${tel() ? esc(tel()) : ''}</span></button><div class="p-grazie">Grazie. Non sapevo più di averla.</div></div>${SCARABOCCHIO}` +
       `<div class="taschino"><div class="taschino-h">Nel taschino</div><button data-act="esporta">Salva una copia delle note</button><button data-act="importa">Riprendi una copia</button><button data-act="installa">Tienila sul telefono</button></div></div>`;
     if (s === 0) return `<div class="p-centro"><div class="p-occhiello">Agenda settimanale</div><div class="p-fregio">❦</div><div class="p-titolo">Cose Che Non Dovevo Scordare</div><div class="p-sotto">(Ma Ho Scordato)</div><div class="p-filo"></div>` +
       `<div class="p-piccolo">${breve(inizio).replace(/ (\d\d)$/, ' 20$1')}<br>${breve(fine).replace(/ (\d\d)$/, ' 20$1')}</div><div style="flex:1"></div>` +
@@ -421,6 +431,7 @@
     $('#t-titolo').textContent = tt; $('#t-sotto').textContent = ts;
     // il tema sta sulla radice, così vale anche per la pagina del giorno e i fogli
     const rad = document.documentElement;
+    libro.className = libro.className.replace(/sf-S+/g, '').trim() + ' sf-' + (SFONDI[S.imp.sfondo] ? S.imp.sfondo : 'pallini');
     rad.classList.toggle('t-nero', S.imp.tema === 'nero'); rad.classList.toggle('t-avorio', S.imp.tema === 'avorio');
     document.querySelector('meta[name="theme-color"]').content = S.imp.tema === 'nero' ? '#000000' : '#3a2216';
   }
@@ -521,7 +532,7 @@
   function esporta() {
     const foto = {}; Object.keys(S.foto).forEach(k => { if (fotoDati[k]) foto[k] = { ...S.foto[k], img: fotoDati[k] }; });
     const dati = { app: 'cose-che-non-dovevo-scordare', version: 3, exported: new Date().toISOString(), notes: S.note, hist: S.storia, rem: S.ric, bookmark: S.imp.bookmark, nome: S.imp.nome, tel: S.imp.tel,
-      dis: S.dis, foto, lettere: S.lettere, letti: S.letti, copertina: S.imp.cop || null };
+      dis: S.dis, foto, lettere: S.lettere, letti: S.letti, copertina: S.imp.cop || null, sfondo: S.imp.sfondo || null };
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(dati, null, 2)], { type: 'application/json' }));
     a.download = 'note-agenda-' + oggiKey() + '.json'; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
@@ -539,6 +550,7 @@
         if (d.dis && typeof d.dis === 'object') { S.dis = { ...S.dis, ...d.dis }; scrivi('dis', S.dis); }
         if (Array.isArray(d.lettere)) { S.lettere = [...S.lettere.filter(x => !d.lettere.some(y => y.id === x.id)), ...d.lettere]; scrivi('lettere', S.lettere); }
         if (Array.isArray(d.letti)) { S.letti = [...new Set([...S.letti, ...d.letti])]; scrivi('letti', S.letti); }
+        if (d.sfondo && !S.imp.sfondo) setImp({ sfondo: d.sfondo });
         if (d.copertina && !personalizzata()) { setImp({ cop: d.copertina }); disegnaCopertina(); }
         if (d.foto && typeof d.foto === 'object') Object.keys(d.foto).forEach(k => { const { img, ...meta } = d.foto[k]; if (img) E.daDataURL(img).then(b => salvaFoto(k, b, meta)).catch(() => {}); });
         scrivi('notes', S.note); scrivi('hist', S.storia); scrivi('rem', S.ric);
@@ -772,7 +784,8 @@
     carta.classList.add('anima'); carta.style.transform = 'none'; carta.style.opacity = '1'; gp.classList.add('su');
     suono('pagina');
     // giorno vuoto: si scrive subito (il fuoco va dato dentro il tocco, se no iPhone non apre la tastiera)
-    if (!GP.orig) fuocoRiga(0, 0, false);
+    // sul telefono la tastiera si apre solo toccando le righe (aperta subito copriva mezza pagina prima di vedere il giorno)
+    if (!GP.orig && !touch()) fuocoRiga(0, 0, false);
   }
   function chiudiGiorno() {
     if (gp.hidden) return;
@@ -853,7 +866,8 @@
   });
   righeEl.addEventListener('click', e => { if (e.target === righeEl) fuocoRiga(GP.righe.length - 1, null); });
 
-  righeEl.addEventListener('focusin', e => { if (e.target.tagName === 'TEXTAREA') { GP.ultimo = +e.target.dataset.i; aggiornaStile(); } });
+  // sul telefono, appena si tocca una riga la parte alta si chiude: con la tastiera aperta tutto lo spazio resta per scrivere
+  righeEl.addEventListener('focusin', e => { if (e.target.tagName === 'TEXTAREA') { GP.ultimo = +e.target.dataset.i; aggiornaStile(); if (touch()) gp.classList.add('scrive'); } });
   // appena inizi a scrivere la parte alta si chiude in una riga con la data (le righe restano in vista sopra la tastiera);
   // non all'apertura, così il biglietto e i ricordi del giorno si vedono
   righeEl.addEventListener('focusout', () => setTimeout(() => { if (!righeEl.contains(document.activeElement)) gp.classList.remove('scrive'); }, 120));
@@ -950,6 +964,8 @@
       case 'salva-nome': salvaNome(); break;
       case 'suoni': setImp({ sound: !S.imp.sound }); sveglia(); disegna(); avviso(S.imp.sound ? 'Suoni accesi' : 'Suoni spenti'); break;
       case 'tema': setImp({ tema: b.dataset.t }); disegna(); break;
+      case 'sfondo': apriVelo('#v-menu'); sceltaSfondo(); break;
+      case 'sf': setImp({ sfondo: b.dataset.s }); disegna(); sceltaSfondo(); break;
       case 'in-fondo': chiudiVeli(); vai(LAST); break;
       case 'installa': infoInstalla(); break;
       case 'esporta': esporta(); break;

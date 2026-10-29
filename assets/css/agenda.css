@@ -164,7 +164,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .p-piccolo{font-size:.64em;color:var(--muted);line-height:1.6;letter-spacing:.04em}
 .p-nome{font-family:var(--mano);font-size:1.25em;color:var(--ink2);border-bottom:1px solid var(--rule);padding:0 .6em;margin:.2em 0 1.4em;min-width:60%}
 .p-nome.vuoto{color:var(--muted);font-size:.95em}
-.p-retro{position:absolute;inset:0;background:radial-gradient(circle at 30% 30%,var(--pois1) 0 16%,transparent 17%) 0 0/2.2em 2.2em,radial-gradient(circle at 75% 72%,var(--pois2) 0 12%,transparent 13%) 0 0/2.2em 2.2em,linear-gradient(var(--retro1),var(--retro2));display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:2.4em}
+.p-retro{position:absolute;inset:0;background:var(--sfondo-img);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:2.4em}
 .p-cartiglio{width:76%;background:var(--cartiglio);color:var(--ink);border:1px solid var(--orlo);outline:3px double var(--orlo);outline-offset:3px;padding:1em .9em .9em;text-align:center;box-shadow:0 2px 6px rgba(60,30,10,.2);transform:rotate(-1.5deg)}
 .p-ritrovata{font-family:var(--fellsc);font-size:.95em;letter-spacing:.06em}
 .p-cartiglio .p-piccolo{margin:.3em 0 .2em}
@@ -224,7 +224,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .cop{position:absolute;left:50%;top:-7px;bottom:-7px;width:calc(50% + 9px);transform-origin:left center;transition:transform 1.15s cubic-bezier(.55,.05,.3,1);backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .aperta .cop{visibility:hidden}
 .cop-retro{z-index:10;border-radius:9px 2px 2px 9px;overflow:hidden;background:var(--pelle);transform:rotateY(0deg) translateX(100%) rotateY(180deg)}
-.cop-retro::after{content:'';position:absolute;inset:7px 0 7px 9px;border-radius:6px 0 0 6px;background:radial-gradient(circle at 30% 30%,var(--pois1) 0 16%,transparent 17%) 0 0/2.2em 2.2em,radial-gradient(circle at 75% 72%,var(--pois2) 0 12%,transparent 13%) 0 0/2.2em 2.2em,linear-gradient(var(--retro1),var(--retro2))}
+.cop-retro::after{content:'';position:absolute;inset:7px 0 7px 9px;border-radius:6px 0 0 6px;background:var(--sfondo-img)}
 .cop-fronte{z-index:11;border-radius:2px 9px 9px 2px;background:radial-gradient(130% 100% at 30% 15%,rgba(255,214,160,.16),transparent 55%),radial-gradient(rgba(0,0,0,.22) .6px,transparent 1.2px) 0 0/4px 4px,radial-gradient(rgba(255,230,200,.05) .6px,transparent 1.2px) 2px 1px/5px 5px,var(--cop,#4a2c1d);box-shadow:inset 0 0 2.5em rgba(0,0,0,.45)}
 .apertura .cop-fronte,.aperta .cop-fronte{transform:rotateY(-180deg)}
 .apertura .cop-retro,.aperta .cop-retro{transform:rotateY(-180deg) translateX(100%) rotateY(180deg)}
@@ -578,3 +578,16 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .t-nero .gp-disegno-apri{background:rgba(255,255,255,.04)}
 .gp-disegno-apri svg{display:block;width:100%;height:100%}
 .gp-togli{position:absolute;top:-12px;right:-12px;width:34px;height:34px;border-radius:50%;background:var(--paper);border:1px solid var(--rule);color:var(--ink);font-size:20px;line-height:1;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+
+/* ---------- sfondo della prima pagina: si sceglie, i colori sono quelli della carta ---------- */
+.libro,.sf-pallini{--sfondo-img:radial-gradient(circle at 30% 30%,var(--pois1) 0 16%,transparent 17%) 0 0/2.2em 2.2em,radial-gradient(circle at 75% 72%,var(--pois2) 0 12%,transparent 13%) 0 0/2.2em 2.2em,linear-gradient(var(--retro1),var(--retro2))}
+.sf-righe{--sfondo-img:repeating-linear-gradient(90deg,var(--pois1) 0 .55em,transparent .55em 1.6em),repeating-linear-gradient(90deg,transparent 0 1em,var(--pois2) 1em 1.12em,transparent 1.12em 1.6em),linear-gradient(var(--retro1),var(--retro2))}
+.sf-quadretti{--sfondo-img:linear-gradient(var(--pois1) 1px,transparent 1px) 0 0/1.15em 1.15em,linear-gradient(90deg,var(--pois1) 1px,transparent 1px) 0 0/1.15em 1.15em,linear-gradient(var(--retro1),var(--retro2))}
+.sf-scacchi{--sfondo-img:conic-gradient(var(--pois2) 25%,transparent 0 50%,var(--pois2) 0 75%,transparent 0) 0 0/1.8em 1.8em,linear-gradient(var(--retro1),var(--retro2))}
+.sf-fiori{--sfondo-img:radial-gradient(circle,var(--pois2) 0 .14em,transparent .15em) 0 0/2.4em 2.4em,radial-gradient(circle at 50% 30%,var(--pois1) 0 .17em,transparent .18em) 0 0/2.4em 2.4em,radial-gradient(circle at 50% 70%,var(--pois1) 0 .17em,transparent .18em) 0 0/2.4em 2.4em,radial-gradient(circle at 30% 50%,var(--pois1) 0 .17em,transparent .18em) 0 0/2.4em 2.4em,radial-gradient(circle at 70% 50%,var(--pois1) 0 .17em,transparent .18em) 0 0/2.4em 2.4em,linear-gradient(var(--retro1),var(--retro2))}
+.sf-liscio{--sfondo-img:linear-gradient(var(--retro1),var(--retro2))}
+.p-sfondo{position:absolute;top:.55em;right:.9em;z-index:2;min-height:2.2em;padding:0 .8em;border-radius:1.1em;background:var(--cartiglio);border:1px solid var(--orlo);font-size:.62em;letter-spacing:.06em;color:var(--ink);box-shadow:0 1px 3px rgba(60,30,10,.15)}
+.sfondi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sfondi button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px;border-radius:10px;border:1px solid var(--rule);font-size:13px;color:var(--ink)}
+.sfondi button[aria-checked="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.sfondi span{display:block;width:100%;aspect-ratio:4/3;border-radius:6px;background:var(--sfondo-img);font-size:12px;box-shadow:inset 0 0 0 1px var(--rule)}

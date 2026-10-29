@@ -129,9 +129,17 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
 
   // ---------- copia delle note con tutto ----------
   await p.click('[data-act="vaia"]'); await p.click('[data-act="vai-pagina"][data-p="0"]'); await attendi(1700);
+  // sfondo della prima pagina a scelta
+  await p.click('.p-sfondo'); await attendi(200);
+  prova('scelta dello sfondo: 6 motivi', await p.locator('.sfondi button').count() === 6);
+  await p.click('.sfondi [data-s="fiori"]'); await attendi(150);
+  if (FOTO) await p.screenshot({ path: path.join(FOTO, MOTORE + '-06-sfondi.png') });
+  await p.click('#v-menu [data-act="chiudi"]'); await attendi(150);
+  prova('prima pagina a fiorellini', (await p.$eval('.p-retro', e => getComputedStyle(e).backgroundImage)).split('radial-gradient').length - 1 === 5);
+  await foto('07-prima-pagina-fiori');
   const [dl] = await Promise.all([p.waitForEvent('download'), p.click('[data-act="esporta"]')]);
   const copia = JSON.parse(fs.readFileSync(await dl.path(), 'utf8'));
-  prova('copia: disegni, foto, lettere, copertina', copia.version === 3 && copia.dis['2026-10-30'] && copia.foto['2026-10-30'] && copia.foto['2026-10-30'].img.startsWith('data:image/jpeg') && copia.lettere.length === 1 && copia.copertina.adesivi.length === 2);
+  prova('copia: disegni, foto, lettere, copertina', copia.version === 3 && copia.dis['2026-10-30'] && copia.foto['2026-10-30'] && copia.foto['2026-10-30'].img.startsWith('data:image/jpeg') && copia.lettere.length === 1 && copia.copertina.adesivi.length === 2 && copia.sfondo === 'fiori');
 
   // ---------- riapro l'app il 5 novembre: la lettera si apre, la foto c'è ancora ----------
   const st = await ctx.storageState({ indexedDB: true }); await p.close();

@@ -46,7 +46,12 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   // scrivo venerdì 30
   await p.click('.giorno[data-k="2026-10-30"]'); await attendi(500);
   prova('pagina del giorno aperta', await p.isVisible('#gp'));
-  prova('fuoco sulla prima riga', await p.evaluate(() => document.activeElement && document.activeElement.dataset.i === '0'));
+  prova('sul telefono la tastiera non si apre da sola', await p.evaluate(() => !document.activeElement || document.activeElement.tagName !== 'TEXTAREA'));
+  prova('aperto si vede la parte alta', await p.isVisible('#gp-sx'));
+  await p.click('#gp-righe textarea'); await attendi(150);
+  prova('toccando le righe la parte alta si chiude', await p.isHidden('#gp-sx') && await p.isVisible('#gp-breve'));
+  const altezza = await p.evaluate(() => document.getElementById('gp-righe').getBoundingClientRect().top);
+  prova('le righe partono subito sotto la testata', altezza < 140, altezza);
   const tipi = () => p.evaluate(() => [...document.querySelectorAll('#gp-righe .riga')].map(r => ({ t: r.querySelector('textarea').value, tipo: ['testo', 'punto', 'fare'].find(c => r.classList.contains(c)), ora: (r.querySelector('.ora') || {}).textContent || '' })));
   const premuto = () => p.$eval('.gp-stile [aria-pressed="true"]', b => b.dataset.s);
   await p.keyboard.type('Cena da Marta alle 20');
@@ -107,7 +112,7 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await p.reload(); await attendi(700); await p.click('.elastico', { force: true }); await attendi(3600);
   prova('nota dopo il ricaricamento', (await p.textContent('.giorno[data-k="2026-10-30"]')).includes('Cena da Marta'));
   // nota lunga: sul libro finisce con «…», aprendo il giorno si legge tutta
-  await p.click('.giorno[data-k="2026-11-01"]'); await attendi(450);
+  await p.click('.giorno[data-k="2026-11-01"]'); await attendi(450); await p.click('#gp-righe textarea');
   for (let k = 1; k <= 12; k++) { await p.keyboard.type('Riga numero ' + k); if (k < 12) await p.keyboard.press('Enter'); }
   await p.click('[data-gp="fatto"]'); await attendi(700);
   prova('nota lunga tagliata con i puntini', await p.evaluate(() => document.querySelector('.giorno[data-k="2026-11-01"] .g-corpo').classList.contains('troppo')));
