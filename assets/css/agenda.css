@@ -6,9 +6,16 @@
   --fell:'IM Fell English',Georgia,serif; --fellsc:'IM Fell English SC',Georgia,serif;
   --mano:'Dancing Script',cursive; --macchina:'Special Elite','Courier New',monospace;
 }
-.notte{
-  --paper:#cfb98f; --paper2:#b79f76; --line:rgba(60,70,95,.25); --rule:rgba(70,48,22,.38);
-  --ink:#1a2242; --ink2:#1748b8; --muted:#544023; --desk:#1c130d; --deskEdge:#090604; --rust:#8a3c1c;
+/* carta nera: pagine nere, scrittura bianca */
+.t-nero{
+  --paper:#1c1916; --paper2:#100e0c; --line:rgba(240,228,205,.13); --rule:rgba(240,225,200,.24);
+  --ink:#f4ede1; --ink2:#ffffff; --muted:#bdae95; --desk:#0d0b09; --deskEdge:#000; --rust:#e79466;
+  --pelle:#1a1410; --tinta:.2;
+}
+/* carta avorio: bianco pieno e inchiostro nero, il massimo contrasto */
+.t-avorio{
+  --paper:#fffdf7; --paper2:#f7f1e3; --line:rgba(0,0,0,.2); --rule:rgba(0,0,0,.38);
+  --ink:#0b0b0b; --ink2:#0a2272; --muted:#4a3f33; --desk:#2b2420; --deskEdge:#120e0b; --rust:#9b2c0c; --tinta:.12;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#1b120c;overscroll-behavior:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
@@ -108,10 +115,10 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .g-mese{font-size:.6em;letter-spacing:.12em;text-transform:uppercase;color:var(--rust)}
 .g-festa{font-size:.6em;letter-spacing:.08em;text-transform:uppercase;color:var(--rust);flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.15em}
 .g-ric{font-family:var(--mano);font-weight:600;font-size:.95em;line-height:1.2;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.g-corpo{flex:1;min-height:0;overflow:hidden;font-family:var(--mano);font-weight:500;font-size:1.05em;line-height:1.36em;
+.g-corpo{flex:1;min-height:0;overflow:hidden;font-family:var(--mano);font-weight:600;font-size:1.14em;line-height:1.36em;
   background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(1.36em - 1px),var(--line) calc(1.36em - 1px),var(--line) 1.36em);
   -webkit-mask-image:linear-gradient(#000 86%,transparent);mask-image:linear-gradient(#000 86%,transparent)}
-.g-note{color:var(--ink2);font-weight:600}
+.g-note{color:var(--ink2);font-weight:700}
 .g-note.appena{animation:inchiostro 1.2s ease both}
 @keyframes inchiostro{from{opacity:0;filter:blur(1.5px)}to{opacity:1;filter:none}}
 .g-riga{display:flex;gap:.3em;align-items:flex-start}
@@ -121,7 +128,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .g-casella span{display:flex;align-items:center;justify-content:center;width:.85em;height:.85em;border:1.5px solid var(--ink2);border-radius:2px;font-family:var(--macchina);font-size:.9em;line-height:1}
 .g-punto{flex:none;color:var(--ink2);padding:0 .1em}
 .g-ora{flex:none;font-family:var(--macchina);font-size:.62em;letter-spacing:.04em;color:var(--rust);padding-top:.45em}
-.g-poesia{font-family:var(--fell);font-style:italic;font-weight:400;font-size:.8em;line-height:1.7em;color:var(--ink);white-space:pre-line;
+.g-poesia{font-family:var(--fell);font-style:italic;font-weight:400;font-size:.78em;line-height:1.7em;color:var(--ink);white-space:pre-line;
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
 .g-poesia.dopo{opacity:.62;-webkit-line-clamp:2;margin-top:.1em}
 .g-autore{display:block;font-family:var(--fellsc);font-style:normal;font-size:.78em;color:var(--rust);letter-spacing:.04em;margin-top:.1em}
@@ -163,6 +170,10 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .p-pref button{display:flex;align-items:center;gap:.6em;min-height:2.6em;font-size:.82em;color:var(--ink);text-align:left}
 .p-pref i{flex:none;width:1.1em;height:1.1em;border:1.5px solid var(--ink2);border-radius:2px;display:flex;align-items:center;justify-content:center;font-style:normal;color:var(--ink2);font-family:var(--macchina);line-height:1}
 .p-pref [aria-checked="true"] i::after{content:'✓'}
+.p-temi{display:flex;align-items:center;gap:.3em;flex-wrap:wrap;margin-top:.3em}
+.p-temi span{font-size:.72em;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:.2em}
+.p-temi button{min-height:2.4em;padding:0 .7em;border:1px solid var(--rule);border-radius:1.2em;font-size:.74em;color:var(--ink)}
+.p-temi button[aria-checked="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .taschino{position:absolute;left:1.2em;right:1.6em;bottom:1.4em;padding:.7em .8em .6em;background:linear-gradient(#ead9b5,#dcc597);border:1px solid rgba(120,80,40,.35);border-top:2px dashed rgba(120,80,40,.45);border-radius:0 0 .5em .5em;box-shadow:0 2px 5px rgba(60,30,10,.2);display:flex;flex-direction:column;gap:.15em}
 .taschino-h{font-family:var(--fellsc);font-size:.75em;letter-spacing:.08em;color:var(--rust);margin-bottom:.2em}
 .taschino button{min-height:2.4em;font-size:.72em;color:var(--ink);text-align:left;border-bottom:1px dashed rgba(120,80,40,.3)}
@@ -210,7 +221,22 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .elastico::before{content:'';position:absolute;inset:0 -14px}
 .sgancio .elastico,.apertura .elastico,.aperta .elastico,.chiusura .elastico{transform:translateX(320%) scaleY(1.05) rotate(5deg);opacity:0}
 .luce-notte{position:absolute;inset:-30px;pointer-events:none;z-index:12;background:radial-gradient(60% 50% at 70% 8%,rgba(255,186,100,.2),transparent 70%),radial-gradient(90% 80% at 50% 50%,transparent 40%,rgba(10,5,0,.4));opacity:0;transition:opacity .6s}
-.notte .luce-notte{opacity:1}
+.t-nero .luce-notte{opacity:.55}
+.t-nero .mazzetto{background:repeating-linear-gradient(90deg,#3a332b 0 1px,#191512 1px 2px)}
+.t-nero .angolo span{filter:brightness(.25)}
+.t-nero .g-ric,.t-nero .ricordo,.t-nero .scelta b,.t-nero .gp-ric span{filter:brightness(1.8) saturate(.8)}
+.t-nero .linguetta{filter:brightness(.85)}
+/* giorni di festa: carta tinta del colore della festa e disegno a tratto */
+.giorno.festivo{background:rgba(var(--rgb),var(--tinta,.1))}
+.giorno.festivo .g-festa{color:rgb(var(--rgb))}
+.t-nero .giorno.festivo .g-festa,.t-nero .g-illu,.t-nero .gp-illu{filter:brightness(1.9) saturate(.85)}
+.g-illu{position:absolute;top:.3em;width:2.2em;height:2.2em;color:rgb(var(--rgb));opacity:.8;pointer-events:none}
+.pg.sx .g-illu{right:.5em}.pg.dx .g-illu{right:2em}
+.g-illu svg,.gp-illu svg{width:100%;height:100%;display:block}
+/* «Vai a…»: salti rapidi in cima al foglio */
+.salti{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.salti button{min-height:58px;border:1px solid var(--rule);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:var(--ink)}
+.salti b{font-family:var(--fell);font-weight:400;font-size:20px;line-height:1;color:var(--rust)}
 .suggerimento{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:12px;letter-spacing:.08em;color:#bfa47a;transition:opacity .4s;pointer-events:none;opacity:0}
 .chiusa .suggerimento{opacity:1}
 
@@ -277,7 +303,13 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .gp-fatto{height:40px;padding:0 18px;border-radius:20px;background:var(--ink);color:var(--paper);font-size:14px;margin-left:4px;flex:none}
 .gp-corpo{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 
-.gp-sx{padding:6px 22px 4px}
+.gp-sx{position:relative;padding:6px 22px 4px}
+.gp-illu{position:absolute;top:0;right:18px;width:74px;height:74px;color:rgb(var(--rgb));opacity:.85;pointer-events:none}
+.gp-illu:empty{display:none}
+.gp-carta.festivo{background:linear-gradient(rgba(var(--rgb),var(--tinta,.1)),rgba(var(--rgb),var(--tinta,.1))),radial-gradient(140% 90% at 50% 0%,var(--paper),var(--paper2))}
+.gp-carta.festivo .gp-festa{color:rgb(var(--rgb))}
+.gp-carta.festivo .gp-stile{background:transparent}
+.riga textarea{font-weight:700}
 .gp-data{display:flex;align-items:flex-end;gap:14px}
 .gp-num{font-family:var(--fell);font-size:78px;line-height:.8;letter-spacing:-.02em}
 .gp-nome{font-family:var(--fell);font-style:italic;font-size:28px;line-height:1}

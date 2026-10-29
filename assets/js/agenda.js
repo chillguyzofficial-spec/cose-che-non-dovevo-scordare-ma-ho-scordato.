@@ -41,7 +41,8 @@
     const dentro = key >= D.INIZIO && key <= D.FINE, poesia = dentro ? D.POESIE[key] || null : null, festa = D.FESTE[key] || '';
     let sorpresa = null;
     if (dentro && !poesia && !festa && (i * 7 + 3) % 11 === 0) { sorpresa = { tipo: nasc % 2 ? 'biglietto' : 'foglia', testo: D.SORPRESE[nasc % D.SORPRESE.length], n: String(1000 + ((i * 7919) % 9000)) }; nasc++; }
-    const g = { i, key, d, dow: (d.getDay() + 6) % 7, dentro, poesia, festa, sorpresa };
+    const tema = dentro ? window.AGENDA_ILLUSTRAZIONI.temaDi(key) : null;
+    const g = { i, key, d, dow: (d.getDay() + 6) % 7, dentro, poesia, festa, sorpresa, tema };
     giorni.push(g); perKey[key] = g;
   }
   const oggiIdx = () => { const k = oggiKey(); return perKey[k < D.INIZIO ? D.INIZIO : k > D.FINE ? D.FINE : k].i; };
@@ -51,11 +52,13 @@
   const S = {
     fase: 'chiusa', spread: 0, flip: null, pw: 0, ph: 0,
     note: leggi('notes', {}), storia: leggi('hist', {}), ric: leggi('rem', []),
-    imp: Object.assign({ sound: true, night: false, bookmark: null, nome: '' }, leggi('set', {})),
+    imp: Object.assign({ sound: true, night: false, bookmark: null, nome: '', tema: 'carta' }, leggi('set', {})),
     lampo: null, appena: null
   };
   let flip = null, noClick = false, ptr = null, raf = 0, pronto = false;
   const setImp = p => { Object.assign(S.imp, p); scrivi('set', S.imp); };
+  // chi aveva la vecchia «modalità notte» la ritrova come carta nera
+  if (S.imp.night && !leggi('set', {}).tema) setImp({ tema: 'nero', night: false });
 
   // ---------- misure ----------
   function misura() {
@@ -253,9 +256,11 @@
       if (g.poesia) corpo += `<div class="g-poesia dopo">${esc(g.poesia.testo)}</div>`;
     } else if (g.poesia) corpo = `<div class="g-poesia">${esc(g.poesia.testo)}</div><span class="g-autore">${esc(g.poesia.autore)}</span>`;
     const mese = g.d.getDate() === 1 || (j === 0 && L) ? MS[g.d.getMonth()] : '';
-    const sfondo = S.lampo === g.key ? '' : T ? `background:${T.w}` : '';
-    const sp = g.sorpresa;
-    return `<div class="giorno${g.dentro ? '' : ' fuori'}${S.lampo === g.key ? ' lampo' : ''}" data-act="giorno" data-k="${g.key}" style="flex:${L ? 1 : j < 5 ? 1 : 0.8};${sfondo}">` +
+    const sfondo = S.lampo === g.key ? '' : T ? `background:${T.w};` : '';
+    const sp = g.sorpresa, tm = g.tema;
+    // i giorni di festa hanno la carta del loro colore e un piccolo disegno
+    return `<div class="giorno${g.dentro ? '' : ' fuori'}${S.lampo === g.key ? ' lampo' : ''}${tm ? ' festivo' : ''}" data-act="giorno" data-k="${g.key}" style="flex:${L ? 1 : j < 5 ? 1 : 0.8};${sfondo}${tm ? `--rgb:${tm.rgb}` : ''}">` +
+      (tm ? `<span class="g-illu">${tm.svg}</span>` : '') +
       `<div class="g-testa"><span class="g-num${oggiKey() === g.key ? ' oggi' : ''}">${g.d.getDate()}</span><span class="g-nome">${DN[g.dow]}</span><span class="g-mese">${mese}</span></div>` +
       (g.festa ? `<div class="g-festa">${esc(g.festa)}</div>` : '') +
       (r ? `<div class="g-ric" style="color:${T.c}">${T.g} ${esc(r.label || T.n)}${rics.length > 1 ? ' +' + (rics.length - 1) : ''}</div>` : '') +
@@ -297,7 +302,8 @@
         voce('V', 'Ricorrenze', '«Ricorda questo giorno»: compleanni e scadenze che tornano ogni anno.') +
         voce('VI', 'Segnalibro', '«Segna», in basso, lascia il nastro sulla pagina.') +
         voce('VII', 'Versi e sorprese', 'Nei giorni speciali scrive un poeta. Tra le pagine c’è qualcosa di nascosto.') +
-        `<div class="p-pref"><button data-act="suoni" role="switch" aria-checked="${!!S.imp.sound}"><i></i>Suoni della carta</button><button data-act="notte" role="switch" aria-checked="${!!S.imp.night}"><i></i>Pagine di sera</button></div>` +
+        `<div class="p-pref"><button data-act="suoni" role="switch" aria-checked="${!!S.imp.sound}"><i></i>Suoni della carta</button>` +
+        `<div class="p-temi" role="radiogroup" aria-label="Carta"><span>Carta</span>${[['carta', 'Classica'], ['nero', 'Nera'], ['avorio', 'Avorio']].map(([t, n]) => `<button data-act="tema" data-t="${t}" role="radio" aria-checked="${S.imp.tema === t}">${n}</button>`).join('')}</div></div>` +
         `<div class="p-prova"><button data-act="oggi">Vai a oggi ›</button><button data-act="nome">${nome() ? 'Cambia il nome' : 'Scrivi il tuo nome'} ›</button></div></div>`;
     }
     if (L) {
@@ -350,7 +356,10 @@
     else if (c === 1) { tt = 'Come si usa'; ts = 'Prima di cominciare'; }
     else if (c === LAST) { tt = 'In fondo all’agenda'; ts = 'Cose scordate e numeri'; }
     $('#t-titolo').textContent = tt; $('#t-sotto').textContent = ts;
-    app.classList.toggle('notte', !!S.imp.night);
+    // il tema sta sulla radice, così vale anche per la pagina del giorno e i fogli
+    const rad = document.documentElement;
+    rad.classList.toggle('t-nero', S.imp.tema === 'nero'); rad.classList.toggle('t-avorio', S.imp.tema === 'avorio');
+    document.querySelector('meta[name="theme-color"]').content = S.imp.tema === 'nero' ? '#000000' : '#3a2216';
   }
 
   // ---------- veli (menu, vai a, nome, ricerca, sorpresa) ----------
@@ -477,6 +486,9 @@
     $('#gp-mese').textContent = M[g.d.getMonth()].toLowerCase() + ' ' + g.d.getFullYear();
     $('#gp-sett').textContent = 'settimana ' + settIso(g.d);
     $('#gp-festa').textContent = g.festa;
+    const tm = g.tema;
+    carta.classList.toggle('festivo', !!tm); carta.style.setProperty('--rgb', tm ? tm.rgb : '0,0,0');
+    $('#gp-illu').innerHTML = tm ? tm.svg : '';
     const p = g.poesia;
     $('#gp-poesia').innerHTML = p ? `<div class="gp-poesia">${esc(p.testo)}<cite>${esc(p.autore)} · ${esc(p.opera)}</cite></div>` +
       (p.originale ? `<button class="gp-orig" data-gp="originale">Testo originale</button><div class="gp-orig-testo" hidden>${esc(p.originale)}</div>` : '') : '';
@@ -717,7 +729,7 @@
       case 'nome': chiediNome(); break;
       case 'salva-nome': salvaNome(); break;
       case 'suoni': setImp({ sound: !S.imp.sound }); sveglia(); disegna(); avviso(S.imp.sound ? 'Suoni accesi' : 'Suoni spenti'); break;
-      case 'notte': setImp({ night: !S.imp.night }); disegna(); break;
+      case 'tema': setImp({ tema: b.dataset.t }); disegna(); break;
       case 'in-fondo': chiudiVeli(); vai(LAST); break;
       case 'installa': infoInstalla(); break;
       case 'esporta': esporta(); break;

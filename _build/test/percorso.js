@@ -112,13 +112,31 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await p.click('.ris'); await attendi(1700);
   prova('dalla ricerca al giorno', (await p.textContent('#t-titolo')).includes('2026') || (await p.textContent('#t-titolo')).includes('2027'));
 
-  // notte + nome
+  // Natale: carta colorata e disegno, anche nella pagina del giorno
+  await p.click('[data-act="vaia"]'); await p.fill('#vaia-data', '2026-12-25'); await attendi(1700);
+  prova('Natale con carta e disegno', await p.evaluate(() => { const g = document.querySelector('.giorno[data-k="2026-12-25"]'); return g.classList.contains('festivo') && !!g.querySelector('.g-illu svg'); }));
+  await foto('09a-natale');
+  await p.click('.giorno[data-k="2026-12-25"]'); await attendi(450);
+  prova('pagina di Natale illustrata', await p.evaluate(() => document.getElementById('gp-carta').classList.contains('festivo') && !!document.querySelector('#gp-illu svg')));
+  await foto('09b-natale-giorno');
+  await p.click('[data-gp="fatto"]'); await attendi(600);
+  // «All'inizio» da qualsiasi pagina, con una sola sfogliata
+  await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="0"]'); await attendi(1300);
+  prova('all’inizio in un passo', (await p.textContent('#t-sotto')) === 'Frontespizio');
   // niente menu: le preferenze stanno nella pagina «Come si usa», raggiunta da «Vai a…»
-  await p.click('[data-act="vaia"]'); await p.click('[data-act="vai-pagina"][data-p="1"]'); await attendi(1700);
+  await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="1"]'); await attendi(1700);
   prova('Vai a… porta a Come si usa', (await p.textContent('#t-titolo')) === 'Come si usa');
-  await p.click('.p-pref [data-act="notte"]');
-  prova('notte accesa', await p.evaluate(() => document.getElementById('app').classList.contains('notte')));
-  await foto('09-notte');
+  await p.click('.p-temi [data-t="nero"]');
+  prova('carta nera', await p.evaluate(() => document.documentElement.classList.contains('t-nero')));
+  await foto('09-nero');
+  await p.click('[data-act="vaia"]'); await p.fill('#vaia-data', '2026-10-30'); await attendi(1700);
+  await foto('09c-nero-settimana');
+  await p.click('.giorno[data-k="2026-10-30"]'); await attendi(450); await foto('09d-nero-giorno'); await p.click('[data-gp="fatto"]'); await attendi(600);
+  await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="1"]'); await attendi(1700);
+  await p.click('.p-temi [data-t="avorio"]');
+  prova('carta avorio', await p.evaluate(() => document.documentElement.classList.contains('t-avorio') && !document.documentElement.classList.contains('t-nero')));
+  await foto('09e-avorio');
+  await p.click('.p-temi [data-t="carta"]');
   await p.click('.p-prova [data-act="nome"]'); await p.fill('#nome-campo', 'Giulia'); await p.click('[data-act="salva-nome"]');
   // il taschino nella copertina interna
   await p.click('[data-act="prec"]'); await attendi(1100);

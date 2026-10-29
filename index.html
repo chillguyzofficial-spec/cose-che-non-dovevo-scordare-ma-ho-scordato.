@@ -67,10 +67,10 @@
 <div class="velo" id="v-menu" hidden data-chiudi><div class="foglio-basso" id="menu"></div></div>
 <!-- vai a -->
 <div class="velo" id="v-vaia" hidden data-chiudi><div class="foglio-basso"><div class="maniglia"></div><div class="dentro">
-  <div class="h-foglio">Vai a una data</div>
-  <input type="date" class="campo" id="vaia-data">
+  <div class="h-foglio">Vai a…</div>
+  <div class="salti"><button data-act="vai-pagina" data-p="0"><b>⇤</b>All'inizio</button><button data-act="vai-pagina" data-p="1"><b>❦</b>Come si usa</button><button data-act="vai-pagina" data-p="fondo"><b>⇥</b>In fondo</button></div>
+  <input type="date" class="campo" id="vaia-data" aria-label="Una data precisa">
   <div class="mesi" id="mesi"></div>
-  <div class="fila"><button class="chip" data-act="vai-pagina" data-p="1">Come si usa</button><button class="chip" data-act="vai-pagina" data-p="fondo">In fondo: cose scordate e numeri</button></div>
 </div></div></div>
 <!-- nome -->
 <div class="velo" id="v-nome" hidden data-chiudi><div class="foglio-basso"><div class="maniglia"></div><div class="dentro">
@@ -97,6 +97,7 @@
     </div>
     <div class="gp-corpo" id="gp-scorri">
       <section class="gp-sx" id="gp-sx">
+        <div class="gp-illu" id="gp-illu" aria-hidden="true"></div>
         <div class="gp-data">
           <div class="gp-num" id="gp-num"></div>
           <div><div class="gp-nome" id="gp-titolo"></div><div class="gp-mese" id="gp-mese"></div><div class="gp-sett" id="gp-sett"></div></div>
@@ -122,6 +123,7 @@
 <input type="file" accept="application/json,.json" id="file" hidden>
 
 <script src="assets/js/dati.js"></script>
+<script src="assets/js/illustrazioni.js"></script>
 <script src="assets/js/agenda.js"></script>
 </body>
 </html>
