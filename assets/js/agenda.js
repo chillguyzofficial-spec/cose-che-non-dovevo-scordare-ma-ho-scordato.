@@ -301,10 +301,12 @@
     const js = L ? [0, 1, 2] : [3, 4, 5, 6];
     return `<div class="linguette">${js.map(j => { const g = giorni[w * 7 + j]; return `<div style="flex:${L ? 1 : j < 5 ? 1 : 0.8};min-height:0;padding-top:${g.dow * 0.5}em"><div class="linguetta" data-act="giorno" data-k="${g.key}" style="background:${TABC[g.dow]}">${DT[g.dow]}</div></div>`; }).join('')}</div>`;
   }
-  const nome = () => (S.imp.nome || '').trim();
+  const nome = () => (S.imp.nome || '').trim(), tel = () => (S.imp.tel || '').trim();
+  // uno scarabocchio a penna sul frontespizio: un ricciolo con una stellina
+  const SCARABOCCHIO = `<svg class="p-scarabocchio" viewBox="0 0 120 70" aria-hidden="true"><path d="M8 52c10-2 18-12 16-20s-12-6-12 2 12 14 24 10 22-20 20-28-12-6-12 4 10 24 26 24 20-8 26-14"/><path d="M98 14l3 7 7 1-5 5 1 7-6-4-6 4 1-7-5-5 7-1z"/><path d="M14 62c22 3 50 2 78-3"/></svg>`;
   function paginaFissa(s, L) {
     // copertina interna: «Se ritrovata» e il taschino con la copia delle note
-    if (s === 0 && L) return `<div class="p-retro"><div class="p-cartiglio"><div style="font-family:var(--fellsc);font-size:.95em;letter-spacing:.06em">Se ritrovata</div><div class="p-piccolo" style="margin:.5em 0">restituire a</div><div style="font-family:var(--mano);font-size:1.4em;color:var(--ink2);border-bottom:1px solid var(--rule)">${nome() ? esc(nome()) : '&nbsp;'}</div><div style="font-family:var(--mano);font-size:.95em;margin-top:.6em;line-height:1.25">Grazie. Non sapevo più di averla.</div></div>` +
+    if (s === 0 && L) return `<div class="p-retro"><div class="p-cartiglio"><div class="p-ritrovata">Se ritrovata</div><div class="p-piccolo">restituire a</div><button class="p-riga" data-act="nome"><small>nome</small><span>${nome() ? esc(nome()) : ''}</span></button><button class="p-riga" data-act="nome"><small>tel.</small><span>${tel() ? esc(tel()) : ''}</span></button><div class="p-grazie">Grazie. Non sapevo più di averla.</div></div>${SCARABOCCHIO}` +
       `<div class="taschino"><div class="taschino-h">Nel taschino</div><button data-act="esporta">Salva una copia delle note</button><button data-act="importa">Riprendi una copia</button><button data-act="installa">Tienila sul telefono</button></div></div>`;
     if (s === 0) return `<div class="p-centro"><div class="p-occhiello">Agenda settimanale</div><div class="p-fregio">❦</div><div class="p-titolo">Cose Che Non Dovevo Scordare</div><div class="p-sotto">(Ma Ho Scordato)</div><div class="p-filo"></div>` +
       `<div class="p-piccolo">${breve(inizio).replace(/ (\d\d)$/, ' 20$1')}<br>${breve(fine).replace(/ (\d\d)$/, ' 20$1')}</div><div style="flex:1"></div>` +
@@ -426,9 +428,10 @@
     apriVelo('#v-vaia');
   }
   $('#vaia-data').addEventListener('change', e => { const v = e.target.value; if (v && perKey[v] && perKey[v].dentro) vaiGiorno(v); });
-  function chiediNome() { const c = $('#nome-campo'); c.value = nome(); apriVelo('#v-nome'); setTimeout(() => c.focus(), 60); }
-  function salvaNome() { setImp({ nome: $('#nome-campo').value.trim() }); chiudiVeli(); disegna(); }
-  $('#nome-campo').addEventListener('keydown', e => { if (e.key === 'Enter') salvaNome(); });
+  function chiediNome() { const c = $('#nome-campo'); c.value = nome(); $('#tel-campo').value = tel(); apriVelo('#v-nome'); setTimeout(() => c.focus(), 60); }
+  function salvaNome() { setImp({ nome: $('#nome-campo').value.trim(), tel: $('#tel-campo').value.trim() }); chiudiVeli(); disegna(); }
+  $('#nome-campo').addEventListener('keydown', e => { if (e.key === 'Enter') $('#tel-campo').focus(); });
+  $('#tel-campo').addEventListener('keydown', e => { if (e.key === 'Enter') salvaNome(); });
 
   function cerca() {
     const q = $('#cerca-campo').value.trim().toLowerCase(), out = [];
@@ -468,7 +471,7 @@
   // il biglietto dentro la pagina del giorno: piegato finché non lo tocchi
   function bigliettoGiorno(g, aperto) {
     const sp = g.biglietto; if (!sp) return '';
-    if (!aperto) return `<button class="gp-biglietto ${sp.tipo}" data-gp="apri-biglietto"><span class="gp-b-ico" aria-hidden="true"></span><span><b>${sp.poesia ? 'Un verso per oggi' : 'Un biglietto per oggi'}</b><small>Tocca per aprirlo</small></span></button>`;
+    if (!aperto) return `<button class="gp-biglietto tipo-${sp.tipo}" data-gp="apri-biglietto"><span class="gp-b-ico" aria-hidden="true"></span><span class="gp-b-testo"><b>${sp.poesia ? 'Un verso per oggi' : 'Un biglietto per oggi'}</b><small>Tocca per aprirlo</small></span></button>`;
     const p = sp.poesia;
     return `<div class="gp-aperto">` + (p ? `<div class="gp-poesia">${esc(p.testo)}<cite>${esc(p.autore)} · ${esc(p.opera)}</cite></div>` +
       (p.originale ? `<button class="gp-orig" data-gp="originale">Testo originale</button><div class="gp-orig-testo" hidden>${esc(p.originale)}</div>` : '')
@@ -672,11 +675,20 @@
     suono('pagina');
   }
   // la pagina del giorno segue la parte visibile dello schermo (sopra la tastiera)
+  // la tastiera è aperta quando la parte visibile è molto più bassa di quella piena (misurata a ogni larghezza nuova)
+  const pieno = { w: 0, h: 0 };
   function posizionaGp() {
-    const vv = window.visualViewport; if (!vv || gp.hidden) return;
+    const vv = window.visualViewport; if (!vv) return;
+    if (vv.width !== pieno.w) { pieno.w = vv.width; pieno.h = 0; }
+    pieno.h = Math.max(pieno.h, vv.height);
+    if (gp.hidden) return;
     gp.style.height = vv.height + 'px'; gp.style.top = vv.offsetTop + 'px';
+    gp.classList.toggle('tastiera', vv.height < pieno.h * 0.8);
   }
+  posizionaGp();
   if (window.visualViewport) { visualViewport.addEventListener('resize', posizionaGp); visualViewport.addEventListener('scroll', posizionaGp); }
+  addEventListener('pagehide', () => { if (!gp.hidden) salvaGiorno(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && !gp.hidden) salvaGiorno(); });
 
   // scrittura: invio = riga nuova, «- » = casella, cancella a inizio riga = toglie casella o unisce
   righeEl.addEventListener('input', e => {
