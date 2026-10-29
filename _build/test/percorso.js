@@ -27,8 +27,11 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   // la prima volta si apre su «Come si usa», e il suo pulsante porta a oggi
   prova('prima apertura su Come si usa', (await p.textContent('#t-titolo')) === 'Come si usa');
   await foto('02a-come-si-usa');
-  await p.click('.p-prova [data-act="oggi"]'); await attendi(1700);
+  // sul telefono una pagina alla volta, larga come lo schermo
+  prova('una pagina alla volta sul telefono', await p.evaluate(() => document.getElementById('app').classList.contains('singolo') && document.querySelectorAll('#pagine .pg').length === 1 && document.getElementById('libro').offsetWidth > innerWidth * 0.85));
+  await p.click('.barra-giu [data-act="oggi"]'); await attendi(1700);
   prova('settimana di oggi', (await p.textContent('#t-sotto')) === 'Settimana 44');
+  prova('oggi è sulla facciata giusta', await p.isVisible('.giorno[data-k="2026-10-29"] .g-num.oggi'));
   await foto('02-aperta');
   // i versi non sono stampati sulla pagina: c'è una busta da aprire
   prova('versi non stampati sulla pagina', !(await p.textContent('.giorno[data-k="2026-10-29"]')).includes('Signore'));
@@ -75,6 +78,11 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   prova('spunta in pagina', await p.evaluate(() => document.querySelectorAll('#gp-righe .riga')[1].classList.contains('fatta')));
   await attendi(600);
   prova('salvataggio automatico', await p.evaluate(() => (JSON.parse(localStorage.getItem('ccnds-notes')) || {})['2026-10-30']?.text === 'Cena da Marta alle 20\n[x] Comprare i fiori\nChiamare la mamma'));
+  // mentre scrivi sul telefono la parte alta si chiude: resta la data, che toccata la riapre
+  prova('scrivendo resta solo la data in alto', await p.evaluate(() => document.getElementById('gp').classList.contains('scrive') && getComputedStyle(document.getElementById('gp-sx')).display === 'none'));
+  await foto('03b-scrivo-compatto');
+  await p.click('#gp-breve'); await attendi(200);
+  prova('tocco la data e torna la parte alta', await p.isVisible('[data-gp="apri-ric"]'));
   // ricorrenza
   await p.click('[data-gp="apri-ric"]'); await attendi(200);
   await p.fill('#ric-campo', 'Marta'); await p.click('[data-gp="aggiungi-ric"]');
@@ -103,7 +111,7 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   for (let k = 1; k <= 12; k++) { await p.keyboard.type('Riga numero ' + k); if (k < 12) await p.keyboard.press('Enter'); }
   await p.click('[data-gp="fatto"]'); await attendi(700);
   prova('nota lunga tagliata con i puntini', await p.evaluate(() => document.querySelector('.giorno[data-k="2026-11-01"] .g-corpo').classList.contains('troppo')));
-  prova('nota corta senza puntini', await p.evaluate(() => !document.querySelector('.giorno[data-k="2026-10-30"] .g-corpo').classList.contains('troppo')));
+  prova('la nota inizia dalla prima riga', (await p.textContent('.giorno[data-k="2026-11-01"] .g-corpo')).startsWith('Riga numero 1'));
   await foto('05b-nota-lunga');
   await p.click('.giorno[data-k="2026-11-01"]'); await attendi(450);
   prova('aprendo si legge tutta', await p.$$eval('#gp-righe .riga', r => r.length) === 12);
@@ -152,6 +160,8 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   // niente menu: le preferenze stanno nella pagina «Come si usa», raggiunta da «Vai a…»
   await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="1"]'); await attendi(1700);
   prova('Vai a… porta a Come si usa', (await p.textContent('#t-titolo')) === 'Come si usa');
+  // le preferenze sono sulla seconda facciata di «Come si usa»
+  await p.click('[data-act="succ"]'); await attendi(1100);
   await p.click('.p-temi [data-t="nero"]');
   prova('carta nera', await p.evaluate(() => document.documentElement.classList.contains('t-nero')));
   await foto('09-nero');
@@ -159,13 +169,14 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await foto('09c-nero-settimana');
   await p.click('.giorno[data-k="2026-10-30"]'); await attendi(450); await foto('09d-nero-giorno'); await p.click('[data-gp="fatto"]'); await attendi(600);
   await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="1"]'); await attendi(1700);
+  await p.click('[data-act="succ"]'); await attendi(1100);
   await p.click('.p-temi [data-t="avorio"]');
   prova('carta avorio', await p.evaluate(() => document.documentElement.classList.contains('t-avorio') && !document.documentElement.classList.contains('t-nero')));
   await foto('09e-avorio');
   await p.click('.p-temi [data-t="carta"]');
   await p.click('.p-prova [data-act="nome"]'); await p.fill('#nome-campo', 'Giulia'); await p.click('[data-act="salva-nome"]');
-  // il taschino nella copertina interna
-  await p.click('[data-act="prec"]'); await attendi(1100);
+  // il taschino nella copertina interna (la prima facciata)
+  await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="0"]'); await attendi(1300);
   prova('taschino con la copia delle note', await p.isVisible('.taschino [data-act="esporta"]'));
   prova('nome nel Se ritrovata', (await p.textContent('.p-retro')).includes('Giulia'));
   await foto('11-taschino');
@@ -175,7 +186,7 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await p.click('#b-nastro'); await attendi(200);
   prova('nastro sulla pagina segnata', await p.isVisible('.nastro'));
   await foto('10-segnalibro');
-  await p.click('[data-act="succ"]'); await attendi(1100);
+  await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="fondo"]'); await attendi(1300);
   prova('coda del nastro a sinistra se la pagina segnata è indietro', await p.isVisible('.coda.indietro'));
   await p.click('.coda'); await attendi(1100);
   prova('dalla coda alla pagina segnata', await p.isVisible('.nastro'));

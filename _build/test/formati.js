@@ -18,7 +18,7 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
     const guida = await p.evaluate(() => [...document.querySelectorAll('.p-guida')].every(g => g.scrollHeight <= g.clientHeight + 1));
     prova(nome + ': Come si usa sta nella pagina', guida);
     if (FOTO) await p.screenshot({ path: path.join(FOTO, nome + '-guida.png') });
-    await p.click('.p-prova [data-act="oggi"]'); await p.waitForTimeout(1700);
+    await p.click('.barra-giu [data-act="oggi"]'); await p.waitForTimeout(1700);
     const fuori = await p.evaluate(() => {
       const W = innerWidth, H = innerHeight, r = document.getElementById('libro').getBoundingClientRect();
       return { largo: document.documentElement.scrollWidth > W, libro: r.left < 0 || r.right > W || r.top < 0 || r.bottom > H };
@@ -26,10 +26,8 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
     prova(nome + ': niente scorrimento laterale', !fuori.largo);
     prova(nome + ': il libro sta nello schermo', !fuori.libro);
     if (FOTO) await p.screenshot({ path: path.join(FOTO, nome + '-settimana.png') });
-    await p.click('.giorno[data-k="2026-11-02"]').catch(() => p.click('[data-act="succ"]'));
-    await p.waitForTimeout(150);
-    if (await p.isHidden('#gp')) { await p.click('[data-act="succ"]'); await p.waitForTimeout(1000); await p.click('.giorno[data-k="2026-11-02"]'); }
-    await p.waitForTimeout(450);
+    await p.click('[data-act="vaia"]'); await p.fill('#vaia-data', '2026-11-02'); await p.waitForTimeout(1700);
+    await p.click('.giorno[data-k="2026-11-02"]'); await p.waitForTimeout(450);
     const gp = await p.evaluate(() => { const r = document.getElementById('gp-carta').getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight + 1; });
     prova(nome + ': pagina del giorno nello schermo', gp);
     if (FOTO) await p.screenshot({ path: path.join(FOTO, nome + '-giorno.png') });

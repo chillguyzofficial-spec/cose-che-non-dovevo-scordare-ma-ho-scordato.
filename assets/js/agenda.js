@@ -55,8 +55,15 @@
     fase: 'chiusa', spread: 0, flip: null, pw: 0, ph: 0,
     note: leggi('notes', {}), storia: leggi('hist', {}), ric: leggi('rem', []), letti: leggi('letti', []),
     imp: Object.assign({ sound: true, night: false, bookmark: null, nome: '', tema: 'carta' }, leggi('set', {})),
-    lampo: null, appena: null
+    lampo: null, appena: null,
+    // sul telefono in verticale si vede una pagina alla volta: pos = facciata; altrimenti pos = doppia pagina
+    singolo: false, pos: 0
   };
+  const maxPos = () => S.singolo ? 2 * LAST + 1 : LAST;
+  const spreadDiPos = p => S.singolo ? p >> 1 : p;
+  const posDiSpread = s => S.singolo ? 2 * s : s;
+  // la facciata dove sta un giorno: lun-mer a sinistra, gio-dom a destra
+  const posDiGiorno = g => S.singolo ? 2 * spreadDi(g.i) + (g.dow < 3 ? 0 : 1) : spreadDi(g.i);
   let flip = null, noClick = false, ptr = null, raf = 0, pronto = false;
   const setImp = p => { Object.assign(S.imp, p); scrivi('set', S.imp); };
   // chi aveva la vecchia «modalità notte» la ritrova come carta nera
@@ -65,14 +72,23 @@
   // ---------- misure ----------
   function misura() {
     const W = scena.clientWidth, H = scena.clientHeight;
-    // su PC il libro è più grande e meno allungato, sul telefono resta com'era
+    // telefono in verticale: una pagina alla volta, larga come lo schermo e con proporzioni da quaderno
+    const singolo = W < 620 && H > W * 1.15;
+    if (singolo !== S.singolo) {
+      const s = spreadDiPos(S.pos); S.singolo = singolo; S.pos = posDiSpread(s);
+      app.classList.toggle('singolo', singolo); S.pw = 0;
+      if (S.fase !== 'chiusa' || S.pos) disegna();
+    }
+    // su PC il libro è più grande e meno allungato
     const largo = W >= 900;
-    const pw = Math.max(120, Math.floor(Math.min((W - 46) / 2, largo ? 520 : 440, largo ? (H - 34) / 1.45 : 1e9)));
-    const ph = Math.max(300, Math.floor(Math.min(H - 34, pw * 3.2)));
+    const pw = singolo ? Math.floor(Math.min(W - 36, 480, (H - 40) / 1.45))
+      : Math.max(120, Math.floor(Math.min((W - 46) / 2, largo ? 520 : 440, largo ? (H - 34) / 1.45 : 1e9)));
+    const ph = singolo ? Math.floor(Math.min(H - 40, pw * 1.62)) : Math.max(300, Math.floor(Math.min(H - 34, pw * 3.2)));
     if (pw === S.pw && ph === S.ph) return;
     S.pw = pw; S.ph = ph;
     libro.style.setProperty('--pw', pw + 'px'); libro.style.setProperty('--ph', ph + 'px');
-    libro.style.setProperty('--fs', Math.max(10, Math.min(largo ? 20 : 17, pw / 14.5, ph / 30)).toFixed(2) + 'px');
+    libro.style.setProperty('--fs', Math.max(10, Math.min(largo ? 20 : singolo ? 16 : 17, pw / (singolo ? 21 : 14.5), ph / 30)).toFixed(2) + 'px');
+    if (S.fase === 'aperta') disegna();
   }
 
   // ---------- suoni (morbidi, generati: niente file) ----------
@@ -123,25 +139,27 @@
       setFase('apertura'); disegna();
       setTimeout(() => suono('posa'), 950);
       // la prima volta si apre su «Come si usa», poi sempre sulla settimana di oggi
-      const meta = S.imp.visto ? spreadDi(oggiIdx()) : 1; setImp({ visto: true });
-      setTimeout(() => { setFase('aperta'); disegna(); setTimeout(() => vai(meta), 260); }, 1200);
+      const meta = S.imp.visto ? posDiGiorno(giorni[oggiIdx()]) : posDiSpread(1); setImp({ visto: true });
+      setTimeout(() => { setFase('aperta'); disegna(); setTimeout(() => vaiPos(meta), 260); }, 1200);
     }, 430);
   }
   function chiudiLibro() {
     chiudiVeli();
     const fai = () => { setFase('chiusura'); disegna(); setTimeout(() => suono('posa'), 950); setTimeout(() => { setFase('chiusa'); disegna(); }, 1200); };
-    if (S.spread !== 0) vai(0, () => setTimeout(fai, 120)); else fai();
+    if (S.pos !== 0) vaiPos(0, () => setTimeout(fai, 120)); else fai();
   }
 
   // ---------- sfogliare ----------
-  function vai(to, cb) {
+  // vai(doppia pagina) per chi pensa a doppie pagine; vaiPos(posizione) gira una facciata o una doppia pagina
+  const vai = (to, cb) => vaiPos(posDiSpread(Math.max(0, Math.min(LAST, to))), cb);
+  function vaiPos(to, cb) {
     if (flip || S.fase !== 'aperta') return;
-    to = Math.max(0, Math.min(LAST, to));
-    if (to === S.spread) { cb && cb(); return; }
+    to = Math.max(0, Math.min(maxPos(), to));
+    if (to === S.pos) { cb && cb(); return; }
     avviaFlip(to);
     animaA(1, () => { fineFlip(true); cb && cb(); });
   }
-  function avviaFlip(to) { flip = { to, dir: to > S.spread ? 1 : -1, p: 0 }; S.flip = { to, dir: flip.dir }; suono('pagina'); disegna(); }
+  function avviaFlip(to) { flip = { to, dir: to > S.pos ? 1 : -1, p: 0 }; S.flip = { to, dir: flip.dir }; suono('pagina'); disegna(); }
   const angoloFlip = () => { const p = flip ? flip.p : 0, dir = flip ? flip.dir : 1; return dir > 0 ? -180 * p : -180 * (1 - p); };
   function applicaFlip() {
     if (!flip) return;
@@ -164,7 +182,7 @@
     };
     raf = requestAnimationFrame(() => { applicaFlip(); raf = requestAnimationFrame(passo); });
   }
-  function fineFlip(commit) { const f = flip; flip = null; S.flip = null; if (commit && f) S.spread = f.to; disegna(); }
+  function fineFlip(commit) { const f = flip; flip = null; S.flip = null; if (commit && f) { S.pos = f.to; S.spread = spreadDiPos(f.to); } disegna(); }
   const sopprimi = () => { noClick = true; clearTimeout(sopprimi.t); sopprimi.t = setTimeout(() => { noClick = false; }, 80); };
 
   libro.addEventListener('pointerdown', e => { if (!$('#gp').hidden) return; ptr = { x: e.clientX, y: e.clientY, t: performance.now(), drag: false }; });
@@ -175,7 +193,7 @@
     if (S.fase !== 'aperta') return;
     if (!P.drag) {
       if (flip || Math.abs(dx) < 12 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
-      const to = S.spread + (dx < 0 ? 1 : -1); if (to < 0 || to > LAST) { ptr = null; return; }
+      const to = S.pos + (dx < 0 ? 1 : -1); if (to < 0 || to > maxPos()) { ptr = null; return; }
       P.drag = true; avviaFlip(to); try { libro.setPointerCapture(e.pointerId); } catch (_) {}
     }
     if (!flip) return;
@@ -193,7 +211,7 @@
   function vaiGiorno(key, lampo = true) {
     const g = perKey[key]; if (!g) return;
     chiudiVeli();
-    setTimeout(() => vai(spreadDi(g.i), () => {
+    setTimeout(() => vaiPos(posDiGiorno(g), () => {
       if (!lampo) return;
       S.lampo = key; disegna(); clearTimeout(vaiGiorno.t); vaiGiorno.t = setTimeout(() => { S.lampo = null; disegna(); }, 1800);
     }), 60);
@@ -329,19 +347,29 @@
     let tr = 'none';
     if (!statica) { const a = angoloFlip(); tr = ruolo === 'F' ? `rotateY(${a}deg)` : `rotateY(${a}deg) translateX(100%) rotateY(180deg)`; }
     const vis = ruolo === 'L' && S.fase !== 'aperta' && S.fase !== 'chiusura' ? 'hidden' : 'visible';
-    const bordo = statica && !S.flip && S.fase === 'aperta' && !((s === 0 && L) || (s === LAST && !L));
+    const aperto = statica && !S.flip && S.fase === 'aperta';
+    // angoli da toccare: in doppia pagina uno per lato; con una pagina sola entrambi sulla stessa
+    const angolo = (dir, cls) => `<button class="angolo${cls}" data-act="angolo" data-dir="${dir}" aria-label="${dir < 0 ? 'Pagina precedente' : 'Pagina successiva'}"><span></span></button>`;
+    const angoli = !aperto ? '' : S.singolo ? (S.pos > 0 ? angolo(-1, ' a-sx') : '') + (S.pos < maxPos() ? angolo(1, ' a-dx') : '')
+      : !((s === 0 && L) || (s === LAST && !L)) ? angolo(L ? -1 : 1, '') : '';
     const sett = s >= PRIMA && s < LAST;
-    return `<div class="pg ${lato}" data-ruolo="${ruolo}" style="left:${ruolo === 'L' ? 0 : '50%'};z-index:${statica ? 1 : 5};transform:${tr};visibility:${vis}">` +
-      (sett ? linguette(s - PRIMA, L) : '') +
-      `<div class="carta">${sett ? settimana(s - PRIMA, L) : paginaFissa(s, L)}<div class="piega"></div>` +
-      (bordo ? `<button class="angolo" data-act="angolo" data-dir="${L ? -1 : 1}" aria-label="${L ? 'Pagina precedente' : 'Pagina successiva'}"><span></span></button>` : '') +
+    return `<div class="pg ${lato}" data-ruolo="${ruolo}" style="left:${ruolo === 'L' || S.singolo ? 0 : '50%'};z-index:${statica ? 1 : 5};transform:${tr};visibility:${vis}">` +
+      (sett && !S.singolo ? linguette(s - PRIMA, L) : '') +
+      `<div class="carta">${sett ? settimana(s - PRIMA, L) : paginaFissa(s, L)}<div class="piega"></div>` + angoli +
       `<div class="ombra" style="background:${OMBRE[ruolo]}"></div></div></div>`;
   }
 
   function disegna() {
+    S.spread = spreadDiPos(S.pos);
     const c = S.spread, f = S.flip;
     let slot;
-    if (!f) slot = [pagina(c, 'sx', 'L'), pagina(c, 'dx', 'R')];
+    if (S.singolo) {
+      // una pagina alla volta: sotto quella che arriva (o resta), sopra quella che gira attorno al dorso
+      const fac = p => [p >> 1, p % 2 ? 'dx' : 'sx'], [cs, cl] = fac(S.pos);
+      if (!f) slot = [pagina(cs, cl, 'R')];
+      else { const [ts, tl] = fac(f.to); slot = f.dir > 0 ? [pagina(ts, tl, 'R'), pagina(cs, cl, 'F')] : [pagina(cs, cl, 'R'), pagina(ts, tl, 'F')]; }
+    }
+    else if (!f) slot = [pagina(c, 'sx', 'L'), pagina(c, 'dx', 'R')];
     else if (f.dir > 0) slot = [pagina(c, 'sx', 'L'), pagina(f.to, 'dx', 'R'), pagina(c, 'dx', 'F'), pagina(f.to, 'sx', 'B')];
     else slot = [pagina(f.to, 'sx', 'L'), pagina(c, 'dx', 'R'), pagina(f.to, 'dx', 'F'), pagina(c, 'sx', 'B')];
     pagineEl.innerHTML = slot.join('');
@@ -504,6 +532,8 @@
     GP.key = key; GP.orig = (S.note[key] && S.note[key].text) || ''; GP.origT = S.note[key] ? S.note[key].t : 0;
     GP.righe = daTesto(GP.orig); GP.forma = null; GP.versioni = false;
     $('#gp-num').textContent = g.d.getDate();
+    $('#gp-breve').textContent = DN[g.dow] + ' ' + g.d.getDate() + ' ' + M[g.d.getMonth()].toLowerCase();
+    gp.classList.remove('scrive');
     $('#gp-titolo').textContent = DN[g.dow];
     $('#gp-mese').textContent = M[g.d.getMonth()].toLowerCase() + ' ' + g.d.getFullYear();
     $('#gp-sett').textContent = 'settimana ' + settIso(g.d);
@@ -551,7 +581,7 @@
       (GP.versioni ? h.map((v, i) => `<div class="versione"><div><small>${new Date(v.t).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small><span>${esc(v.text.replace(/^\[[ xX]\] /gm, '').replace(/\n/g, ' · '))}</span></div><button class="piccolo-btn" data-gp="ripristina" data-i="${i}">Riprendi</button></div>`).join('') + '<div class="nota-p" style="margin-top:6px">Riprendi una versione: sostituisce la pagina, e quella di adesso resta qui.</div>' : '');
   }
 
-  function adatta(ta) { ta.style.height = '36px'; ta.style.height = Math.max(36, Math.ceil((ta.scrollHeight - 2) / 36) * 36) + 'px'; }
+  function adatta(ta) { const lh = parseFloat(getComputedStyle(ta).lineHeight) || 36; ta.style.height = lh + 'px'; ta.style.height = Math.max(lh, Math.ceil((ta.scrollHeight - 2) / lh) * lh) + 'px'; }
   function disegnaRighe(fuoco) {
     const vuota = GP.righe.every(r => !r.t);
     righeEl.innerHTML = GP.righe.map((r, i) => {
@@ -615,7 +645,7 @@
   function chiudiGiorno() {
     if (gp.hidden) return;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-    const fatto = concludiGiorno(), key = GP.key, g = perKey[key], stessa = spreadDi(g.i) === S.spread;
+    const fatto = concludiGiorno(), key = GP.key, g = perKey[key], stessa = posDiGiorno(g) === S.pos;
     if (fatto) S.appena = key;
     if (stessa) disegna();
     const el = stessa && pagineEl.querySelector(`.giorno[data-k="${key}"]`), f = carta.getBoundingClientRect(), r = el && el.getBoundingClientRect();
@@ -652,6 +682,7 @@
   righeEl.addEventListener('input', e => {
     const ta = e.target; if (ta.tagName !== 'TEXTAREA') return;
     const i = +ta.dataset.i, r = GP.righe[i], v = ta.value;
+    gp.classList.add('scrive');
     if (v.includes('\n')) {
       const parti = v.split('\n');
       if (r.c !== null && !parti[0].trim() && parti.length === 2 && !parti[1]) { r.c = null; r.t = ''; disegnaRighe({ i, pos: 0 }); schedula(); return; }
@@ -682,6 +713,9 @@
   righeEl.addEventListener('click', e => { if (e.target === righeEl) fuocoRiga(GP.righe.length - 1, null); });
 
   righeEl.addEventListener('focusin', e => { if (e.target.tagName === 'TEXTAREA') { GP.ultimo = +e.target.dataset.i; aggiornaStile(); } });
+  // appena inizi a scrivere la parte alta si chiude in una riga con la data (le righe restano in vista sopra la tastiera);
+  // non all'apertura, così il biglietto e i ricordi del giorno si vedono
+  righeEl.addEventListener('focusout', () => setTimeout(() => { if (!righeEl.contains(document.activeElement)) gp.classList.remove('scrive'); }, 120));
   // la scelta del tipo di riga e la spunta non tolgono il fuoco (la tastiera resta aperta)
   carta.addEventListener('pointerdown', e => { if (e.target.closest('.gp-stile button, .spunta')) e.preventDefault(); });
 
@@ -704,6 +738,7 @@
     const b = e.target.closest('[data-gp]'); if (!b) return;
     const a = b.dataset.gp;
     if (a === 'fatto') chiudiGiorno();
+    else if (a === 'smetti') { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); gp.classList.remove('scrive'); }
     else if (a === 'prima') cambiaGiorno(-1);
     else if (a === 'dopo') cambiaGiorno(1);
     else if (a === 'spunta') spunta(+b.dataset.i);
@@ -737,9 +772,9 @@
       case 'giorno': apriGiorno(k, b.classList.contains('giorno') ? b : pagineEl.querySelector(`.giorno[data-k="${k}"]`)); break;
       case 'spunta': e.stopPropagation(); spunta(k, +b.dataset.i); break;
       case 'sorpresa': e.stopPropagation(); sorpresa(k); break;
-      case 'angolo': vai(S.spread + +b.dataset.dir); break;
-      case 'prec': vai(S.spread - 1); break;
-      case 'succ': vai(S.spread + 1); break;
+      case 'angolo': vaiPos(S.pos + +b.dataset.dir); break;
+      case 'prec': vaiPos(S.pos - 1); break;
+      case 'succ': vaiPos(S.pos + 1); break;
       case 'oggi': vaiGiorno(giorni[oggiIdx()].key); break;
       case 'vaia': vaiA(); break;
       case 'vai-giorno': vaiGiorno(k); break;
@@ -762,8 +797,8 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { if (!gp.hidden) chiudiGiorno(); else chiudiVeli(); return; }
     if (!gp.hidden || veli.some(v => !$(v).hidden)) return;
-    if (e.key === 'ArrowRight') vai(S.spread + 1);
-    if (e.key === 'ArrowLeft') vai(S.spread - 1);
+    if (e.key === 'ArrowRight') vaiPos(S.pos + 1);
+    if (e.key === 'ArrowLeft') vaiPos(S.pos - 1);
   });
 
   // ---------- avvio ----------
