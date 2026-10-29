@@ -35,7 +35,12 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 /* ---------- barre ---------- */
 .barra-su{height:52px;flex:none;display:flex;align-items:center;gap:4px;padding:0 14px 0 6px;transition:opacity .6s}
 .barra-giu{height:60px;flex:none;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 8px;transition:opacity .6s}
-.chiusa .barra-su,.chiusa .barra-giu{opacity:0;pointer-events:none}
+.chiusa .barra-su{opacity:0;pointer-events:none}
+/* ad agenda chiusa in basso resta solo «Decora la copertina» */
+.barra-giu .decora{display:none}
+.chiusa .barra-giu>.pill{display:none}
+.chiusa .barra-giu>.decora{display:flex}
+.atelier-on .barra-giu,.atelier-on .suggerimento{display:none}
 .ico{width:44px;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
 .ico-menu span{width:19px;height:2px;background:#e9d7b0;border-radius:1px}
 .ico-cerca{position:relative;width:18px;height:18px;display:block}
@@ -220,7 +225,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .aperta .cop{visibility:hidden}
 .cop-retro{z-index:10;border-radius:9px 2px 2px 9px;overflow:hidden;background:var(--pelle);transform:rotateY(0deg) translateX(100%) rotateY(180deg)}
 .cop-retro::after{content:'';position:absolute;inset:7px 0 7px 9px;border-radius:6px 0 0 6px;background:radial-gradient(circle at 30% 30%,var(--pois1) 0 16%,transparent 17%) 0 0/2.2em 2.2em,radial-gradient(circle at 75% 72%,var(--pois2) 0 12%,transparent 13%) 0 0/2.2em 2.2em,linear-gradient(var(--retro1),var(--retro2))}
-.cop-fronte{z-index:11;border-radius:2px 9px 9px 2px;background:radial-gradient(130% 100% at 30% 15%,rgba(255,214,160,.16),transparent 55%),radial-gradient(rgba(0,0,0,.22) .6px,transparent 1.2px) 0 0/4px 4px,radial-gradient(rgba(255,230,200,.05) .6px,transparent 1.2px) 2px 1px/5px 5px,#4a2c1d;box-shadow:inset 0 0 2.5em rgba(0,0,0,.45)}
+.cop-fronte{z-index:11;border-radius:2px 9px 9px 2px;background:radial-gradient(130% 100% at 30% 15%,rgba(255,214,160,.16),transparent 55%),radial-gradient(rgba(0,0,0,.22) .6px,transparent 1.2px) 0 0/4px 4px,radial-gradient(rgba(255,230,200,.05) .6px,transparent 1.2px) 2px 1px/5px 5px,var(--cop,#4a2c1d);box-shadow:inset 0 0 2.5em rgba(0,0,0,.45)}
 .apertura .cop-fronte,.aperta .cop-fronte{transform:rotateY(-180deg)}
 .apertura .cop-retro,.aperta .cop-retro{transform:rotateY(-180deg) translateX(100%) rotateY(180deg)}
 .cop-dorso{position:absolute;left:0;top:0;bottom:0;width:9%;background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(0,0,0,.15) 60%,rgba(255,220,170,.06))}
@@ -477,3 +482,92 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
   .libro,.cop,.gp-carta.anima,.elastico{transition-duration:.01s!important}
   .g-note.appena{animation:none}
 }
+
+/* ---------- copertina personalizzata ---------- */
+.cop-nome{font-family:var(--mano);font-size:1.6em;line-height:1.2;margin-top:.3em;padding:0 .2em}
+.cop-nome:empty{display:none}
+.cop-decoro{position:absolute;inset:0;container-type:size;pointer-events:none;overflow:hidden;border-radius:inherit}
+.cop-tratti{position:absolute;inset:0;width:100%;height:100%}
+.ades{position:absolute;left:calc(var(--x) * .1cqw);top:calc(var(--y) * .1cqw);width:calc(var(--s) * .1cqw);aspect-ratio:1;transform:translate(-50%,-50%) rotate(var(--r));filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}
+.ades svg{display:block;width:100%;height:100%}
+.atelier-on .ades{pointer-events:auto;cursor:grab;touch-action:none}
+.ades.scelto{outline:2px dashed rgba(255,240,205,.95);outline-offset:3px;border-radius:12%}
+.atelier{flex:none;display:flex;flex-direction:column;gap:10px;padding:10px 14px 12px;border-top:1px solid rgba(233,215,176,.18);background:rgba(0,0,0,.28);color:var(--chiaro)}
+.atelier[hidden]{display:none}
+.atelier .btn{color:var(--chiaro);border-color:rgba(233,215,176,.3);height:40px;font-size:14px;padding:0 14px}
+.atelier .btn.pieno{background:#e9d7b0;color:#2a1a10}
+.at-testa{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.at-testa b{font-family:var(--fell);font-style:italic;font-weight:400;font-size:20px}
+.at-riga{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.at-colori button{width:38px;height:38px;border-radius:50%;background:var(--c);border:2px solid rgba(233,215,176,.35);box-shadow:inset 0 0 8px rgba(0,0,0,.4)}
+.at-colori button[aria-checked="true"]{border-color:#f3e5c6;box-shadow:0 0 0 2px rgba(243,229,198,.35),inset 0 0 8px rgba(0,0,0,.4)}
+.at-adesivi{flex-wrap:nowrap;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.at-adesivi button{flex:none;width:48px;height:48px;padding:4px;border-radius:10px;background:rgba(255,255,255,.06)}
+.at-adesivi svg{width:100%;height:100%;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+@media (min-width:900px){.atelier{width:100%;max-width:760px;margin:0 auto;border:1px solid rgba(233,215,176,.18);border-radius:14px 14px 0 0}}
+
+/* ---------- lavagna: scrivere a mano ---------- */
+.lav{position:fixed;inset:0;z-index:65;display:flex;flex-direction:column;background:#120c08;color:var(--chiaro);
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.lav-su{flex:none;display:flex;align-items:center;gap:10px;padding:8px 12px}
+.lav-titolo{flex:1;text-align:center;font-family:var(--fell);font-style:italic;font-size:19px}
+.lav .btn{color:var(--chiaro);border-color:rgba(233,215,176,.3);height:40px;font-size:14px}
+.lav .btn.pieno{background:#e9d7b0;color:#2a1a10}
+.lav-area{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px}
+.lav-foglio{position:relative;border-radius:4px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.6)}
+.lav-carta .lav-foglio{background:radial-gradient(140% 90% at 50% 0%,var(--paper),var(--paper2))}
+.lav-foglio canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.lav .cop-copia{position:absolute;left:0;top:0;bottom:auto;width:100%;height:100%;transform:none!important;transition:none;pointer-events:none}
+.lav .cop-copia .elastico{transform:none;opacity:1}
+.lav-giu{flex:none;display:flex;flex-direction:column;gap:10px;padding:8px 12px 12px}
+.lav-colori,.lav-strumenti{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.lav-col{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid transparent}
+.lav-col[aria-checked="true"]{border-color:#f3e5c6}
+.lav-col i{width:26px;height:26px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.lav-strumenti button{height:38px;padding:0 14px;border-radius:19px;border:1px solid rgba(233,215,176,.3);font-size:13px}
+.lav-strumenti button[aria-pressed="true"]{background:#e9d7b0;color:#2a1a10}
+/* colori dei tratti: seguono la carta scelta */
+.tr-blu{stroke:var(--ink2)}.tr-nero{stroke:var(--ink)}.tr-rosso{stroke:#b8322a}.tr-verde{stroke:#4f7a3a}.tr-oro{stroke:#dcb862}.tr-bianco{stroke:#f6eedd}.tr-rosa{stroke:#e98aa5}
+.pz-blu{background:var(--ink2)}.pz-nero{background:var(--ink)}.pz-rosso{background:#b8322a}.pz-verde{background:#4f7a3a}.pz-oro{background:#dcb862}.pz-bianco{background:#f6eedd}.pz-rosa{background:#e98aa5}
+.lav-carta .pz-nero{box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
+
+/* ---------- sulla pagina: lettera, disegno e polaroid ---------- */
+.g-attacchi{--ar:.5em;position:absolute;bottom:.45em;right:var(--ar);display:flex;align-items:flex-end;gap:.5em;pointer-events:none;z-index:1}
+.pg.dx .g-attacchi{--ar:2.1em}
+.singolo .pg .g-attacchi{--ar:.9em}
+.g-attacchi.spostati{right:calc(var(--ar) + 3.3em)}
+.g-polaroid{display:block;width:2.6em;padding:.18em .18em .5em;background:#fbf8f1;box-shadow:0 1px 3px rgba(40,20,5,.45);transform:rotate(var(--r))}
+.g-polaroid img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.g-disegno{display:block;width:3.2em;aspect-ratio:4/3;padding:.1em;background:rgba(255,255,255,.35);border:1px solid var(--rule);transform:rotate(-3deg)}
+.t-nero .g-disegno{background:rgba(255,255,255,.06)}
+.g-disegno svg{display:block;width:100%;height:100%}
+.lettera{position:relative;display:block;width:2.5em;height:1.65em;background:#26355a;border:1px solid rgba(220,184,98,.6);border-radius:2px;transform:rotate(5deg);box-shadow:0 1px 3px rgba(20,10,5,.45);pointer-events:auto;cursor:pointer}
+.lettera::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom right,transparent 49%,rgba(220,184,98,.55) 50%,transparent 52%) 0 0/50% 100% no-repeat,linear-gradient(to bottom left,transparent 49%,rgba(220,184,98,.55) 50%,transparent 52%) 100% 0/50% 100% no-repeat}
+.lettera::after{content:'';position:absolute;left:50%;top:48%;width:.62em;height:.62em;margin:-.31em 0 0 -.31em;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f1d68a,#a07a26 70%)}
+.lettera.letto::after{clip-path:polygon(0 0,45% 0,60% 40%,40% 60%,55% 100%,0 100%);opacity:.75}
+.cartolina.lettera-c{background:radial-gradient(140% 90% at 50% 0%,#f6eedb,#e6d3ab);border:1px solid rgba(120,80,40,.35);outline:3px double rgba(38,53,90,.35);outline-offset:3px;text-align:left;max-width:380px;max-height:80vh;overflow:auto}
+.cartolina.lettera-c .glifo{text-align:center;color:#26355a;font-size:34px}
+.cartolina.lettera-c .frase{white-space:pre-line;font-size:22px}
+
+/* ---------- pagina del giorno: lettere, a mano, polaroid ---------- */
+.gp-biglietto.tipo-lettera .gp-b-ico{background:#26355a;border-color:rgba(220,184,98,.6)}
+.gp-biglietto.tipo-lettera .gp-b-ico::before{background:linear-gradient(to bottom right,transparent 49%,rgba(220,184,98,.6) 50%,transparent 52%) 0 0/50% 100% no-repeat,linear-gradient(to bottom left,transparent 49%,rgba(220,184,98,.6) 50%,transparent 52%) 100% 0/50% 100% no-repeat}
+.gp-biglietto.tipo-lettera .gp-b-ico::after{background:radial-gradient(circle at 35% 35%,#f1d68a,#a07a26 70%)}
+.gp-lettera{white-space:pre-line}
+.gp-lettera small{display:block;margin-top:8px;font-family:var(--macchina);font-weight:400;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.gp-lettera::before{content:'✉'}
+.gp-spedita{margin-top:12px;font-size:12px;letter-spacing:.04em;color:var(--muted)}
+.gp-lettera-campo{height:auto;min-height:130px;padding:10px 12px;font-family:var(--mano);font-size:20px;line-height:1.35;resize:vertical}
+.gp-extra{display:flex;flex-direction:column;align-items:flex-start;gap:16px;margin-top:14px}
+.gp-extra:empty{display:none}
+.gp-aggiungi{display:flex;gap:8px;flex-wrap:wrap}
+.gp-aggiungi .gp-link{margin-top:0}
+.gp-polaroid{position:relative;margin:4px 0 0 4px;width:min(260px,78%);padding:10px 10px 4px;background:#fbf8f1;box-shadow:0 6px 18px rgba(40,20,5,.3);transform:rotate(var(--r))}
+.gp-polaroid img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.gp-polaroid figcaption input{width:100%;height:40px;border:0;background:none;outline:none;font-family:var(--mano);font-size:20px;color:#1d2a52;text-align:center}
+.gp-polaroid figcaption input::placeholder{color:#9a8a70}
+.gp-disegno{position:relative;width:min(340px,100%)}
+.gp-disegno-apri{display:block;width:100%;aspect-ratio:4/3;border:1px solid var(--rule);border-radius:4px;background:rgba(255,255,255,.25)}
+.t-nero .gp-disegno-apri{background:rgba(255,255,255,.04)}
+.gp-disegno-apri svg{display:block;width:100%;height:100%}
+.gp-togli{position:absolute;top:-12px;right:-12px;width:34px;height:34px;border-radius:50%;background:var(--paper);border:1px solid var(--rule);color:var(--ink);font-size:20px;line-height:1;box-shadow:0 2px 6px rgba(0,0,0,.2)}

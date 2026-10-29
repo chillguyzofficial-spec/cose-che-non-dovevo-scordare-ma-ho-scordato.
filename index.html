@@ -45,8 +45,10 @@
           <div class="cop-sotto oro">(Ma Ho Scordato)</div>
           <div class="cop-filo" style="margin-top:.4em"></div>
           <div class="cop-fregio">❦</div>
+          <div class="cop-nome oro" id="cop-nome"></div>
         </div>
         <div class="cop-anni" id="cop-anni"></div>
+        <div class="cop-decoro" id="cop-decoro"></div>
         <div class="elastico" data-act="apri"></div>
       </div>
       <div class="luce-notte"></div>
@@ -60,7 +62,9 @@
     <button class="pill" data-act="vaia">Vai a…</button>
     <button class="pill" data-act="nastro" id="b-nastro"><span class="nastrino"></span><span>Segna</span></button>
     <button class="pill tondo" data-act="succ" aria-label="Pagina successiva">›</button>
+    <button class="pill decora" data-act="atelier">✎ Decora la copertina</button>
   </div>
+  <div class="atelier" id="atelier" hidden></div>
 </div>
 
 <!-- spiegazioni (tienila sul telefono) -->
@@ -106,6 +110,7 @@
         <div class="gp-festa" id="gp-festa"></div>
         <div id="gp-poesia"></div>
         <div id="gp-ricordi"></div>
+        <div id="gp-lettere"></div>
         <div id="gp-versioni"></div>
       </section>
       <section class="gp-dx" id="gp-dx">
@@ -115,6 +120,7 @@
           <button data-gp="stile" data-s="fare" aria-pressed="false"><i></i>Da spuntare</button>
         </div>
         <div class="gp-righe" id="gp-righe"></div>
+        <div class="gp-extra" id="gp-extra"></div>
       </section>
     </div>
   </div>
@@ -122,9 +128,11 @@
 
 <div class="avviso" id="avviso" hidden role="status"><span id="avviso-testo"></span><button id="avviso-annulla" hidden>Annulla</button></div>
 <input type="file" accept="application/json,.json" id="file" hidden>
+<input type="file" accept="image/*" id="foto-file" hidden>
 
 <script src="assets/js/dati.js"></script>
 <script src="assets/js/illustrazioni.js"></script>
+<script src="assets/js/extra.js"></script>
 <script src="assets/js/agenda.js"></script>
 </body>
 </html>

@@ -174,9 +174,10 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   prova('carta avorio', await p.evaluate(() => document.documentElement.classList.contains('t-avorio') && !document.documentElement.classList.contains('t-nero')));
   await foto('09e-avorio');
   await p.click('.p-temi [data-t="carta"]');
-  await p.click('.p-prova [data-act="nome"]'); await p.fill('#nome-campo', 'Giulia'); await p.click('[data-act="salva-nome"]');
   // il taschino nella copertina interna (la prima facciata)
   await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="0"]'); await attendi(1300);
+  // nome e telefono si scrivono sulle righe del «Se ritrovata»
+  await p.click('.p-riga >> nth=0'); await p.fill('#nome-campo', 'Giulia'); await p.click('[data-act="salva-nome"]'); await attendi(200);
   prova('taschino con la copia delle note', await p.isVisible('.taschino [data-act="esporta"]'));
   prova('nome nel Se ritrovata', (await p.textContent('.p-retro')).includes('Giulia'));
   await foto('11-taschino');
