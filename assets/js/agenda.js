@@ -39,10 +39,12 @@
   for (let i = 0, nasc = 0; i < NG; i++) {
     const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i, 12), key = ymd(d);
     const dentro = key >= D.INIZIO && key <= D.FINE, poesia = dentro ? D.POESIE[key] || null : null, festa = D.FESTE[key] || '';
-    let sorpresa = null;
-    if (dentro && !poesia && !festa && (i * 7 + 3) % 11 === 0) { sorpresa = { tipo: nasc % 2 ? 'biglietto' : 'foglia', testo: D.SORPRESE[nasc % D.SORPRESE.length], n: String(1000 + ((i * 7919) % 9000)) }; nasc++; }
+    // il biglietto del giorno: una busta coi versi, oppure un biglietto/foglia con una battuta. Si apre, non è stampato sulla pagina
+    const n = String(1000 + ((i * 7919) % 9000)), frase = dentro && !poesia ? D.FRASI[key] || null : null;
+    let biglietto = poesia ? { tipo: 'busta', poesia } : frase ? { tipo: 'biglietto', testo: frase, n } : null;
+    if (!biglietto && dentro && !festa && (i * 7 + 3) % 17 === 0) { biglietto = { tipo: nasc % 2 ? 'biglietto' : 'foglia', testo: D.SORPRESE[nasc % D.SORPRESE.length], n }; nasc++; }
     const tema = dentro ? window.AGENDA_ILLUSTRAZIONI.temaDi(key) : null;
-    const g = { i, key, d, dow: (d.getDay() + 6) % 7, dentro, poesia, festa, sorpresa, tema };
+    const g = { i, key, d, dow: (d.getDay() + 6) % 7, dentro, poesia, festa, biglietto, tema };
     giorni.push(g); perKey[key] = g;
   }
   const oggiIdx = () => { const k = oggiKey(); return perKey[k < D.INIZIO ? D.INIZIO : k > D.FINE ? D.FINE : k].i; };
@@ -51,7 +53,7 @@
   // ---------- stato ----------
   const S = {
     fase: 'chiusa', spread: 0, flip: null, pw: 0, ph: 0,
-    note: leggi('notes', {}), storia: leggi('hist', {}), ric: leggi('rem', []),
+    note: leggi('notes', {}), storia: leggi('hist', {}), ric: leggi('rem', []), letti: leggi('letti', []),
     imp: Object.assign({ sound: true, night: false, bookmark: null, nome: '', tema: 'carta' }, leggi('set', {})),
     lampo: null, appena: null
   };
@@ -177,12 +179,13 @@
       P.drag = true; avviaFlip(to); try { libro.setPointerCapture(e.pointerId); } catch (_) {}
     }
     if (!flip) return;
-    flip.p = Math.max(0, Math.min(1, (-dx * flip.dir) / (S.pw * 1.5))); applicaFlip(); P.dx = dx;
+    flip.p = Math.max(0, Math.min(1, (-dx * flip.dir) / (S.pw * 1.1))); applicaFlip(); P.dx = dx;
   });
   const suSu = () => {
     const P = ptr; ptr = null; if (!P || !P.drag || !flip) return;
     sopprimi(); cancelAnimationFrame(raf);
-    const svelto = performance.now() - P.t < 320 && Math.abs(P.dx || 0) > 30, ok = flip.p > 0.33 || svelto;
+    // basta un trascinamento corto (un quinto della pagina) o un gesto veloce per girarla
+    const svelto = performance.now() - P.t < 450 && Math.abs(P.dx || 0) > 30, ok = flip.p > 0.2 || svelto;
     animaA(ok ? 1 : 0, () => fineFlip(ok));
   };
   libro.addEventListener('pointerup', suSu); libro.addEventListener('pointercancel', suSu);
@@ -250,23 +253,21 @@
   function giornoHTML(g, L, j) {
     const n = S.note[g.key], rics = ricDi(g.key), r = rics[0], T = r ? RIC[r.type] || RIC.altro : null;
     const righe = n && n.text ? n.text.split('\n') : [], scritto = righe.some(x => x.replace(CASELLA, '').trim());
-    let corpo = '';
-    if (scritto) {
-      corpo = `<div class="g-note${S.appena === g.key ? ' appena' : ''}">${righe.map((l, i) => rigaPagina(g.key, l, i)).join('')}</div>`;
-      if (g.poesia) corpo += `<div class="g-poesia dopo">${esc(g.poesia.testo)}</div>`;
-    } else if (g.poesia) corpo = `<div class="g-poesia">${esc(g.poesia.testo)}</div><span class="g-autore">${esc(g.poesia.autore)}</span>`;
+    // sulla pagina c'è solo ciò che la persona ha scritto; versi e battute stanno nel biglietto da aprire
+    const corpo = scritto ? `<div class="g-note${S.appena === g.key ? ' appena' : ''}">${righe.map((l, i) => rigaPagina(g.key, l, i)).join('')}</div>` : '';
     const mese = g.d.getDate() === 1 || (j === 0 && L) ? MS[g.d.getMonth()] : '';
-    const sfondo = S.lampo === g.key ? '' : T ? `background:${T.w};` : '';
-    const sp = g.sorpresa, tm = g.tema;
+    const sfondo = S.lampo === g.key || !T ? '' : `--wash:${T.w};`;
+    const sp = g.biglietto, tm = g.tema, letto = sp && S.letti.includes(g.key) ? ' letto' : '';
     // i giorni di festa hanno la carta del loro colore e un piccolo disegno
-    return `<div class="giorno${g.dentro ? '' : ' fuori'}${S.lampo === g.key ? ' lampo' : ''}${tm ? ' festivo' : ''}" data-act="giorno" data-k="${g.key}" style="flex:${L ? 1 : j < 5 ? 1 : 0.8};${sfondo}${tm ? `--rgb:${tm.rgb}` : ''}">` +
+    return `<div class="giorno${g.dentro ? '' : ' fuori'}${S.lampo === g.key ? ' lampo' : ''}${tm ? ' festivo' : ''}${sfondo ? ' con-ric' : ''}" data-act="giorno" data-k="${g.key}" style="flex:${L ? 1 : j < 5 ? 1 : 0.8};${sfondo}${tm ? `--rgb:${tm.rgb}` : ''}">` +
       (tm ? `<span class="g-illu">${tm.svg}</span>` : '') +
       `<div class="g-testa"><span class="g-num${oggiKey() === g.key ? ' oggi' : ''}">${g.d.getDate()}</span><span class="g-nome">${DN[g.dow]}</span><span class="g-mese">${mese}</span></div>` +
       (g.festa ? `<div class="g-festa">${esc(g.festa)}</div>` : '') +
       (r ? `<div class="g-ric" style="color:${T.c}">${T.g} ${esc(r.label || T.n)}${rics.length > 1 ? ' +' + (rics.length - 1) : ''}</div>` : '') +
       `<div class="g-corpo">${corpo}</div>` +
-      (sp && sp.tipo === 'foglia' ? `<span class="foglia" data-act="sorpresa" data-k="${g.key}" role="button" aria-label="Qualcosa tra le pagine">❦</span>` : '') +
-      (sp && sp.tipo === 'biglietto' ? `<span class="biglietto" data-act="sorpresa" data-k="${g.key}" role="button" aria-label="Un biglietto tra le pagine">N° ${sp.n}</span>` : '') +
+      (sp && sp.tipo === 'busta' ? `<span class="busta${letto}" data-act="sorpresa" data-k="${g.key}" role="button" aria-label="Una busta con un verso per oggi"></span>` : '') +
+      (sp && sp.tipo === 'foglia' ? `<span class="foglia${letto}" data-act="sorpresa" data-k="${g.key}" role="button" aria-label="Qualcosa tra le pagine">❦</span>` : '') +
+      (sp && sp.tipo === 'biglietto' ? `<span class="biglietto${letto}" data-act="sorpresa" data-k="${g.key}" role="button" aria-label="Un biglietto tra le pagine">N° ${sp.n}</span>` : '') +
       `</div>`;
   }
   function settimana(w, L) {
@@ -301,7 +302,7 @@
       return `<div class="p-guida"><div class="p-h">Piccole cose</div>` +
         voce('V', 'Ricorrenze', '«Ricorda questo giorno»: compleanni e scadenze che tornano ogni anno.') +
         voce('VI', 'Segnalibro', '«Segna», in basso, lascia il nastro sulla pagina.') +
-        voce('VII', 'Versi e sorprese', 'Nei giorni speciali scrive un poeta. Tra le pagine c’è qualcosa di nascosto.') +
+        voce('VII', 'Buste e biglietti', 'Qua e là, tra le pagine, una busta o un biglietto: toccali per aprirli. Dentro, un verso o una battuta.') +
         `<div class="p-pref"><button data-act="suoni" role="switch" aria-checked="${!!S.imp.sound}"><i></i>Suoni della carta</button>` +
         `<div class="p-temi" role="radiogroup" aria-label="Carta"><span>Carta</span>${[['carta', 'Classica'], ['nero', 'Nera'], ['avorio', 'Avorio']].map(([t, n]) => `<button data-act="tema" data-t="${t}" role="radio" aria-checked="${S.imp.tema === t}">${n}</button>`).join('')}</div></div>` +
         `<div class="p-prova"><button data-act="oggi">Vai a oggi ›</button><button data-act="nome">${nome() ? 'Cambia il nome' : 'Scrivi il tuo nome'} ›</button></div></div>`;
@@ -344,6 +345,13 @@
     else if (f.dir > 0) slot = [pagina(c, 'sx', 'L'), pagina(f.to, 'dx', 'R'), pagina(c, 'dx', 'F'), pagina(f.to, 'sx', 'B')];
     else slot = [pagina(f.to, 'sx', 'L'), pagina(c, 'dx', 'R'), pagina(f.to, 'dx', 'F'), pagina(c, 'sx', 'B')];
     pagineEl.innerHTML = slot.join('');
+    // se la scrittura non ci sta: si taglia a righe intere e finisce con «…» (aprendo il giorno si legge tutta)
+    pagineEl.querySelectorAll('.g-corpo').forEach(c => {
+      if (!c.firstElementChild) return;
+      const lh = parseFloat(getComputedStyle(c).lineHeight), h = Math.floor(c.clientHeight / lh) * lh;
+      c.style.maxHeight = h + 'px';
+      c.classList.toggle('troppo', c.scrollHeight > h + 2);
+    });
     $('#mz-sx').style.width = (1 + 6 * c / LAST).toFixed(1) + 'px';
     $('#mz-dx').style.width = (1 + 6 * (1 - c / LAST)).toFixed(1) + 'px';
     const bm = S.imp.bookmark, aperto = S.fase === 'aperta' && !f;
@@ -403,7 +411,8 @@
         if (!g.dentro) continue;
         const n = S.note[g.key], fonti = [];
         if (n && n.text) fonti.push(['Mia nota', n.text.replace(/^\[[ xX]\] /gm, '').replace(/\n/g, ' · '), 'var(--ink2)']);
-        if (g.poesia) fonti.push([g.poesia.autore, g.poesia.testo.replace(/\n/g, ' / '), 'var(--ink)']);
+        // si cercano solo i biglietti già aperti: quelli chiusi restano una sorpresa
+        if (g.biglietto && S.letti.includes(g.key)) fonti.push([g.poesia ? g.poesia.autore : 'Biglietto', (g.poesia ? g.poesia.testo : g.biglietto.testo).replace(/\n/g, ' / '), 'var(--ink)']);
         for (const [fonte, t, col] of fonti) {
           const i = t.toLowerCase().indexOf(q); if (i < 0) continue;
           const s0 = Math.max(0, i - 30), e0 = i + q.length;
@@ -418,11 +427,24 @@
   $('#cerca-campo').addEventListener('input', cerca);
   function apriCerca() { apriVelo('#v-cerca'); cerca(); setTimeout(() => $('#cerca-campo').focus(), 40); }
 
+  // un biglietto aperto resta aperto (la busta mostra il sigillo rotto)
+  function segnaLetto(key) { if (S.letti.includes(key)) return; S.letti = [...S.letti, key]; scrivi('letti', S.letti); }
   function sorpresa(key) {
-    const g = perKey[key], sp = g && g.sorpresa; if (!sp) return;
-    const f = sp.tipo === 'foglia';
-    $('#sorpresa').innerHTML = `<div class="cartolina ${f ? 'foglia-c' : 'biglietto-c'}" data-act="chiudi"><div class="glifo">${f ? '❦' : '✂'}</div><div class="frase">${esc(sp.testo)}</div><small>${breve(g.d)} · tocca per richiudere</small></div>`;
-    apriVelo('#v-sorpresa'); suono('pagina');
+    const g = perKey[key], sp = g && g.biglietto; if (!sp) return;
+    const p = sp.poesia, f = sp.tipo === 'foglia';
+    $('#sorpresa').innerHTML = p
+      ? `<div class="cartolina busta-c" data-act="chiudi"><div class="glifo">❦</div><div class="verso">${esc(p.testo)}</div><cite>${esc(p.autore)} · ${esc(p.opera)}</cite>${p.originale ? `<div class="orig">${esc(p.originale)}</div>` : ''}<small>${breve(g.d)} · tocca per richiudere</small></div>`
+      : `<div class="cartolina ${f ? 'foglia-c' : 'biglietto-c'}" data-act="chiudi"><div class="glifo">${f ? '❦' : '✂'}</div><div class="frase">${esc(sp.testo)}</div><small>${breve(g.d)} · tocca per richiudere</small></div>`;
+    apriVelo('#v-sorpresa'); suono('pagina'); segnaLetto(key); disegna();
+  }
+  // il biglietto dentro la pagina del giorno: piegato finché non lo tocchi
+  function bigliettoGiorno(g, aperto) {
+    const sp = g.biglietto; if (!sp) return '';
+    if (!aperto) return `<button class="gp-biglietto ${sp.tipo}" data-gp="apri-biglietto"><span class="gp-b-ico" aria-hidden="true"></span><span><b>${sp.poesia ? 'Un verso per oggi' : 'Un biglietto per oggi'}</b><small>Tocca per aprirlo</small></span></button>`;
+    const p = sp.poesia;
+    return `<div class="gp-aperto">` + (p ? `<div class="gp-poesia">${esc(p.testo)}<cite>${esc(p.autore)} · ${esc(p.opera)}</cite></div>` +
+      (p.originale ? `<button class="gp-orig" data-gp="originale">Testo originale</button><div class="gp-orig-testo" hidden>${esc(p.originale)}</div>` : '')
+      : `<div class="gp-frase">${esc(sp.testo)}</div>`) + `</div>`;
   }
 
   // ---------- avviso con Annulla ----------
@@ -489,9 +511,7 @@
     const tm = g.tema;
     carta.classList.toggle('festivo', !!tm); carta.style.setProperty('--rgb', tm ? tm.rgb : '0,0,0');
     $('#gp-illu').innerHTML = tm ? tm.svg : '';
-    const p = g.poesia;
-    $('#gp-poesia').innerHTML = p ? `<div class="gp-poesia">${esc(p.testo)}<cite>${esc(p.autore)} · ${esc(p.opera)}</cite></div>` +
-      (p.originale ? `<button class="gp-orig" data-gp="originale">Testo originale</button><div class="gp-orig-testo" hidden>${esc(p.originale)}</div>` : '') : '';
+    $('#gp-poesia').innerHTML = bigliettoGiorno(g, S.letti.includes(key));
     const pr = giorni[g.i - 1], ds = giorni[g.i + 1];
     const bp = $('[data-gp="prima"]'), bd = $('[data-gp="dopo"]');
     bp.disabled = !pr || !pr.dentro; bd.disabled = !ds || !ds.dentro;
@@ -700,6 +720,7 @@
       concludiGiorno(); GP.orig = (S.note[GP.key] && S.note[GP.key].text) || ''; GP.origT = Date.now();
       GP.righe = daTesto(v.text); disegnaRighe(null); salvaGiorno(); disegnaVersioni();
     }
+    else if (a === 'apri-biglietto') { const g = perKey[GP.key]; segnaLetto(GP.key); $('#gp-poesia').innerHTML = bigliettoGiorno(g, true); $('#gp-poesia').firstElementChild.classList.add('si-apre'); suono('pagina'); }
     else if (a === 'originale') { const t = b.nextElementSibling; t.hidden = !t.hidden; b.textContent = t.hidden ? 'Testo originale' : 'Nascondi l’originale'; }
   });
 

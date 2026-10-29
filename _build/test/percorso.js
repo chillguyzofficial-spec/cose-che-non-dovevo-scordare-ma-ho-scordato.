@@ -30,7 +30,15 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await p.click('.p-prova [data-act="oggi"]'); await attendi(1700);
   prova('settimana di oggi', (await p.textContent('#t-sotto')) === 'Settimana 44');
   await foto('02-aperta');
-  prova('poesia del primo giorno', (await p.textContent('.giorno[data-k="2026-10-29"]')).includes('Signore, è tempo'));
+  // i versi non sono stampati sulla pagina: c'è una busta da aprire
+  prova('versi non stampati sulla pagina', !(await p.textContent('.giorno[data-k="2026-10-29"]')).includes('Signore'));
+  prova('busta col sigillo il primo giorno', await p.isVisible('.giorno[data-k="2026-10-29"] .busta:not(.letto)'));
+  prova('biglietto con battuta ad Halloween', await p.isVisible('.giorno[data-k="2026-10-31"] .biglietto'));
+  await p.click('.giorno[data-k="2026-10-29"] .busta'); await attendi(300);
+  prova('la busta si apre con Rilke in italiano', (await p.textContent('#sorpresa')).includes('Signore, è tempo') && (await p.textContent('#sorpresa')).includes('Rilke') && !(await p.textContent('#sorpresa')).includes('Herr'));
+  await foto('02b-busta-aperta');
+  await p.click('#sorpresa .cartolina'); await attendi(200);
+  prova('sigillo rotto dopo la lettura', await p.isVisible('.giorno[data-k="2026-10-29"] .busta.letto'));
 
   // scrivo venerdì 30
   await p.click('.giorno[data-k="2026-10-30"]'); await attendi(500);
@@ -90,24 +98,42 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   // ricarico: la nota resta
   await p.reload(); await attendi(700); await p.click('.elastico', { force: true }); await attendi(3600);
   prova('nota dopo il ricaricamento', (await p.textContent('.giorno[data-k="2026-10-30"]')).includes('Cena da Marta'));
+  // nota lunga: sul libro finisce con «…», aprendo il giorno si legge tutta
+  await p.click('.giorno[data-k="2026-11-01"]'); await attendi(450);
+  for (let k = 1; k <= 12; k++) { await p.keyboard.type('Riga numero ' + k); if (k < 12) await p.keyboard.press('Enter'); }
+  await p.click('[data-gp="fatto"]'); await attendi(700);
+  prova('nota lunga tagliata con i puntini', await p.evaluate(() => document.querySelector('.giorno[data-k="2026-11-01"] .g-corpo').classList.contains('troppo')));
+  prova('nota corta senza puntini', await p.evaluate(() => !document.querySelector('.giorno[data-k="2026-10-30"] .g-corpo').classList.contains('troppo')));
+  await foto('05b-nota-lunga');
+  await p.click('.giorno[data-k="2026-11-01"]'); await attendi(450);
+  prova('aprendo si legge tutta', await p.$$eval('#gp-righe .riga', r => r.length) === 12);
+  await p.click('[data-gp="fatto"]'); await attendi(600);
 
   // vado a San Martino (poesia) con Vai a…
   await p.click('[data-act="vaia"]'); await p.fill('#vaia-data', '2026-11-11'); await attendi(1600);
-  prova('San Martino con Carducci', (await p.textContent('.giorno[data-k="2026-11-11"]')).includes('La nebbia'));
+  prova('San Martino con la busta', await p.isVisible('.giorno[data-k="2026-11-11"] .busta'));
   await foto('06-san-martino');
-  // poesia straniera con l'originale
+  // poesia straniera: nella pagina del giorno il biglietto è piegato, si apre e mostra l'originale
   await p.click('[data-act="vaia"]'); await p.fill('#vaia-data', '2026-11-22'); await attendi(1600);
   await p.click('.giorno[data-k="2026-11-22"]'); await attendi(450);
-  await p.click('[data-gp="originale"]');
-  prova('originale visibile', (await p.textContent('.gp-orig-testo')).includes('Fall, leaves, fall'));
+  prova('biglietto piegato nella pagina del giorno', await p.isVisible('.gp-biglietto') && !(await p.textContent('#gp-poesia')).includes('Cadete'));
+  await foto('07a-biglietto-chiuso');
+  await p.click('.gp-biglietto'); await attendi(550);
+  // versi stranieri tradotti in italiano, senza l'originale
+  prova('biglietto aperto in italiano', (await p.textContent('#gp-poesia')).includes('Cadete, foglie') && !(await p.textContent('#gp-poesia')).includes('Fall'));
   await foto('07-bronte');
   await p.click('[data-gp="fatto"]'); await attendi(600);
   prova('giorno senza scrittura non crea note', await p.evaluate(() => !(JSON.parse(localStorage.getItem('ccnds-notes')) || {})['2026-11-22']));
 
   // ricerca
-  await p.click('[data-act="cerca"]'); await p.fill('#cerca-campo', 'neve'); await attendi(150);
+  // si trovano le note e i biglietti già aperti, non quelli ancora chiusi
+  await p.click('[data-act="cerca"]'); await p.fill('#cerca-campo', 'meridiane'); await attendi(150);
+  prova('ricerca nei biglietti aperti', await p.$$eval('.ris', r => r.length) === 1);
+  await p.fill('#cerca-campo', 'nebbia'); await attendi(150);
+  prova('i biglietti chiusi restano una sorpresa', await p.$$eval('.ris', r => r.length) === 0);
+  await p.fill('#cerca-campo', 'Marta'); await attendi(150);
   const ris = await p.$$eval('.ris', r => r.length);
-  prova('ricerca nei versi', ris >= 2);
+  prova('ricerca nelle note', ris >= 1);
   await foto('08-ricerca');
   await p.click('.ris'); await attendi(1700);
   prova('dalla ricerca al giorno', (await p.textContent('#t-titolo')).includes('2026') || (await p.textContent('#t-titolo')).includes('2027'));

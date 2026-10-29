@@ -116,8 +116,10 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .g-festa{font-size:.6em;letter-spacing:.08em;text-transform:uppercase;color:var(--rust);flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.15em}
 .g-ric{font-family:var(--mano);font-weight:600;font-size:.95em;line-height:1.2;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .g-corpo{flex:1;min-height:0;overflow:hidden;font-family:var(--mano);font-weight:600;font-size:1.14em;line-height:1.36em;
-  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(1.36em - 1px),var(--line) calc(1.36em - 1px),var(--line) 1.36em);
-  -webkit-mask-image:linear-gradient(#000 86%,transparent);mask-image:linear-gradient(#000 86%,transparent)}
+  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(1.36em - 1px),var(--line) calc(1.36em - 1px),var(--line) 1.36em);position:relative}
+.g-corpo.troppo::after{content:'…';position:absolute;right:0;bottom:0;height:1.36em;padding:0 .1em 0 1.4em;color:var(--ink2);font-weight:700;
+  background:linear-gradient(to right,transparent,var(--paper2) 55%)}
+.giorno.festivo .g-corpo.troppo::after{background:linear-gradient(to right,transparent,rgba(var(--rgb),.01) 30%,var(--paper2) 70%)}
 .g-note{color:var(--ink2);font-weight:700}
 .g-note.appena{animation:inchiostro 1.2s ease both}
 @keyframes inchiostro{from{opacity:0;filter:blur(1.5px)}to{opacity:1;filter:none}}
@@ -138,7 +140,13 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 /* sorprese */
 .foglia{position:absolute;bottom:-.15em;font-size:2.3em;line-height:1;color:#a5582a;transform:rotate(-28deg);text-shadow:1px 2px 2px rgba(60,30,10,.35);padding:.05em}
 .biglietto{position:absolute;bottom:.6em;width:3.6em;height:1.7em;background:#efe0bd;border:1px dashed #a5582a;outline:2px solid #efe0bd;transform:rotate(9deg);box-shadow:0 1px 3px rgba(60,30,10,.35);font-family:var(--macchina);font-size:.58em;color:#8a4a1c;display:flex;align-items:flex-start;justify-content:center;padding-top:.25em;letter-spacing:.08em}
-.pg.sx .foglia,.pg.sx .biglietto{right:.5em}.pg.dx .foglia,.pg.dx .biglietto{right:2.1em}
+.pg.sx .foglia,.pg.sx .biglietto,.pg.sx .busta{right:.5em}.pg.dx .foglia,.pg.dx .biglietto,.pg.dx .busta{right:2.1em}
+/* busta col sigillo di ceralacca: i versi del giorno. Aperta, il sigillo si rompe */
+.busta{position:absolute;bottom:.55em;width:2.5em;height:1.65em;background:#f4e8cc;border:1px solid rgba(120,80,40,.45);border-radius:2px;transform:rotate(-6deg);box-shadow:0 1px 3px rgba(60,30,10,.35);cursor:pointer}
+.busta::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom right,transparent 49%,rgba(120,80,40,.4) 50%,transparent 52%) 0 0/50% 100% no-repeat,linear-gradient(to bottom left,transparent 49%,rgba(120,80,40,.4) 50%,transparent 52%) 100% 0/50% 100% no-repeat}
+.busta::after{content:'';position:absolute;left:50%;top:48%;width:.62em;height:.62em;margin:-.31em 0 0 -.31em;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d0564a,#8e1f1c 70%);box-shadow:0 0 0 .08em rgba(142,31,28,.35)}
+.busta.letto::after{clip-path:polygon(0 0,45% 0,60% 40%,40% 60%,55% 100%,0 100%);opacity:.75}
+.foglia.letto,.biglietto.letto{opacity:.6}
 
 /* pagine fisse */
 .p-centro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;text-align:center;padding:2.4em 2.1em 1.6em 1.3em}
@@ -228,6 +236,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .t-nero .linguetta{filter:brightness(.85)}
 /* giorni di festa: carta tinta del colore della festa e disegno a tratto */
 .giorno.festivo{background:rgba(var(--rgb),var(--tinta,.1))}
+.giorno.con-ric{background:var(--wash)}
+.t-nero .giorno.con-ric{background:linear-gradient(rgba(16,14,12,.72),rgba(16,14,12,.72)),var(--wash)}
 .giorno.festivo .g-festa{color:rgb(var(--rgb))}
 .t-nero .giorno.festivo .g-festa,.t-nero .g-illu,.t-nero .gp-illu{filter:brightness(1.9) saturate(.85)}
 .g-illu{position:absolute;top:.3em;width:2.2em;height:2.2em;color:rgb(var(--rgb));opacity:.8;pointer-events:none}
@@ -279,6 +289,11 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .cartolina.biglietto-c{background:#efe0bd;border:2px dashed #a5582a}
 .cartolina .glifo{font-size:44px;line-height:1;color:#a5582a}
 .cartolina .frase{font-family:var(--mano);font-size:24px;line-height:1.3;text-wrap:pretty}
+.cartolina.busta-c{background:radial-gradient(140% 90% at 50% 0%,#f6eedb,#e6d3ab);border:1px solid rgba(120,80,40,.35);outline:3px double rgba(120,80,40,.3);outline-offset:3px;text-align:left;max-width:360px}
+.cartolina.busta-c .glifo{font-size:30px;text-align:center}
+.cartolina .verso{font-family:var(--fell);font-style:italic;font-size:19px;line-height:1.5;white-space:pre-line;color:#1f2d55}
+.cartolina cite{font-style:normal;font-family:var(--fellsc);font-size:14px;color:#a8502a}
+.cartolina .orig{font-family:var(--fell);font-style:italic;font-size:14px;line-height:1.45;white-space:pre-line;color:#806746;border-top:1px solid rgba(120,88,48,.3);padding-top:10px}
 .cartolina small{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#7a5a32}
 
 /* avviso */
@@ -320,6 +335,20 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .gp-poesia{margin:18px 0 0;padding-top:12px;border-top:1px solid var(--rule);font-family:var(--fell);font-style:italic;font-size:18px;line-height:1.5;white-space:pre-line}
 .gp-poesia::before{content:'❦';display:block;font-style:normal;color:var(--rust);font-size:22px;line-height:1;margin-bottom:8px}
 .gp-poesia cite{display:block;font-style:normal;font-family:var(--fellsc);font-size:14px;color:var(--rust);margin-top:8px;letter-spacing:.03em;white-space:normal}
+/* biglietto piegato nella pagina del giorno: si apre toccandolo */
+.gp-biglietto{display:flex;align-items:center;gap:14px;width:100%;margin:18px 0 0;padding:14px 16px;border:1px solid var(--rule);border-radius:4px;background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,.08));box-shadow:0 2px 6px rgba(60,30,10,.12);text-align:left;color:var(--ink);transform:rotate(-.6deg)}
+.gp-biglietto b{display:block;font-family:var(--fell);font-style:italic;font-weight:400;font-size:20px;line-height:1.2}
+.gp-biglietto small{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.gp-b-ico{flex:none;position:relative;width:44px;height:30px;background:#f4e8cc;border:1px solid rgba(120,80,40,.45);border-radius:2px}
+.gp-b-ico::before{content:'';position:absolute;inset:0;background:linear-gradient(to bottom right,transparent 49%,rgba(120,80,40,.4) 50%,transparent 52%) 0 0/50% 100% no-repeat,linear-gradient(to bottom left,transparent 49%,rgba(120,80,40,.4) 50%,transparent 52%) 100% 0/50% 100% no-repeat}
+.gp-b-ico::after{content:'';position:absolute;left:50%;top:48%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d0564a,#8e1f1c 70%)}
+.gp-biglietto.biglietto .gp-b-ico,.gp-biglietto.foglia .gp-b-ico{background:#efe0bd;border:1px dashed #a5582a;transform:rotate(6deg)}
+.gp-biglietto.biglietto .gp-b-ico::before,.gp-biglietto.foglia .gp-b-ico::before{display:none}
+.gp-biglietto.biglietto .gp-b-ico::after,.gp-biglietto.foglia .gp-b-ico::after{content:'✂';background:none;width:auto;height:auto;margin:0;transform:translate(-50%,-50%);color:#a5582a;font-size:14px;border-radius:0}
+.gp-aperto.si-apre{animation:apri-biglietto .5s cubic-bezier(.3,.7,.2,1) both;transform-origin:50% 0}
+@keyframes apri-biglietto{from{opacity:0;transform:scaleY(.3) rotate(-1deg)}to{opacity:1;transform:none}}
+.gp-frase{margin:18px 0 0;padding-top:12px;border-top:1px solid var(--rule);font-family:var(--mano);font-weight:600;font-size:22px;line-height:1.4;color:var(--ink)}
+.gp-frase::before{content:'✂';display:block;font-family:var(--macchina);color:var(--rust);font-size:16px;margin-bottom:6px}
 .gp-orig{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);height:34px;text-decoration:underline;text-underline-offset:3px}
 .gp-orig-testo{font-family:var(--fell);font-style:italic;font-size:15px;line-height:1.5;white-space:pre-line;color:var(--muted);margin:0 0 4px}
 .gp-h{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:20px 0 4px}
