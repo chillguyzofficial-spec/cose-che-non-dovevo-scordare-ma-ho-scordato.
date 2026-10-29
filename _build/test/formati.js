@@ -14,6 +14,11 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
     const errori = []; p.on('pageerror', e => errori.push(e.message));
     await p.goto('http://localhost:8998/'); await p.waitForTimeout(600);
     await p.click('.elastico', { force: true }); await p.waitForTimeout(3600);
+    // prima apertura: «Come si usa» deve stare tutta nella pagina
+    const guida = await p.evaluate(() => [...document.querySelectorAll('.p-guida')].every(g => g.scrollHeight <= g.clientHeight + 1));
+    prova(nome + ': Come si usa sta nella pagina', guida);
+    if (FOTO) await p.screenshot({ path: path.join(FOTO, nome + '-guida.png') });
+    await p.click('.p-prova [data-act="oggi"]'); await p.waitForTimeout(1700);
     const fuori = await p.evaluate(() => {
       const W = innerWidth, H = innerHeight, r = document.getElementById('libro').getBoundingClientRect();
       return { largo: document.documentElement.scrollWidth > W, libro: r.left < 0 || r.right > W || r.top < 0 || r.bottom > H };

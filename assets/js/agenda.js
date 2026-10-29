@@ -33,7 +33,8 @@
   const inizio = daKey(D.INIZIO), fine = daKey(D.FINE);
   const base = new Date(inizio); base.setDate(base.getDate() - ((base.getDay() + 6) % 7));
   const NG = Math.ceil((Math.round((fine - base) / 864e5) + 1) / 7) * 7;
-  const LAST = NG / 7 + 1;
+  // doppie pagine: 0 frontespizio, 1 «Come si usa», da PRIMA le settimane, LAST il fondo
+  const PRIMA = 2, LAST = NG / 7 + PRIMA;
   const giorni = [], perKey = {};
   for (let i = 0, nasc = 0; i < NG; i++) {
     const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i, 12), key = ymd(d);
@@ -44,7 +45,7 @@
     giorni.push(g); perKey[key] = g;
   }
   const oggiIdx = () => { const k = oggiKey(); return perKey[k < D.INIZIO ? D.INIZIO : k > D.FINE ? D.FINE : k].i; };
-  const spreadDi = i => 1 + Math.floor(i / 7);
+  const spreadDi = i => PRIMA + Math.floor(i / 7);
 
   // ---------- stato ----------
   const S = {
@@ -59,12 +60,14 @@
   // ---------- misure ----------
   function misura() {
     const W = scena.clientWidth, H = scena.clientHeight;
-    const pw = Math.max(120, Math.floor(Math.min((W - 46) / 2, 440)));
+    // su PC il libro è più grande e meno allungato, sul telefono resta com'era
+    const largo = W >= 900;
+    const pw = Math.max(120, Math.floor(Math.min((W - 46) / 2, largo ? 520 : 440, largo ? (H - 34) / 1.45 : 1e9)));
     const ph = Math.max(300, Math.floor(Math.min(H - 34, pw * 3.2)));
     if (pw === S.pw && ph === S.ph) return;
     S.pw = pw; S.ph = ph;
     libro.style.setProperty('--pw', pw + 'px'); libro.style.setProperty('--ph', ph + 'px');
-    libro.style.setProperty('--fs', Math.max(10, Math.min(17, pw / 14.5, ph / 30)).toFixed(2) + 'px');
+    libro.style.setProperty('--fs', Math.max(10, Math.min(largo ? 20 : 17, pw / 14.5, ph / 30)).toFixed(2) + 'px');
   }
 
   // ---------- suoni (morbidi, generati: niente file) ----------
@@ -114,7 +117,9 @@
     setTimeout(() => {
       setFase('apertura'); disegna();
       setTimeout(() => suono('posa'), 950);
-      setTimeout(() => { setFase('aperta'); disegna(); setTimeout(() => vai(spreadDi(oggiIdx())), 260); }, 1200);
+      // la prima volta si apre su «Come si usa», poi sempre sulla settimana di oggi
+      const meta = S.imp.visto ? spreadDi(oggiIdx()) : 1; setImp({ visto: true });
+      setTimeout(() => { setFase('aperta'); disegna(); setTimeout(() => vai(meta), 260); }, 1200);
     }, 430);
   }
   function chiudiLibro() {
@@ -232,9 +237,10 @@
 
   // ---------- pagine del libro ----------
   function rigaPagina(key, l, i) {
-    const c = CASELLA.exec(l), fatta = c && c[1] !== ' ', testo = c ? l.slice(4) : l, ora = oraIn(testo);
+    const c = CASELLA.exec(l), punto = !c && l.startsWith('• '), fatta = c && c[1] !== ' ', testo = c ? l.slice(4) : punto ? l.slice(2) : l, ora = oraIn(testo);
     return `<div class="g-riga${fatta ? ' fatta' : ''}">` +
       (c ? `<span class="g-casella" data-act="spunta" data-k="${key}" data-i="${i}"><span>${fatta ? '✓' : ''}</span></span>` : '') +
+      (punto ? '<span class="g-punto">•</span>' : '') +
       (ora ? `<span class="g-ora">${ora}</span>` : '') +
       `<span class="t">${testo ? esc(testo) : '&nbsp;'}</span></div>`;
   }
@@ -277,7 +283,20 @@
     if (s === 0) return `<div class="p-centro"><div class="p-occhiello">Agenda settimanale</div><div class="p-fregio">❦</div><div class="p-titolo">Cose Che Non Dovevo Scordare</div><div class="p-sotto">(Ma Ho Scordato)</div><div class="p-filo"></div>` +
       `<div class="p-piccolo">${breve(inizio).replace(/ (\d\d)$/, ' 20$1')}<br>${breve(fine).replace(/ (\d\d)$/, ' 20$1')}</div><div style="flex:1"></div>` +
       `<div class="p-occhiello" style="font-size:.6em">Questa agenda appartiene a</div><button class="p-nome${nome() ? '' : ' vuoto'}" data-act="nome">${nome() ? esc(nome()) : 'tocca e scrivi il tuo nome'}</button>` +
-      `<div class="p-piccolo">Sfoglia con le frecce in basso<br>o toccando gli angoli.<br>Tocca un giorno per scrivere.</div></div>`;
+      `<div class="p-piccolo">Come si usa: alla pagina dopo ›</div></div>`;
+    if (s === 1) {
+      const voce = (n, t, d) => `<div class="g-voce"><b>${n}</b><span><strong>${t}</strong>${d}</span></div>`;
+      if (L) return `<div class="p-guida"><div class="p-h">Come si usa</div>` +
+        voce('I', 'Sfogliare', 'Con le frecce in basso, toccando gli angoli delle pagine o trascinandole.') +
+        voce('II', 'Scrivere', 'Tocca un giorno: si apre la sua pagina. Si salva da sola, «Fatto» la richiude.') +
+        voce('III', 'Liste', 'Sopra le righe scegli Testo, Elenco o Da spuntare.') +
+        voce('IV', 'Orari', 'Scrivi «alle 20» e l’ora finisce a margine.') + `</div>`;
+      return `<div class="p-guida"><div class="p-h">Piccole cose</div>` +
+        voce('V', 'Ricorrenze', '«Ricorda questo giorno»: compleanni e scadenze che tornano ogni anno.') +
+        voce('VI', 'Segnalibro', '«Segna», in basso, lascia il nastro sulla pagina.') +
+        voce('VII', 'Versi e sorprese', 'Nei giorni speciali scrive un poeta. Tra le pagine c’è qualcosa di nascosto.') +
+        `<div class="p-prova"><button data-act="oggi">Vai a oggi ›</button><button data-act="nome">${nome() ? 'Cambia il nome' : 'Scrivi il tuo nome'} ›</button></div></div>`;
+    }
     if (L) {
       const mie = scordate();
       return `<div class="p-elenco"><div class="p-h">Cose che ho scordato</div><div class="p-nota">Le caselle rimaste vuote nei giorni passati.<br>Nessun rimprovero: solo un promemoria.</div>` +
@@ -301,10 +320,10 @@
     if (!statica) { const a = angoloFlip(); tr = ruolo === 'F' ? `rotateY(${a}deg)` : `rotateY(${a}deg) translateX(100%) rotateY(180deg)`; }
     const vis = ruolo === 'L' && S.fase !== 'aperta' && S.fase !== 'chiusura' ? 'hidden' : 'visible';
     const bordo = statica && !S.flip && S.fase === 'aperta' && !((s === 0 && L) || (s === LAST && !L));
-    const sett = s > 0 && s < LAST;
+    const sett = s >= PRIMA && s < LAST;
     return `<div class="pg ${lato}" data-ruolo="${ruolo}" style="left:${ruolo === 'L' ? 0 : '50%'};z-index:${statica ? 1 : 5};transform:${tr};visibility:${vis}">` +
-      (sett ? linguette(s - 1, L) : '') +
-      `<div class="carta">${sett ? settimana(s - 1, L) : paginaFissa(s, L)}<div class="piega"></div>` +
+      (sett ? linguette(s - PRIMA, L) : '') +
+      `<div class="carta">${sett ? settimana(s - PRIMA, L) : paginaFissa(s, L)}<div class="piega"></div>` +
       (bordo ? `<button class="angolo" data-act="angolo" data-dir="${L ? -1 : 1}" aria-label="${L ? 'Pagina precedente' : 'Pagina successiva'}"><span></span></button>` : '') +
       `<div class="ombra" style="background:${OMBRE[ruolo]}"></div></div></div>`;
   }
@@ -319,10 +338,13 @@
     $('#mz-sx').style.width = (1 + 6 * c / LAST).toFixed(1) + 'px';
     $('#mz-dx').style.width = (1 + 6 * (1 - c / LAST)).toFixed(1) + 'px';
     const bm = S.imp.bookmark, aperto = S.fase === 'aperta' && !f;
-    $('#segnalibro').innerHTML = aperto && bm === c ? '<div class="nastro"></div>' : aperto && bm != null ? '<button class="coda" data-act="al-nastro" aria-label="Vai al nastro"><span></span></button>' : '';
-    const bn = $('#b-nastro'); bn.classList.toggle('acceso', bm === c); bn.lastElementChild.textContent = bm === c ? 'Togli' : 'Nastro';
+    // il nastro esce dalla cucitura; se la pagina segnata è un'altra, la coda spunta dal lato dove si trova
+    $('#segnalibro').innerHTML = aperto && bm === c ? '<div class="nastro" aria-hidden="true"><span></span></div>'
+      : aperto && bm != null ? `<button class="coda ${bm > c ? 'avanti' : 'indietro'}" data-act="al-nastro" aria-label="Vai alla pagina segnata"><span></span></button>` : '';
+    const bn = $('#b-nastro'); bn.classList.toggle('acceso', bm === c); bn.lastElementChild.textContent = bm === c ? 'Togli' : 'Segna';
     let tt = 'Cose Che Non Dovevo Scordare', ts = 'Frontespizio';
-    if (c > 0 && c < LAST) { const d0 = giorni[(c - 1) * 7].d, d3 = giorni[(c - 1) * 7 + 3].d; tt = M[d3.getMonth()] + ' ' + d3.getFullYear(); ts = 'Settimana ' + settIso(d0); }
+    if (c >= PRIMA && c < LAST) { const d0 = giorni[(c - PRIMA) * 7].d, d3 = giorni[(c - PRIMA) * 7 + 3].d; tt = M[d3.getMonth()] + ' ' + d3.getFullYear(); ts = 'Settimana ' + settIso(d0); }
+    else if (c === 1) { tt = 'Come si usa'; ts = 'Prima di cominciare'; }
     else if (c === LAST) { tt = 'In fondo all’agenda'; ts = 'Cose scordate e numeri'; }
     $('#t-titolo').textContent = tt; $('#t-sotto').textContent = ts;
     app.classList.toggle('notte', !!S.imp.night);
@@ -341,8 +363,8 @@
       ['suoni', 'Suoni', S.imp.sound ? 'Attivi' : 'Spenti'],
       ['notte', 'Modalità notte', S.imp.night ? 'Accesa' : 'Spenta'],
       ['nome', 'Il mio nome', nome() || 'da scrivere'],
-      ['nastro', bm === c ? 'Togli il nastro da qui' : 'Metti il nastro qui', ''],
-      ['al-nastro', 'Vai al nastro', bm == null ? 'nessuno' : ''],
+      ['nastro', bm === c ? 'Togli il segnalibro da qui' : 'Metti il segnalibro qui', ''],
+      ['al-nastro', 'Vai alla pagina segnata', bm == null ? 'nessuna' : ''],
       ['in-fondo', 'Cose scordate e numeri', ''],
       ['installa', 'Tienila sul telefono', ''],
       ['esporta', 'Salva una copia delle note', 'file'],
@@ -364,7 +386,7 @@
     const mesi = [];
     for (let d = new Date(inizio.getFullYear(), inizio.getMonth(), 1, 12); d <= fine; d.setMonth(d.getMonth() + 1)) {
       const key = d < inizio ? D.INIZIO : ymd(d);
-      const qui = S.spread > 0 && S.spread < LAST && giorni[(S.spread - 1) * 7 + 3].d.getMonth() === d.getMonth() && giorni[(S.spread - 1) * 7 + 3].d.getFullYear() === d.getFullYear();
+      const qui = S.spread >= PRIMA && S.spread < LAST && giorni[(S.spread - PRIMA) * 7 + 3].d.getMonth() === d.getMonth() && giorni[(S.spread - PRIMA) * 7 + 3].d.getFullYear() === d.getFullYear();
       mesi.push(`<button class="mese${qui ? ' qui' : ''}" data-act="vai-giorno" data-k="${key}">${M[d.getMonth()].slice(0, 3)}<br><small>${d.getFullYear()}</small></button>`);
     }
     $('#mesi').innerHTML = mesi.join('');
@@ -453,8 +475,10 @@
   const gp = $('#gp'), carta = $('#gp-carta'), righeEl = $('#gp-righe');
   const GP = { key: null, righe: [], orig: '', origT: 0, timer: 0, forma: null, versioni: false };
   const GG = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
-  const daTesto = t => { const r = (t || '').split('\n').map(l => { const c = CASELLA.exec(l); return c ? { t: l.slice(4), c: c[1] !== ' ' } : { t: l, c: null }; }); return r.length ? r : [{ t: '', c: null }]; };
-  const aTesto = righe => { const r = righe.slice(); while (r.length && !r[r.length - 1].t.trim()) r.pop(); return r.map(x => (x.c === null ? '' : x.c ? '[x] ' : '[ ] ') + x.t.replace(/\s+$/, '')).join('\n'); };
+  const daTesto = t => { const r = (t || '').split('\n').map(l => { const c = CASELLA.exec(l); return c ? { t: l.slice(4), c: c[1] !== ' ' } : l.startsWith('• ') ? { t: l.slice(2), c: 'p' } : { t: l, c: null }; }); return r.length ? r : [{ t: '', c: null }]; };
+  // c: null = testo, 'p' = elenco puntato, false/true = da spuntare (non spuntata/spuntata)
+  const aTesto = righe => { const r = righe.slice(); while (r.length && !r[r.length - 1].t.trim()) r.pop(); return r.map(x => (x.c === null ? '' : x.c === 'p' ? '• ' : x.c ? '[x] ' : '[ ] ') + x.t.replace(/\s+$/, '')).join('\n'); };
+  const tipoDi = c => c === null ? 'testo' : c === 'p' ? 'punto' : 'fare';
   let chiestoPersist = false;
 
   function caricaGiorno(key) {
@@ -512,15 +536,21 @@
   function disegnaRighe(fuoco) {
     const vuota = GP.righe.every(r => !r.t);
     righeEl.innerHTML = GP.righe.map((r, i) => {
-      const ora = oraIn(r.t);
-      return `<div class="riga${r.c !== null ? ' casella' : ''}${r.c === true ? ' fatta' : ''}">` +
-        `<button class="segno" data-gp="segno" data-i="${i}" tabindex="-1" aria-label="${r.c === null ? 'Fai diventare una cosa da fare' : r.c ? 'Togli la spunta' : 'Spunta'}"><span></span></button>` +
+      const ora = oraIn(r.t), fare = r.c === true || r.c === false;
+      return `<div class="riga ${tipoDi(r.c)}${r.c === true ? ' fatta' : ''}">` +
+        (fare ? `<button class="spunta" data-gp="spunta" data-i="${i}" tabindex="-1" aria-label="${r.c ? 'Togli la spunta' : 'Spunta'}"><span></span></button>` : '') +
+        (r.c === 'p' ? '<span class="punto-segno" aria-hidden="true">•</span>' : '') +
         `<textarea rows="1" data-i="${i}" enterkeyhint="enter" autocapitalize="sentences" aria-label="Riga ${i + 1}"${vuota && i === 0 ? ' placeholder="Scrivi qui…"' : ''}>${esc(r.t)}</textarea>` +
         (ora ? `<span class="ora">${ora}</span>` : '') + `</div>`;
     }).join('');
     righeEl.querySelectorAll('textarea').forEach(adatta);
-    $('#gp-consiglio').hidden = !vuota;
     if (fuoco) fuocoRiga(fuoco.i, fuoco.pos, fuoco.scorri !== false);
+    aggiornaStile();
+  }
+  // la scelta Testo / Elenco / Da spuntare mostra il tipo della riga su cui stai scrivendo
+  function aggiornaStile() {
+    const r = GP.righe[GP.ultimo >= 0 && GP.ultimo < GP.righe.length ? GP.ultimo : GP.righe.length - 1], t = r ? tipoDi(r.c) : 'testo';
+    document.querySelectorAll('.gp-stile button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === t)));
   }
   function fuocoRiga(i, pos, scorri = true) {
     const ta = righeEl.querySelector(`textarea[data-i="${i}"]`); if (!ta) return;
@@ -607,17 +637,15 @@
       const parti = v.split('\n');
       if (r.c !== null && !parti[0].trim() && parti.length === 2 && !parti[1]) { r.c = null; r.t = ''; disegnaRighe({ i, pos: 0 }); schedula(); return; }
       r.t = parti[0];
-      const nuove = parti.slice(1).map(t => ({ t, c: r.c !== null ? false : null }));
+      // la lista continua solo se l'hai scelta (Elenco o Da spuntare); il testo resta testo
+      const nuove = parti.slice(1).map(t => ({ t, c: r.c === 'p' ? 'p' : r.c !== null ? false : null }));
       GP.righe.splice(i + 1, 0, ...nuove);
       disegnaRighe(nuove.length > 1 ? { i: i + nuove.length, pos: null } : { i: i + 1, pos: 0 }); schedula(); return;
     }
-    const m = r.c === null && /^(?:\[\s?\]|-|\*|•)\s/.exec(v);
-    if (m) { r.c = false; r.t = v.slice(m[0].length); disegnaRighe({ i, pos: 0 }); schedula(); return; }
     r.t = v; adatta(ta);
     const ora = oraIn(v), riga = ta.parentNode; let tag = riga.querySelector('.ora');
     if (ora && !tag) { tag = document.createElement('span'); tag.className = 'ora'; riga.appendChild(tag); }
     if (tag) { if (ora) tag.textContent = ora; else tag.remove(); }
-    if (v && !$('#gp-consiglio').hidden) $('#gp-consiglio').hidden = true;
     schedula();
   });
   righeEl.addEventListener('beforeinput', e => {
@@ -634,19 +662,23 @@
   });
   righeEl.addEventListener('click', e => { if (e.target === righeEl) fuocoRiga(GP.righe.length - 1, null); });
 
-  // il quadratino a margine e «Aggiungi» non tolgono il fuoco (la tastiera resta aperta)
-  carta.addEventListener('pointerdown', e => { if (e.target.closest('.segno, .gp-aggiungi')) e.preventDefault(); });
+  righeEl.addEventListener('focusin', e => { if (e.target.tagName === 'TEXTAREA') { GP.ultimo = +e.target.dataset.i; aggiornaStile(); } });
+  // la scelta del tipo di riga e la spunta non tolgono il fuoco (la tastiera resta aperta)
+  carta.addEventListener('pointerdown', e => { if (e.target.closest('.gp-stile button, .spunta')) e.preventDefault(); });
 
-  function segno(i) {
-    const r = GP.righe[i]; if (!r) return;
-    const ta = righeEl.querySelector(`textarea[data-i="${i}"]`), attivo = document.activeElement === ta;
-    r.c = r.c === null ? false : !r.c;
-    disegnaRighe(attivo ? { i, pos: ta.selectionStart } : null); schedula();
+  function stile(s) {
+    let i = GP.ultimo;
+    if (i < 0 || i >= GP.righe.length) i = GP.righe.length - 1;
+    const r = GP.righe[i], ta = righeEl.querySelector(`textarea[data-i="${i}"]`);
+    const pos = ta && document.activeElement === ta ? ta.selectionStart : null;
+    r.c = s === 'testo' ? null : s === 'punto' ? 'p' : (r.c === true ? true : false);
+    GP.ultimo = i; disegnaRighe({ i, pos }); schedula();
   }
-  function nuovaCasella() {
-    const u = GP.righe[GP.righe.length - 1];
-    if (u.t) GP.righe.push({ t: '', c: false }); else u.c = false;
-    disegnaRighe({ i: GP.righe.length - 1, pos: 0 }); schedula();
+  function spunta(i) {
+    const r = GP.righe[i]; if (!r) return;
+    r.c = !r.c; const riga = righeEl.children[i];
+    riga.classList.toggle('fatta', r.c); riga.querySelector('.spunta').setAttribute('aria-label', r.c ? 'Togli la spunta' : 'Spunta');
+    schedula();
   }
 
   carta.addEventListener('click', e => {
@@ -655,8 +687,8 @@
     if (a === 'fatto') chiudiGiorno();
     else if (a === 'prima') cambiaGiorno(-1);
     else if (a === 'dopo') cambiaGiorno(1);
-    else if (a === 'segno') segno(+b.dataset.i);
-    else if (a === 'nuova-casella') nuovaCasella();
+    else if (a === 'spunta') spunta(+b.dataset.i);
+    else if (a === 'stile') stile(b.dataset.s);
     else if (a === 'apri-ric') { GP.forma = { type: 'compleanno', label: '', yearly: true }; disegnaRicordi(); setTimeout(() => { const c = $('#ric-campo'); if (c) { c.focus({ preventScroll: true }); c.scrollIntoView({ block: 'nearest' }); } }, 30); }
     else if (a === 'chiudi-ric') { GP.forma = null; disegnaRicordi(); }
     else if (a === 'tipo-ric') { GP.forma.type = b.dataset.t; if (b.dataset.t === 'compleanno') GP.forma.yearly = true; disegnaRicordi(); }
@@ -691,7 +723,7 @@
       case 'oggi': vaiGiorno(giorni[oggiIdx()].key); break;
       case 'vaia': vaiA(); break;
       case 'vai-giorno': vaiGiorno(k); break;
-      case 'nastro': { const on = S.imp.bookmark === S.spread; setImp({ bookmark: on ? null : S.spread }); chiudiVeli(); disegna(); avviso(on ? 'Nastro tolto' : 'Nastro messo su questa pagina'); break; }
+      case 'nastro': { const on = S.imp.bookmark === S.spread; setImp({ bookmark: on ? null : S.spread }); chiudiVeli(); disegna(); avviso(on ? 'Segnalibro tolto' : 'Segnalibro su questa pagina'); break; }
       case 'al-nastro': chiudiVeli(); if (S.imp.bookmark != null) vai(S.imp.bookmark); break;
       case 'menu': menu(); break;
       case 'cerca': apriCerca(); break;

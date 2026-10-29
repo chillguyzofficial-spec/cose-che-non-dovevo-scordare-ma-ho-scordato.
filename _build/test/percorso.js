@@ -24,6 +24,10 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
 
   await p.click('.elastico', { force: true }); await attendi(3600);
   prova('libro aperto', await p.evaluate(() => document.getElementById('app').classList.contains('aperta')));
+  // la prima volta si apre su «Come si usa», e il suo pulsante porta a oggi
+  prova('prima apertura su Come si usa', (await p.textContent('#t-titolo')) === 'Come si usa');
+  await foto('02a-come-si-usa');
+  await p.click('.p-prova [data-act="oggi"]'); await attendi(1700);
   prova('settimana di oggi', (await p.textContent('#t-sotto')) === 'Settimana 44');
   await foto('02-aperta');
   prova('poesia del primo giorno', (await p.textContent('.giorno[data-k="2026-10-29"]')).includes('Signore, è tempo'));
@@ -32,26 +36,34 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await p.click('.giorno[data-k="2026-10-30"]'); await attendi(500);
   prova('pagina del giorno aperta', await p.isVisible('#gp'));
   prova('fuoco sulla prima riga', await p.evaluate(() => document.activeElement && document.activeElement.dataset.i === '0'));
+  const tipi = () => p.evaluate(() => [...document.querySelectorAll('#gp-righe .riga')].map(r => ({ t: r.querySelector('textarea').value, tipo: ['testo', 'punto', 'fare'].find(c => r.classList.contains(c)), ora: (r.querySelector('.ora') || {}).textContent || '' })));
+  const premuto = () => p.$eval('.gp-stile [aria-pressed="true"]', b => b.dataset.s);
   await p.keyboard.type('Cena da Marta alle 20');
   await p.keyboard.press('Enter');
-  await p.keyboard.type('- Comprare i fiori');
+  prova('invio sul testo fa testo (niente quadratino)', (await tipi())[1].tipo === 'testo');
+  await p.click('.gp-stile [data-s="fare"]');
+  prova('«Da spuntare» acceso', await premuto() === 'fare');
+  await p.keyboard.type('Comprare i fiori');
   await p.keyboard.press('Enter');
   await p.keyboard.type('Chiamare la mamma');
-  const righe = await p.evaluate(() => [...document.querySelectorAll('#gp-righe .riga')].map(r => ({ t: r.querySelector('textarea').value, c: r.classList.contains('casella'), ora: (r.querySelector('.ora') || {}).textContent || '' })));
+  let righe = await tipi();
   prova('tre righe', righe.length === 3);
-  prova('ora riconosciuta', righe[0] && righe[0].ora === '20:00');
-  prova('«- » crea la casella', righe[1] && righe[1].c && righe[1].t === 'Comprare i fiori');
-  prova('la casella continua con invio', righe[2] && righe[2].c);
+  prova('ora riconosciuta', righe[0].ora === '20:00');
+  prova('riga da spuntare', righe[1].tipo === 'fare' && righe[1].t === 'Comprare i fiori');
+  prova('la lista scelta continua con invio', righe[2].tipo === 'fare');
   await foto('03-scrivo');
-  // cancella a inizio riga: toglie la casella
-  await p.keyboard.press('Home'); await p.keyboard.press('Backspace');
-  prova('cancella toglie la casella', await p.evaluate(() => !document.querySelectorAll('#gp-righe .riga')[2].classList.contains('casella')));
-  // il quadratino a margine trasforma la riga in casella
-  await p.click('#gp-righe .riga:nth-child(3) .segno');
-  prova('quadratino a margine crea la casella', await p.evaluate(() => document.querySelectorAll('#gp-righe .riga')[2].classList.contains('casella')));
-  await p.keyboard.press('Home'); await p.keyboard.press('Backspace');
-  // spunto la prima casella
-  await p.click('#gp-righe .riga.casella .segno');
+  // due invii di fila escono dalla lista
+  await p.keyboard.press('Enter'); await p.keyboard.press('Enter');
+  righe = await tipi();
+  prova('invio su riga vuota esce dalla lista', righe.length === 4 && righe[3].tipo === 'testo' && await premuto() === 'testo');
+  await p.keyboard.press('Backspace');
+  // elenco puntato e ritorno al testo dalla riga 3
+  await p.click('#gp-righe .riga:nth-child(3) textarea'); await p.click('.gp-stile [data-s="punto"]');
+  prova('elenco puntato', (await tipi())[2].tipo === 'punto');
+  await p.click('.gp-stile [data-s="testo"]');
+  prova('torna testo', (await tipi())[2].tipo === 'testo');
+  // spunto la prima cosa da fare
+  await p.click('#gp-righe .riga.fare .spunta');
   prova('spunta in pagina', await p.evaluate(() => document.querySelectorAll('#gp-righe .riga')[1].classList.contains('fatta')));
   await attendi(600);
   prova('salvataggio automatico', await p.evaluate(() => (JSON.parse(localStorage.getItem('ccnds-notes')) || {})['2026-10-30']?.text === 'Cena da Marta alle 20\n[x] Comprare i fiori\nChiamare la mamma'));
@@ -59,9 +71,6 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await p.click('[data-gp="apri-ric"]'); await attendi(200);
   await p.fill('#ric-campo', 'Marta'); await p.click('[data-gp="aggiungi-ric"]');
   prova('ricorrenza aggiunta', (await p.textContent('#gp-ricordi')).includes('Marta'));
-  // «Aggiungi una cosa da fare» crea una casella in fondo
-  await p.click('[data-gp="nuova-casella"]'); await p.keyboard.type('Ritirare il pacco');
-  prova('aggiungi cosa da fare', await p.evaluate(() => { const r = [...document.querySelectorAll('#gp-righe .riga')].pop(); return r.classList.contains('casella') && r.querySelector('textarea').value === 'Ritirare il pacco'; }));
   await foto('04-ricorrenza');
   await p.click('[data-gp="fatto"]'); await attendi(700);
   prova('pagina chiusa', await p.isHidden('#gp'));
@@ -108,7 +117,16 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   prova('notte accesa', await p.evaluate(() => document.getElementById('app').classList.contains('notte')));
   await foto('09-notte');
   await p.click('[data-act="menu"]'); await p.click('[data-act="nome"]'); await p.fill('#nome-campo', 'Giulia'); await p.click('[data-act="salva-nome"]');
-  await p.click('[data-act="menu"]'); await p.click('[data-act="chiudi-libro"]'); await attendi(5000);
+  // segnalibro: nastro sulla pagina segnata, coda dal lato giusto quando si è altrove
+  await p.click('#b-nastro'); await attendi(200);
+  prova('nastro sulla pagina segnata', await p.isVisible('.nastro'));
+  await foto('10-segnalibro');
+  await p.click('[data-act="succ"]'); await attendi(1100);
+  prova('coda del nastro a sinistra se la pagina segnata è indietro', await p.isVisible('.coda.indietro'));
+  await p.click('.coda'); await attendi(1100);
+  prova('dalla coda alla pagina segnata', await p.isVisible('.nastro'));
+  // «Chiudi» in alto richiude l'agenda
+  await p.click('.chiudi-libro'); await attendi(5000);
   prova('libro richiuso', await p.evaluate(() => document.getElementById('app').classList.contains('chiusa')));
   await p.click('.elastico', { force: true }); await attendi(1800);
   await p.click('[data-act="prec"]'); await attendi(300);

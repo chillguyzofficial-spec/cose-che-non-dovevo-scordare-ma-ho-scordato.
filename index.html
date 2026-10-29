@@ -24,6 +24,7 @@
     <button class="ico ico-menu" data-act="menu" aria-label="Menu"><span></span><span></span><span></span></button>
     <div class="testata"><div class="testata-titolo" id="t-titolo">Cose Che Non Dovevo Scordare</div><div class="testata-sotto" id="t-sotto"></div></div>
     <button class="ico" data-act="cerca" aria-label="Cerca"><span class="ico-cerca"></span></button>
+    <button class="chiudi-libro" data-act="chiudi-libro" aria-label="Chiudi l'agenda"><span class="ico-libro"></span><span class="chiudi-testo">Chiudi</span></button>
   </div>
 
   <div class="scena" id="scena">
@@ -58,7 +59,7 @@
     <button class="pill tondo" data-act="prec" aria-label="Pagina precedente">‹</button>
     <button class="pill" data-act="oggi">Oggi</button>
     <button class="pill" data-act="vaia">Vai a…</button>
-    <button class="pill" data-act="nastro" id="b-nastro"><span class="nastrino"></span><span>Nastro</span></button>
+    <button class="pill" data-act="nastro" id="b-nastro"><span class="nastrino"></span><span>Segna</span></button>
     <button class="pill tondo" data-act="succ" aria-label="Pagina successiva">›</button>
   </div>
 </div>
@@ -106,9 +107,12 @@
         <div id="gp-versioni"></div>
       </section>
       <section class="gp-dx" id="gp-dx">
+        <div class="gp-stile" role="group" aria-label="Tipo di riga">
+          <button data-gp="stile" data-s="testo" aria-pressed="true">Testo</button>
+          <button data-gp="stile" data-s="punto" aria-pressed="false"><b>•</b>Elenco</button>
+          <button data-gp="stile" data-s="fare" aria-pressed="false"><i></i>Da spuntare</button>
+        </div>
         <div class="gp-righe" id="gp-righe"></div>
-        <button class="gp-aggiungi" data-gp="nuova-casella"><span class="q"></span>Aggiungi una cosa da fare</button>
-        <div class="gp-consiglio" id="gp-consiglio">Tocca il quadratino a margine di una riga per farla diventare una cosa da spuntare.</div>
       </section>
     </div>
   </div>
