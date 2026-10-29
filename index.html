@@ -87,26 +87,29 @@
 
 <!-- pagina del giorno -->
 <div class="gp" id="gp" hidden>
-  <div class="gp-carta" id="gp-carta" role="dialog" aria-modal="true" aria-labelledby="gp-nome">
-    <div class="gp-margine"></div>
-    <div class="gp-testa">
-      <button class="gp-nav" data-gp="prima" aria-label="Giorno prima">‹</button>
-      <div class="gp-quando"><div class="gp-nome" id="gp-nome"></div><div class="gp-data" id="gp-data"></div><div class="gp-festa" id="gp-festa"></div></div>
-      <button class="gp-nav" data-gp="dopo" aria-label="Giorno dopo">›</button>
+  <div class="gp-carta" id="gp-carta" role="dialog" aria-modal="true" aria-labelledby="gp-titolo">
+    <div class="gp-su">
+      <button class="gp-giro" data-gp="prima" aria-label="Giorno prima"><span>‹</span><em id="gp-prima"></em></button>
+      <div class="gp-salvato" id="gp-salvato" aria-live="polite"></div>
+      <button class="gp-giro" data-gp="dopo" aria-label="Giorno dopo"><em id="gp-dopo"></em><span>›</span></button>
       <button class="gp-fatto" data-gp="fatto">Fatto</button>
     </div>
-    <div class="gp-scorri" id="gp-scorri">
-      <div id="gp-poesia"></div>
-      <div class="gp-ric" id="gp-ric"></div>
-      <div class="gp-righe" id="gp-righe"></div>
-    </div>
-    <div class="gp-pannello" id="gp-pannello" hidden></div>
-    <div class="gp-attrezzi">
-      <button class="att" data-gp="casella"><span class="q"></span>Casella</button>
-      <button class="att" data-gp="ricorrenza">♥ Ricorrenza</button>
-      <button class="att" data-gp="versioni" id="gp-b-versioni">Versioni</button>
-      <span class="att-spazio"></span>
-      <span class="gp-salvato" id="gp-salvato"></span>
+    <div class="gp-corpo" id="gp-scorri">
+      <section class="gp-sx" id="gp-sx">
+        <div class="gp-data">
+          <div class="gp-num" id="gp-num"></div>
+          <div><div class="gp-nome" id="gp-titolo"></div><div class="gp-mese" id="gp-mese"></div><div class="gp-sett" id="gp-sett"></div></div>
+        </div>
+        <div class="gp-festa" id="gp-festa"></div>
+        <div id="gp-poesia"></div>
+        <div id="gp-ricordi"></div>
+        <div id="gp-versioni"></div>
+      </section>
+      <section class="gp-dx" id="gp-dx">
+        <div class="gp-righe" id="gp-righe"></div>
+        <button class="gp-aggiungi" data-gp="nuova-casella"><span class="q"></span>Aggiungi una cosa da fare</button>
+        <div class="gp-consiglio" id="gp-consiglio">Tocca il quadratino a margine di una riga per farla diventare una cosa da spuntare.</div>
+      </section>
     </div>
   </div>
 </div>

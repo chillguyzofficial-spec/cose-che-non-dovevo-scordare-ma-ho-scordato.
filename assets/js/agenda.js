@@ -448,51 +448,85 @@
   }
 
   // =====================================================================
-  // ---------- pagina del giorno: si scrive su righe vere, si salva da sola ----------
+  // ---------- pagina del giorno: data grande e poesia, righe col margine, si salva da sola ----------
   // =====================================================================
-  const gp = $('#gp'), carta = $('#gp-carta'), righeEl = $('#gp-righe'), pannello = $('#gp-pannello');
-  const GP = { key: null, righe: [], orig: '', timer: 0, ultimo: -1, pann: null, forma: { type: 'compleanno', label: '', yearly: true } };
+  const gp = $('#gp'), carta = $('#gp-carta'), righeEl = $('#gp-righe');
+  const GP = { key: null, righe: [], orig: '', origT: 0, timer: 0, forma: null, versioni: false };
+  const GG = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
   const daTesto = t => { const r = (t || '').split('\n').map(l => { const c = CASELLA.exec(l); return c ? { t: l.slice(4), c: c[1] !== ' ' } : { t: l, c: null }; }); return r.length ? r : [{ t: '', c: null }]; };
   const aTesto = righe => { const r = righe.slice(); while (r.length && !r[r.length - 1].t.trim()) r.pop(); return r.map(x => (x.c === null ? '' : x.c ? '[x] ' : '[ ] ') + x.t.replace(/\s+$/, '')).join('\n'); };
   let chiestoPersist = false;
 
   function caricaGiorno(key) {
     const g = perKey[key];
-    GP.key = key; GP.orig = (S.note[key] && S.note[key].text) || ''; GP.righe = daTesto(GP.orig); GP.ultimo = -1; GP.pann = null;
-    $('#gp-nome').textContent = DN[g.dow];
-    $('#gp-data').textContent = g.d.getDate() + ' ' + M[g.d.getMonth()].toLowerCase() + ' ' + g.d.getFullYear() + ' · settimana ' + settIso(g.d);
-    $('#gp-festa').textContent = g.festa; $('#gp-festa').hidden = !g.festa;
+    GP.key = key; GP.orig = (S.note[key] && S.note[key].text) || ''; GP.origT = S.note[key] ? S.note[key].t : 0;
+    GP.righe = daTesto(GP.orig); GP.forma = null; GP.versioni = false;
+    $('#gp-num').textContent = g.d.getDate();
+    $('#gp-titolo').textContent = DN[g.dow];
+    $('#gp-mese').textContent = M[g.d.getMonth()].toLowerCase() + ' ' + g.d.getFullYear();
+    $('#gp-sett').textContent = 'settimana ' + settIso(g.d);
+    $('#gp-festa').textContent = g.festa;
     const p = g.poesia;
-    $('#gp-poesia').innerHTML = p ? `<div class="gp-poesia">${esc(p.testo)}<cite>${esc(p.autore)} · ${esc(p.opera)}${p.originale ? ' · traduzione nostra' : ''}</cite></div>` +
+    $('#gp-poesia').innerHTML = p ? `<div class="gp-poesia">${esc(p.testo)}<cite>${esc(p.autore)} · ${esc(p.opera)}</cite></div>` +
       (p.originale ? `<button class="gp-orig" data-gp="originale">Testo originale</button><div class="gp-orig-testo" hidden>${esc(p.originale)}</div>` : '') : '';
-    $('[data-gp="prima"]').disabled = key <= D.INIZIO; $('[data-gp="dopo"]').disabled = key >= D.FINE;
+    const pr = giorni[g.i - 1], ds = giorni[g.i + 1];
+    const bp = $('[data-gp="prima"]'), bd = $('[data-gp="dopo"]');
+    bp.disabled = !pr || !pr.dentro; bd.disabled = !ds || !ds.dentro;
+    $('#gp-prima').textContent = pr ? GG[pr.dow] + ' ' + pr.d.getDate() : '';
+    $('#gp-dopo').textContent = ds ? GG[ds.dow] + ' ' + ds.d.getDate() : '';
     $('#gp-salvato').textContent = '';
-    disegnaRic(); disegnaRighe(null); chiudiPannello(); contaVersioni();
-    $('#gp-scorri').scrollTop = 0;
+    disegnaRicordi(); disegnaVersioni(); disegnaRighe(null);
+    ['#gp-scorri', '#gp-sx', '#gp-dx'].forEach(s => { $(s).scrollTop = 0; });
   }
-  function disegnaRic() {
-    $('#gp-ric').innerHTML = ricDi(GP.key).map(r => { const T = RIC[r.type] || RIC.altro; return `<span style="color:${T.c}">${T.g} ${esc(r.label || T.n)}</span>`; }).join('');
+
+  function disegnaRicordi() {
+    const mie = ricDi(GP.key), F = GP.forma;
+    let h = mie.length ? '<div class="gp-h">Da ricordare</div>' : '';
+    h += mie.map(r => { const T = RIC[r.type] || RIC.altro; return `<div class="ricordo" style="color:${T.c}"><span>${T.g} ${esc(r.label || T.n)}</span><small>${r.yearly ? 'ogni anno' : 'solo quest’anno'}</small><button data-gp="togli-ric" data-id="${r.id}" aria-label="Togli ${esc(r.label || T.n)}">×</button></div>`; }).join('');
+    if (F) {
+      const ph = F.type === 'compleanno' ? 'Di chi? Es. Marta' : F.type === 'scadenza' ? 'Cosa scade? Es. bollo auto' : 'Cosa ricordi? Es. anniversario';
+      h += `<div class="gp-forma"><div class="gp-h">Ricorda questo giorno</div>` +
+        `<div class="scelte" role="radiogroup">${Object.keys(RIC).map(k => `<button class="scelta${F.type === k ? ' on' : ''}" data-gp="tipo-ric" data-t="${k}" role="radio" aria-checked="${F.type === k}" style="--c:${RIC[k].c}"><b>${RIC[k].g}</b>${RIC[k].n}</button>`).join('')}</div>` +
+        `<input class="campo" id="ric-campo" value="${esc(F.label)}" placeholder="${ph}" maxlength="60">` +
+        `<button class="anno${F.yearly ? ' on' : ''}" data-gp="ogni-anno" role="checkbox" aria-checked="${F.yearly}"><span></span>Torna ogni anno</button>` +
+        `<div class="fila fine"><button class="btn" data-gp="chiudi-ric">Annulla</button><button class="btn pieno" data-gp="aggiungi-ric">Aggiungi</button></div></div>`;
+    } else h += `<button class="gp-link" data-gp="apri-ric"><b>+</b>Ricorda questo giorno</button>`;
+    $('#gp-ricordi').innerHTML = h;
+    const c = $('#ric-campo');
+    if (c) { c.addEventListener('input', () => { F.label = c.value; }); c.addEventListener('keydown', e => { if (e.key === 'Enter') aggiungiRic(); }); }
   }
-  function contaVersioni() { const n = (S.storia[GP.key] || []).length; $('#gp-b-versioni').textContent = 'Versioni' + (n ? ' (' + n + ')' : ''); }
+  function aggiungiRic() {
+    const F = GP.forma; if (!F) return;
+    S.ric = [...S.ric, { id: Date.now().toString(36), date: GP.key, type: F.type, label: F.label.trim(), yearly: F.yearly }];
+    scrivi('rem', S.ric); GP.forma = null; disegnaRicordi();
+    $('#gp-salvato').textContent = 'Ricordo aggiunto';
+  }
+  function disegnaVersioni() {
+    const h = S.storia[GP.key] || [], el = $('#gp-versioni');
+    if (!h.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `<button class="gp-link piano" data-gp="versioni">${GP.versioni ? 'Nascondi le pagine precedenti' : 'Pagine precedenti (' + h.length + ')'}</button>` +
+      (GP.versioni ? h.map((v, i) => `<div class="versione"><div><small>${new Date(v.t).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small><span>${esc(v.text.replace(/^\[[ xX]\] /gm, '').replace(/\n/g, ' · '))}</span></div><button class="piccolo-btn" data-gp="ripristina" data-i="${i}">Riprendi</button></div>`).join('') + '<div class="nota-p" style="margin-top:6px">Riprendi una versione: sostituisce la pagina, e quella di adesso resta qui.</div>' : '');
+  }
+
   function adatta(ta) { ta.style.height = '36px'; ta.style.height = Math.max(36, Math.ceil((ta.scrollHeight - 2) / 36) * 36) + 'px'; }
   function disegnaRighe(fuoco) {
-    const sola = GP.righe.length === 1 && !GP.righe[0].t;
+    const vuota = GP.righe.every(r => !r.t);
     righeEl.innerHTML = GP.righe.map((r, i) => {
       const ora = oraIn(r.t);
-      return `<div class="riga${r.c === true ? ' fatta' : ''}">` +
-        (r.c !== null ? `<button class="casella" data-gp="spunta" data-i="${i}" aria-label="${r.c ? 'Togli la spunta' : 'Spunta'}"><span></span></button>` : '') +
-        `<textarea rows="1" data-i="${i}" enterkeyhint="enter" autocapitalize="sentences" aria-label="Riga ${i + 1}"${sola && i === 0 ? ' placeholder="Scrivi qui…"' : ''}>${esc(r.t)}</textarea>` +
+      return `<div class="riga${r.c !== null ? ' casella' : ''}${r.c === true ? ' fatta' : ''}">` +
+        `<button class="segno" data-gp="segno" data-i="${i}" tabindex="-1" aria-label="${r.c === null ? 'Fai diventare una cosa da fare' : r.c ? 'Togli la spunta' : 'Spunta'}"><span></span></button>` +
+        `<textarea rows="1" data-i="${i}" enterkeyhint="enter" autocapitalize="sentences" aria-label="Riga ${i + 1}"${vuota && i === 0 ? ' placeholder="Scrivi qui…"' : ''}>${esc(r.t)}</textarea>` +
         (ora ? `<span class="ora">${ora}</span>` : '') + `</div>`;
     }).join('');
     righeEl.querySelectorAll('textarea').forEach(adatta);
-    if (fuoco) fuocoRiga(fuoco.i, fuoco.pos);
+    $('#gp-consiglio').hidden = !vuota;
+    if (fuoco) fuocoRiga(fuoco.i, fuoco.pos, fuoco.scorri !== false);
   }
-  function fuocoRiga(i, pos) {
+  function fuocoRiga(i, pos, scorri = true) {
     const ta = righeEl.querySelector(`textarea[data-i="${i}"]`); if (!ta) return;
     ta.focus({ preventScroll: true });
     const p = pos == null ? ta.value.length : Math.min(pos, ta.value.length); ta.setSelectionRange(p, p);
-    const r = ta.getBoundingClientRect(), s = $('#gp-scorri').getBoundingClientRect();
-    if (r.bottom > s.bottom - 8 || r.top < s.top) ta.scrollIntoView({ block: 'nearest' });
+    if (scorri) ta.scrollIntoView({ block: 'nearest' });
   }
   function schedula() { clearTimeout(GP.timer); $('#gp-salvato').textContent = ''; GP.timer = setTimeout(salvaGiorno, 450); }
   function salvaGiorno() {
@@ -502,22 +536,22 @@
     const note = { ...S.note };
     if (t.replace(/^\[[ xX]\] /gm, '').trim()) note[GP.key] = { text: t, t: Date.now() }; else delete note[GP.key];
     S.note = note; scrivi('notes', note);
-    $('#gp-salvato').textContent = 'Salvato';
+    $('#gp-salvato').textContent = '✓ Salvato';
     if (!chiestoPersist && navigator.storage && navigator.storage.persist) { chiestoPersist = true; navigator.storage.persist().catch(() => {}); }
   }
-  // chiude il lavoro sul giorno: salva e mette la versione precedente nella cronologia
+  // chiude il lavoro sul giorno: salva e mette la versione precedente tra le pagine precedenti
   function concludiGiorno() {
     salvaGiorno();
     const ora = (S.note[GP.key] && S.note[GP.key].text) || '', prima = GP.orig;
     if (ora === prima) return null;
-    if (prima) { const prev = S.note[GP.key] ? S.note[GP.key].t : Date.now(); S.storia = { ...S.storia, [GP.key]: [{ t: (GP.origT || prev), text: prima }, ...(S.storia[GP.key] || [])].slice(0, 8) }; scrivi('hist', S.storia); }
+    if (prima) { S.storia = { ...S.storia, [GP.key]: [{ t: GP.origT || Date.now(), text: prima }, ...(S.storia[GP.key] || [])].slice(0, 8) }; scrivi('hist', S.storia); }
     return { key: GP.key, prima };
   }
 
   function apriGiorno(key, el) {
     if (noClick || flip || S.fase !== 'aperta') return;
     const g = perKey[key]; if (!g || !g.dentro) return;
-    caricaGiorno(key); GP.origT = S.note[key] ? S.note[key].t : 0;
+    caricaGiorno(key);
     gp.hidden = false; posizionaGp();
     // si apre dal riquadro del giorno toccato
     carta.classList.remove('anima'); carta.style.transform = ''; carta.style.opacity = '';
@@ -527,7 +561,7 @@
     carta.classList.add('anima'); carta.style.transform = 'none'; carta.style.opacity = '1'; gp.classList.add('su');
     suono('pagina');
     // giorno vuoto: si scrive subito (il fuoco va dato dentro il tocco, se no iPhone non apre la tastiera)
-    if (!GP.orig) fuocoRiga(0, 0);
+    if (!GP.orig) fuocoRiga(0, 0, false);
   }
   function chiudiGiorno() {
     if (gp.hidden) return;
@@ -541,7 +575,7 @@
     setTimeout(() => {
       gp.hidden = true; GP.key = null;
       if (!stessa) vaiGiorno(key, false);
-      setTimeout(() => { if (S.appena === key) { S.appena = null; } }, 1400);
+      setTimeout(() => { if (S.appena === key) S.appena = null; }, 1400);
     }, 340);
     if (fatto) {
       suono('penna');
@@ -555,7 +589,7 @@
   }
   function cambiaGiorno(dir) {
     const g = perKey[GP.key], nuovo = giorni[g.i + dir]; if (!nuovo || !nuovo.dentro) return;
-    concludiGiorno(); disegna(); caricaGiorno(nuovo.key); GP.origT = S.note[nuovo.key] ? S.note[nuovo.key].t : 0;
+    concludiGiorno(); disegna(); caricaGiorno(nuovo.key);
     suono('pagina');
   }
   // la pagina del giorno segue la parte visibile dello schermo (sopra la tastiera)
@@ -583,6 +617,7 @@
     const ora = oraIn(v), riga = ta.parentNode; let tag = riga.querySelector('.ora');
     if (ora && !tag) { tag = document.createElement('span'); tag.className = 'ora'; riga.appendChild(tag); }
     if (tag) { if (ora) tag.textContent = ora; else tag.remove(); }
+    if (v && !$('#gp-consiglio').hidden) $('#gp-consiglio').hidden = true;
     schedula();
   });
   righeEl.addEventListener('beforeinput', e => {
@@ -597,46 +632,21 @@
     if (e.key === 'ArrowUp' && ta.selectionStart === 0 && i > 0) { e.preventDefault(); fuocoRiga(i - 1, null); }
     else if (e.key === 'ArrowDown' && ta.selectionStart === ta.value.length && i < GP.righe.length - 1) { e.preventDefault(); fuocoRiga(i + 1, 0); }
   });
-  righeEl.addEventListener('focusin', e => { if (e.target.tagName === 'TEXTAREA') GP.ultimo = +e.target.dataset.i; });
   righeEl.addEventListener('click', e => { if (e.target === righeEl) fuocoRiga(GP.righe.length - 1, null); });
 
-  // i pulsanti in basso non tolgono il fuoco (la tastiera resta aperta)
-  carta.addEventListener('pointerdown', e => { if (e.target.closest('.att, .casella')) e.preventDefault(); });
+  // il quadratino a margine e «Aggiungi» non tolgono il fuoco (la tastiera resta aperta)
+  carta.addEventListener('pointerdown', e => { if (e.target.closest('.segno, .gp-aggiungi')) e.preventDefault(); });
 
-  function casella() {
-    let i = GP.ultimo;
-    if (i < 0 || i >= GP.righe.length) { const u = GP.righe[GP.righe.length - 1]; if (u.t) GP.righe.push({ t: '', c: false }); else u.c = false; i = GP.righe.length - 1; }
-    else GP.righe[i].c = GP.righe[i].c === null ? false : null;
-    const ta = righeEl.querySelector(`textarea[data-i="${i}"]`);
-    disegnaRighe({ i, pos: ta ? ta.selectionStart : null }); schedula();
+  function segno(i) {
+    const r = GP.righe[i]; if (!r) return;
+    const ta = righeEl.querySelector(`textarea[data-i="${i}"]`), attivo = document.activeElement === ta;
+    r.c = r.c === null ? false : !r.c;
+    disegnaRighe(attivo ? { i, pos: ta.selectionStart } : null); schedula();
   }
-  function chiudiPannello() { GP.pann = null; pannello.hidden = true; pannello.innerHTML = ''; document.querySelectorAll('.gp-attrezzi .att').forEach(b => b.classList.remove('on')); }
-  function apriPannello(tipo) {
-    if (GP.pann === tipo) { chiudiPannello(); return; }
-    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-    GP.pann = tipo; pannello.hidden = false;
-    document.querySelectorAll('.gp-attrezzi .att').forEach(b => b.classList.toggle('on', b.dataset.gp === (tipo === 'ric' ? 'ricorrenza' : 'versioni')));
-    if (tipo === 'ric') disegnaPannelloRic(); else disegnaVersioni();
-  }
-  function disegnaPannelloRic() {
-    const F = GP.forma, mie = ricDi(GP.key);
-    pannello.innerHTML =
-      mie.map(r => { const T = RIC[r.type] || RIC.altro; return `<div class="fila" style="font-family:var(--mano);font-weight:600;font-size:19px;color:${T.c}"><span style="flex:1">${T.g} ${esc(r.label || T.n)}${r.yearly ? ' · ogni anno' : ''}</span><button class="piccolo-btn" data-gp="togli-ric" data-id="${r.id}">Togli</button></div>`; }).join('') +
-      `<div class="fila">${Object.keys(RIC).map(k => `<button class="chip${F.type === k ? ' on' : ''}" data-gp="tipo-ric" data-t="${k}" style="color:${RIC[k].c}">${RIC[k].g} ${RIC[k].n}</button>`).join('')}` +
-      `<button class="chip${F.yearly ? ' on' : ''}" data-gp="ogni-anno">${F.yearly ? '✓ Ogni anno' : 'Solo quest’anno'}</button></div>` +
-      `<div class="fila" style="flex-wrap:nowrap"><input class="campo" id="ric-campo" value="${esc(F.label)}" placeholder="Es. Marta, bollo auto…" style="height:42px"><button class="btn pieno" data-gp="aggiungi-ric" style="flex:none">Aggiungi</button></div>`;
-    const c = $('#ric-campo'); c.addEventListener('input', () => { F.label = c.value; }); c.addEventListener('keydown', e => { if (e.key === 'Enter') aggiungiRic(); });
-  }
-  function aggiungiRic() {
-    const F = GP.forma;
-    S.ric = [...S.ric, { id: Date.now().toString(36), date: GP.key, type: F.type, label: F.label.trim(), yearly: F.yearly }];
-    scrivi('rem', S.ric); F.label = ''; disegnaRic(); disegnaPannelloRic();
-  }
-  function disegnaVersioni() {
-    const h = S.storia[GP.key] || [];
-    pannello.innerHTML = h.length
-      ? h.map((v, i) => `<div class="versione"><div><small>${new Date(v.t).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small><span>${esc(v.text.replace(/^\[[ xX]\] /gm, '').replace(/\n/g, ' · '))}</span></div><button class="piccolo-btn" data-gp="ripristina" data-i="${i}">Riprendi</button></div>`).join('') + '<div class="nota-p">Riprendi una versione: sostituisce la pagina, e la versione di adesso resta qui.</div>'
-      : '<div class="nota-p">Nessuna versione precedente. Ogni volta che cambi la pagina, quella di prima si conserva qui.</div>';
+  function nuovaCasella() {
+    const u = GP.righe[GP.righe.length - 1];
+    if (u.t) GP.righe.push({ t: '', c: false }); else u.c = false;
+    disegnaRighe({ i: GP.righe.length - 1, pos: 0 }); schedula();
   }
 
   carta.addEventListener('click', e => {
@@ -645,18 +655,19 @@
     if (a === 'fatto') chiudiGiorno();
     else if (a === 'prima') cambiaGiorno(-1);
     else if (a === 'dopo') cambiaGiorno(1);
-    else if (a === 'casella') casella();
-    else if (a === 'spunta') { const i = +b.dataset.i, r = GP.righe[i]; r.c = !r.c; b.parentNode.classList.toggle('fatta', r.c); b.setAttribute('aria-label', r.c ? 'Togli la spunta' : 'Spunta'); schedula(); }
-    else if (a === 'ricorrenza') apriPannello('ric');
-    else if (a === 'versioni') apriPannello('ver');
-    else if (a === 'tipo-ric') { GP.forma.type = b.dataset.t; if (b.dataset.t === 'compleanno') GP.forma.yearly = true; disegnaPannelloRic(); }
-    else if (a === 'ogni-anno') { GP.forma.yearly = !GP.forma.yearly; disegnaPannelloRic(); }
+    else if (a === 'segno') segno(+b.dataset.i);
+    else if (a === 'nuova-casella') nuovaCasella();
+    else if (a === 'apri-ric') { GP.forma = { type: 'compleanno', label: '', yearly: true }; disegnaRicordi(); setTimeout(() => { const c = $('#ric-campo'); if (c) { c.focus({ preventScroll: true }); c.scrollIntoView({ block: 'nearest' }); } }, 30); }
+    else if (a === 'chiudi-ric') { GP.forma = null; disegnaRicordi(); }
+    else if (a === 'tipo-ric') { GP.forma.type = b.dataset.t; if (b.dataset.t === 'compleanno') GP.forma.yearly = true; disegnaRicordi(); }
+    else if (a === 'ogni-anno') { GP.forma.yearly = !GP.forma.yearly; disegnaRicordi(); }
     else if (a === 'aggiungi-ric') aggiungiRic();
-    else if (a === 'togli-ric') { S.ric = S.ric.filter(r => r.id !== b.dataset.id); scrivi('rem', S.ric); disegnaRic(); disegnaPannelloRic(); }
+    else if (a === 'togli-ric') { S.ric = S.ric.filter(r => r.id !== b.dataset.id); scrivi('rem', S.ric); disegnaRicordi(); }
+    else if (a === 'versioni') { GP.versioni = !GP.versioni; disegnaVersioni(); }
     else if (a === 'ripristina') {
       const v = (S.storia[GP.key] || [])[+b.dataset.i]; if (!v) return;
       concludiGiorno(); GP.orig = (S.note[GP.key] && S.note[GP.key].text) || ''; GP.origT = Date.now();
-      GP.righe = daTesto(v.text); disegnaRighe(null); salvaGiorno(); contaVersioni(); disegnaVersioni();
+      GP.righe = daTesto(v.text); disegnaRighe(null); salvaGiorno(); disegnaVersioni();
     }
     else if (a === 'originale') { const t = b.nextElementSibling; t.hidden = !t.hidden; b.textContent = t.hidden ? 'Testo originale' : 'Nascondi l’originale'; }
   });

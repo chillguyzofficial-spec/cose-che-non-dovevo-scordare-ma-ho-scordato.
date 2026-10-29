@@ -37,7 +37,7 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await p.keyboard.type('- Comprare i fiori');
   await p.keyboard.press('Enter');
   await p.keyboard.type('Chiamare la mamma');
-  const righe = await p.evaluate(() => [...document.querySelectorAll('#gp-righe .riga')].map(r => ({ t: r.querySelector('textarea').value, c: !!r.querySelector('.casella'), ora: (r.querySelector('.ora') || {}).textContent || '' })));
+  const righe = await p.evaluate(() => [...document.querySelectorAll('#gp-righe .riga')].map(r => ({ t: r.querySelector('textarea').value, c: r.classList.contains('casella'), ora: (r.querySelector('.ora') || {}).textContent || '' })));
   prova('tre righe', righe.length === 3);
   prova('ora riconosciuta', righe[0] && righe[0].ora === '20:00');
   prova('«- » crea la casella', righe[1] && righe[1].c && righe[1].t === 'Comprare i fiori');
@@ -45,16 +45,23 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await foto('03-scrivo');
   // cancella a inizio riga: toglie la casella
   await p.keyboard.press('Home'); await p.keyboard.press('Backspace');
-  prova('cancella toglie la casella', await p.evaluate(() => !document.querySelectorAll('#gp-righe .riga')[2].querySelector('.casella')));
+  prova('cancella toglie la casella', await p.evaluate(() => !document.querySelectorAll('#gp-righe .riga')[2].classList.contains('casella')));
+  // il quadratino a margine trasforma la riga in casella
+  await p.click('#gp-righe .riga:nth-child(3) .segno');
+  prova('quadratino a margine crea la casella', await p.evaluate(() => document.querySelectorAll('#gp-righe .riga')[2].classList.contains('casella')));
+  await p.keyboard.press('Home'); await p.keyboard.press('Backspace');
   // spunto la prima casella
-  await p.click('#gp-righe .casella');
+  await p.click('#gp-righe .riga.casella .segno');
   prova('spunta in pagina', await p.evaluate(() => document.querySelectorAll('#gp-righe .riga')[1].classList.contains('fatta')));
   await attendi(600);
   prova('salvataggio automatico', await p.evaluate(() => (JSON.parse(localStorage.getItem('ccnds-notes')) || {})['2026-10-30']?.text === 'Cena da Marta alle 20\n[x] Comprare i fiori\nChiamare la mamma'));
   // ricorrenza
-  await p.click('[data-gp="ricorrenza"]'); await attendi(200);
+  await p.click('[data-gp="apri-ric"]'); await attendi(200);
   await p.fill('#ric-campo', 'Marta'); await p.click('[data-gp="aggiungi-ric"]');
-  prova('ricorrenza aggiunta', (await p.textContent('#gp-ric')).includes('Marta'));
+  prova('ricorrenza aggiunta', (await p.textContent('#gp-ricordi')).includes('Marta'));
+  // «Aggiungi una cosa da fare» crea una casella in fondo
+  await p.click('[data-gp="nuova-casella"]'); await p.keyboard.type('Ritirare il pacco');
+  prova('aggiungi cosa da fare', await p.evaluate(() => { const r = [...document.querySelectorAll('#gp-righe .riga')].pop(); return r.classList.contains('casella') && r.querySelector('textarea').value === 'Ritirare il pacco'; }));
   await foto('04-ricorrenza');
   await p.click('[data-gp="fatto"]'); await attendi(700);
   prova('pagina chiusa', await p.isHidden('#gp'));
@@ -68,7 +75,7 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await p.click('.giorno[data-k="2026-10-30"]'); await attendi(450);
   prova('giorno con note: niente tastiera in automatico', await p.evaluate(() => !document.activeElement || document.activeElement.tagName !== 'TEXTAREA'));
   await p.click('[data-gp="dopo"]'); await attendi(200);
-  prova('freccia al giorno dopo', (await p.textContent('#gp-data')).startsWith('31 ottobre'));
+  prova('freccia al giorno dopo', (await p.textContent('#gp-num')) === '31' && (await p.textContent('#gp-prima')) === 'ven 30');
   await p.click('[data-gp="fatto"]'); await attendi(600);
 
   // ricarico: la nota resta
