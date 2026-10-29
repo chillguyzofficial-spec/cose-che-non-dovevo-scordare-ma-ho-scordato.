@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="robots" content="noindex, nofollow">
+<title>Cose Che Non Dovevo Scordare</title>
+<meta name="description" content="Un'agenda da sfogliare, con i versi dei poeti nei giorni speciali.">
+<meta name="theme-color" content="#3a2216">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Non Scordare">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/img/icon-192.png">
+<link rel="icon" href="assets/img/icon-192.png">
+<link rel="stylesheet" href="assets/css/caratteri.css">
+<link rel="stylesheet" href="assets/css/agenda.css">
+</head>
+<body>
+<div class="app chiusa" id="app">
+
+  <div class="barra-su">
+    <button class="ico ico-menu" data-act="menu" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="testata"><div class="testata-titolo" id="t-titolo">Cose Che Non Dovevo Scordare</div><div class="testata-sotto" id="t-sotto"></div></div>
+    <button class="ico" data-act="cerca" aria-label="Cerca"><span class="ico-cerca"></span></button>
+  </div>
+
+  <div class="scena" id="scena">
+    <div class="libro" id="libro">
+      <div class="custodia dx"></div>
+      <div class="custodia sx"></div>
+      <div class="mazzetto sx" id="mz-sx"></div>
+      <div class="mazzetto dx" id="mz-dx"></div>
+      <div id="pagine"></div>
+      <div id="segnalibro"></div>
+
+      <div class="cop cop-retro"></div>
+      <div class="cop cop-fronte" data-act="apri">
+        <div class="cop-dorso"></div>
+        <div class="cop-cucitura"></div>
+        <div class="cop-testo">
+          <div class="cop-filo"></div>
+          <div class="cop-titolo oro">Cose Che Non Dovevo Scordare</div>
+          <div class="cop-sotto oro">(Ma Ho Scordato)</div>
+          <div class="cop-filo" style="margin-top:.4em"></div>
+          <div class="cop-fregio">❦</div>
+        </div>
+        <div class="cop-anni" id="cop-anni"></div>
+        <div class="elastico" data-act="apri"></div>
+      </div>
+      <div class="luce-notte"></div>
+    </div>
+    <div class="suggerimento" id="sugg">Preparo le pagine…</div>
+  </div>
+
+  <div class="barra-giu">
+    <button class="pill tondo" data-act="prec" aria-label="Pagina precedente">‹</button>
+    <button class="pill" data-act="oggi">Oggi</button>
+    <button class="pill" data-act="vaia">Vai a…</button>
+    <button class="pill" data-act="nastro" id="b-nastro"><span class="nastrino"></span><span>Nastro</span></button>
+    <button class="pill tondo" data-act="succ" aria-label="Pagina successiva">›</button>
+  </div>
+</div>
+
+<!-- menu -->
+<div class="velo" id="v-menu" hidden data-chiudi><div class="foglio-basso" id="menu"></div></div>
+<!-- vai a -->
+<div class="velo" id="v-vaia" hidden data-chiudi><div class="foglio-basso"><div class="maniglia"></div><div class="dentro">
+  <div class="h-foglio">Vai a una data</div>
+  <input type="date" class="campo" id="vaia-data">
+  <div class="mesi" id="mesi"></div>
+</div></div></div>
+<!-- nome -->
+<div class="velo" id="v-nome" hidden data-chiudi><div class="foglio-basso"><div class="maniglia"></div><div class="dentro">
+  <div class="h-foglio">Questa agenda appartiene a…</div>
+  <input class="campo" id="nome-campo" maxlength="40" placeholder="Il tuo nome" autocomplete="given-name">
+  <div class="fila" style="justify-content:flex-end"><button class="btn" data-act="chiudi">Annulla</button><button class="btn pieno" data-act="salva-nome">Scrivi</button></div>
+</div></div></div>
+<!-- ricerca -->
+<div class="velo alto" id="v-cerca" hidden data-chiudi><div class="cerca-box">
+  <div class="cerca-su"><input class="campo" id="cerca-campo" placeholder="Cerca nelle note e nei versi…" autocomplete="off"><button class="btn" data-act="chiudi" style="border:0">Chiudi</button></div>
+  <div class="cerca-ris" id="cerca-ris"></div>
+</div></div>
+<!-- sorpresa -->
+<div class="velo" id="v-sorpresa" hidden data-chiudi style="justify-content:center;padding:24px"><div id="sorpresa"></div></div>
+
+<!-- pagina del giorno -->
+<div class="gp" id="gp" hidden>
+  <div class="gp-carta" id="gp-carta" role="dialog" aria-modal="true" aria-labelledby="gp-nome">
+    <div class="gp-margine"></div>
+    <div class="gp-testa">
+      <button class="gp-nav" data-gp="prima" aria-label="Giorno prima">‹</button>
+      <div class="gp-quando"><div class="gp-nome" id="gp-nome"></div><div class="gp-data" id="gp-data"></div><div class="gp-festa" id="gp-festa"></div></div>
+      <button class="gp-nav" data-gp="dopo" aria-label="Giorno dopo">›</button>
+      <button class="gp-fatto" data-gp="fatto">Fatto</button>
+    </div>
+    <div class="gp-scorri" id="gp-scorri">
+      <div id="gp-poesia"></div>
+      <div class="gp-ric" id="gp-ric"></div>
+      <div class="gp-righe" id="gp-righe"></div>
+    </div>
+    <div class="gp-pannello" id="gp-pannello" hidden></div>
+    <div class="gp-attrezzi">
+      <button class="att" data-gp="casella"><span class="q"></span>Casella</button>
+      <button class="att" data-gp="ricorrenza">♥ Ricorrenza</button>
+      <button class="att" data-gp="versioni" id="gp-b-versioni">Versioni</button>
+      <span class="att-spazio"></span>
+      <span class="gp-salvato" id="gp-salvato"></span>
+    </div>
+  </div>
+</div>
+
+<div class="avviso" id="avviso" hidden role="status"><span id="avviso-testo"></span><button id="avviso-annulla" hidden>Annulla</button></div>
+<input type="file" accept="application/json,.json" id="file" hidden>
+
+<script src="assets/js/dati.js"></script>
+<script src="assets/js/agenda.js"></script>
+</body>
+</html>
