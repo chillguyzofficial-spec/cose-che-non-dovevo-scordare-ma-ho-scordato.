@@ -85,7 +85,7 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   prova('tocco la data e torna la parte alta', await p.isVisible('[data-gp="apri-ric"]'));
   // ricorrenza
   await p.click('[data-gp="apri-ric"]'); await attendi(200);
-  await p.fill('#ric-campo', 'Marta'); await p.click('[data-gp="aggiungi-ric"]');
+  await p.click('[data-gp="tipo-ric"][data-t="compleanno"]'); await p.fill('#ric-campo', 'Marta'); await p.click('[data-gp="aggiungi-ric"]');
   prova('ricorrenza aggiunta', (await p.textContent('#gp-ricordi')).includes('Marta'));
   await foto('04-ricorrenza');
   await p.click('[data-gp="fatto"]'); await attendi(700);

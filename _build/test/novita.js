@@ -92,7 +92,17 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   await p.fill('#foto-testo', 'Il mare a novembre'); await attendi(100);
   prova('scritta sotto la foto salvata', ((await ls('foto')) || {})['2026-10-30'].testo === 'Il mare a novembre');
   await foto('03-giorno-mano-foto');
+  // a tutto schermo sul telefono
+  const pieno = await p.$eval('#gp-carta', e => { const r = e.getBoundingClientRect(); return r.left === 0 && r.top === 0 && Math.abs(r.right - innerWidth) < 1 && Math.abs(r.bottom - innerHeight) < 1; });
+  prova('pagina del giorno a tutto schermo', pieno);
+  // promemoria: visita medica con l'ora
+  await p.click('[data-gp="apri-ric"]'); await attendi(150);
+  prova('di default un appuntamento', (await p.getAttribute('.scelta.on', 'data-t')) === 'appuntamento');
+  await p.click('[data-gp="tipo-ric"][data-t="visita"]'); await attendi(100);
+  await p.fill('#ric-campo', 'Dentista'); await p.fill('#ric-ora', '10:30'); await p.click('[data-gp="aggiungi-ric"]'); await attendi(150);
+  prova('visita medica con l’ora', (await p.textContent('#gp-ricordi')).includes('✚ 10:30 · Dentista') && (await p.textContent('#gp-ricordi')).includes('solo quest'));
   await p.click('[data-gp="fatto"]'); await attendi(700);
+  prova('visita sulla pagina del libro', (await p.textContent('.giorno[data-k="2026-10-30"] .g-ric')).includes('10:30 · Dentista'));
   prova('sulla pagina del libro: disegno e polaroid', await p.isVisible('.giorno[data-k="2026-10-30"] .g-disegno') && await p.isVisible('.giorno[data-k="2026-10-30"] .g-polaroid img'));
   await foto('04-pagina-con-attacchi');
 

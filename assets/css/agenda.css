@@ -380,6 +380,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .scelta{height:38px;padding:0 13px;border-radius:19px;border:1px solid var(--rule);font-size:13px;color:var(--ink);display:flex;align-items:center;gap:6px}
 .scelta b{color:var(--c);font-weight:400}
 .scelta.on{border-color:var(--c);background:rgba(255,255,255,.6);box-shadow:inset 0 0 0 1px var(--c)}
+.ric-ora{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink)}
+.ric-ora .campo{width:auto;min-width:130px}
+.ric-ora small{font-size:11px;letter-spacing:.06em;color:var(--muted)}
 .anno{display:flex;align-items:center;gap:10px;height:36px;font-size:14px;color:var(--ink);align-self:flex-start}
 .anno span{width:18px;height:18px;border:1.5px solid var(--ink);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1}
 .anno.on span::after{content:'✓'}
@@ -473,6 +476,10 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
   .gp.tastiera .gp-illu{display:none}
   .gp.tastiera .gp-dx{margin-top:8px}
   .gp.scrive .gp-sx{display:none}
+  /* a tutto schermo: niente bordi né angoli, la carta arriva ai lati e sotto la barra del telefono */
+  .gp-carta,.gp.tastiera .gp-carta{margin:0;border-radius:0;box-shadow:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  .gp.tastiera .gp-carta{padding-bottom:0}
+  .gp-su{padding:6px 10px 4px 6px}
   .gp.scrive .gp-dx{margin-top:0;border-top:0}
   .gp.scrive .gp-breve{display:block}
   .gp.scrive .gp-giro em{display:none}

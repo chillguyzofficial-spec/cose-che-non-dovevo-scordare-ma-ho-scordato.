@@ -12,13 +12,17 @@
   const TABC = ['#9c4a2a', '#ad6a2c', '#9a7e34', '#6c7739', '#4c6858', '#56598a', '#7a4766'];
   const DOOD = ['❦', '❧', '☙', '✤', '❁', '❦', '✾', '❧'];
   // "altro" resta come chiave per compatibilità con le copie esportate dall'agenda originale
+  // appuntamenti e visite hanno anche l'ora; compleanni e ricorrenze tornano ogni anno
   const RIC = {
+    appuntamento: { g: '◷', c: '#5b4a9b', w: 'rgba(120,100,190,.16)', n: 'Appuntamento', ora: true, ph: 'Con chi o per cosa? Es. parrucchiere' },
+    visita: { g: '✚', c: '#2b6f86', w: 'rgba(70,150,180,.16)', n: 'Visita medica', ora: true, ph: 'Quale visita? Es. dentista' },
     compleanno: { g: '♥', c: '#a8402f', w: 'rgba(212,110,95,.17)', n: 'Compleanno' },
     altro: { g: '✦', c: '#46692e', w: 'rgba(110,150,80,.18)', n: 'Ricorrenza' },
     scadenza: { g: '⚑', c: '#8d5a0c', w: 'rgba(220,160,50,.2)', n: 'Scadenza' }
   };
   const CASELLA = /^\[( |x|X)\] /;
 
+  const etichetta = (r, T) => (r.ora ? r.ora + ' · ' : '') + (r.label || T.n);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const leggi = (k, d) => { try { const v = localStorage.getItem('ccnds-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
   const scrivi = (k, v) => { try { localStorage.setItem('ccnds-' + k, JSON.stringify(v)); } catch (e) {} };
@@ -253,7 +257,7 @@
       return { r, date };
     }).filter(x => x.date >= t).sort((a, b) => a.date < b.date ? -1 : 1).slice(0, 6).map(({ r, date }) => {
       const T = RIC[r.type] || RIC.altro;
-      return `<div style="font-family:var(--mano);font-weight:600;line-height:1.3;color:${T.c}">${T.g} ${breve(daKey(date))} · ${esc(r.label || T.n)}${r.yearly ? ' (ogni anno)' : ''}</div>`;
+      return `<div style="font-family:var(--mano);font-weight:600;line-height:1.3;color:${T.c}">${T.g} ${breve(daKey(date))} · ${esc(etichetta(r, T))}${r.yearly ? ' (ogni anno)' : ''}</div>`;
     });
   }
   function scordate() {
@@ -291,7 +295,7 @@
       (tm ? `<span class="g-illu">${tm.svg}</span>` : '') +
       `<div class="g-testa"><span class="g-num${oggiKey() === g.key ? ' oggi' : ''}">${g.d.getDate()}</span><span class="g-nome">${DN[g.dow]}</span><span class="g-mese">${mese}</span></div>` +
       (g.festa ? `<div class="g-festa">${esc(g.festa)}</div>` : '') +
-      (r ? `<div class="g-ric" style="color:${T.c}">${T.g} ${esc(r.label || T.n)}${rics.length > 1 ? ' +' + (rics.length - 1) : ''}</div>` : '') +
+      (r ? `<div class="g-ric" style="color:${T.c}">${T.g} ${esc(etichetta(r, T))}${rics.length > 1 ? ' +' + (rics.length - 1) : ''}</div>` : '') +
       `<div class="g-corpo">${corpo}</div>` + attacchi(g) +
       (sp && sp.tipo === 'busta' ? `<span class="busta${letto}" data-act="sorpresa" data-k="${g.key}" role="button" aria-label="Una busta con un verso per oggi"></span>` : '') +
       (sp && sp.tipo === 'foglia' ? `<span class="foglia${letto}" data-act="sorpresa" data-k="${g.key}" role="button" aria-label="Qualcosa tra le pagine">❦</span>` : '') +
@@ -341,7 +345,7 @@
         voce('IV', 'Orari', 'Scrivi «alle 20» e l’ora finisce a margine.') +
         voce('V', 'A mano e foto', '«Scrivi a mano» per disegnare col dito, «Una foto» per incollarla come una polaroid.') + `</div>`;
       return `<div class="p-guida"><div class="p-h">Piccole cose</div>` +
-        voce('VI', 'Ricorrenze', '«Ricorda questo giorno»: compleanni e scadenze che tornano ogni anno.') +
+        voce('VI', 'Da ricordare', '«Ricorda questo giorno»: appuntamenti, visite, compleanni, scadenze.') +
         voce('VII', 'Buste e biglietti', 'Tra le pagine, buste e biglietti da aprire: un verso o una battuta.') +
         voce('VIII', 'Lettere al futuro', 'Scrivila, sigillala: si apre solo nel giorno che scegli.') +
         `<div class="p-pref"><button data-act="suoni" role="switch" aria-checked="${!!S.imp.sound}"><i></i>Suoni della carta</button>` +
@@ -593,22 +597,24 @@
   function disegnaRicordi() {
     const mie = ricDi(GP.key), F = GP.forma;
     let h = mie.length ? '<div class="gp-h">Da ricordare</div>' : '';
-    h += mie.map(r => { const T = RIC[r.type] || RIC.altro; return `<div class="ricordo" style="color:${T.c}"><span>${T.g} ${esc(r.label || T.n)}</span><small>${r.yearly ? 'ogni anno' : 'solo quest’anno'}</small><button data-gp="togli-ric" data-id="${r.id}" aria-label="Togli ${esc(r.label || T.n)}">×</button></div>`; }).join('');
+    h += mie.map(r => { const T = RIC[r.type] || RIC.altro; return `<div class="ricordo" style="color:${T.c}"><span>${T.g} ${esc(etichetta(r, T))}</span><small>${r.yearly ? 'ogni anno' : 'solo quest’anno'}</small><button data-gp="togli-ric" data-id="${r.id}" aria-label="Togli ${esc(r.label || T.n)}">×</button></div>`; }).join('');
     if (F) {
-      const ph = F.type === 'compleanno' ? 'Di chi? Es. Marta' : F.type === 'scadenza' ? 'Cosa scade? Es. bollo auto' : 'Cosa ricordi? Es. anniversario';
+      const ph = RIC[F.type].ph || (F.type === 'compleanno' ? 'Di chi? Es. Marta' : F.type === 'scadenza' ? 'Cosa scade? Es. bollo auto' : 'Cosa ricordi? Es. anniversario');
       h += `<div class="gp-forma"><div class="gp-h">Ricorda questo giorno</div>` +
         `<div class="scelte" role="radiogroup">${Object.keys(RIC).map(k => `<button class="scelta${F.type === k ? ' on' : ''}" data-gp="tipo-ric" data-t="${k}" role="radio" aria-checked="${F.type === k}" style="--c:${RIC[k].c}"><b>${RIC[k].g}</b>${RIC[k].n}</button>`).join('')}</div>` +
         `<input class="campo" id="ric-campo" value="${esc(F.label)}" placeholder="${ph}" maxlength="60">` +
+        (RIC[F.type].ora ? `<label class="ric-ora"><span>Alle</span><input type="time" class="campo" id="ric-ora" value="${F.ora || ''}" aria-label="Ora"><small>se serve</small></label>` : '') +
         `<button class="anno${F.yearly ? ' on' : ''}" data-gp="ogni-anno" role="checkbox" aria-checked="${F.yearly}"><span></span>Torna ogni anno</button>` +
         `<div class="fila fine"><button class="btn" data-gp="chiudi-ric">Annulla</button><button class="btn pieno" data-gp="aggiungi-ric">Aggiungi</button></div></div>`;
     } else h += `<button class="gp-link" data-gp="apri-ric"><b>+</b>Ricorda questo giorno</button>`;
     $('#gp-ricordi').innerHTML = h;
     const c = $('#ric-campo');
     if (c) { c.addEventListener('input', () => { F.label = c.value; }); c.addEventListener('keydown', e => { if (e.key === 'Enter') aggiungiRic(); }); }
+    const o = $('#ric-ora'); if (o) o.addEventListener('input', () => { F.ora = o.value; });
   }
   function aggiungiRic() {
     const F = GP.forma; if (!F) return;
-    S.ric = [...S.ric, { id: Date.now().toString(36), date: GP.key, type: F.type, label: F.label.trim(), yearly: F.yearly }];
+    S.ric = [...S.ric, { id: Date.now().toString(36), date: GP.key, type: F.type, label: F.label.trim(), yearly: F.yearly, ...(RIC[F.type].ora && F.ora ? { ora: F.ora } : {}) }];
     scrivi('rem', S.ric); GP.forma = null; disegnaRicordi();
     $('#gp-salvato').textContent = 'Ricordo aggiunto';
   }
@@ -878,9 +884,9 @@
     else if (a === 'dopo') cambiaGiorno(1);
     else if (a === 'spunta') spunta(+b.dataset.i);
     else if (a === 'stile') stile(b.dataset.s);
-    else if (a === 'apri-ric') { GP.forma = { type: 'compleanno', label: '', yearly: true }; disegnaRicordi(); setTimeout(() => { const c = $('#ric-campo'); if (c) { c.focus({ preventScroll: true }); c.scrollIntoView({ block: 'nearest' }); } }, 30); }
+    else if (a === 'apri-ric') { GP.forma = { type: 'appuntamento', label: '', yearly: false, ora: '' }; disegnaRicordi(); setTimeout(() => { const c = $('#ric-campo'); if (c) { c.focus({ preventScroll: true }); c.scrollIntoView({ block: 'nearest' }); } }, 30); }
     else if (a === 'chiudi-ric') { GP.forma = null; disegnaRicordi(); }
-    else if (a === 'tipo-ric') { GP.forma.type = b.dataset.t; if (b.dataset.t === 'compleanno') GP.forma.yearly = true; disegnaRicordi(); }
+    else if (a === 'tipo-ric') { GP.forma.type = b.dataset.t; GP.forma.yearly = b.dataset.t === 'compleanno' || b.dataset.t === 'altro'; disegnaRicordi(); }
     else if (a === 'ogni-anno') { GP.forma.yearly = !GP.forma.yearly; disegnaRicordi(); }
     else if (a === 'aggiungi-ric') aggiungiRic();
     else if (a === 'togli-ric') { S.ric = S.ric.filter(r => r.id !== b.dataset.id); scrivi('rem', S.ric); disegnaRicordi(); }
