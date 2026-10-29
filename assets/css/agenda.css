@@ -143,7 +143,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .p-piccolo{font-size:.64em;color:var(--muted);line-height:1.6;letter-spacing:.04em}
 .p-nome{font-family:var(--mano);font-size:1.25em;color:var(--ink2);border-bottom:1px solid var(--rule);padding:0 .6em;margin:.2em 0 1.4em;min-width:60%}
 .p-nome.vuoto{color:var(--muted);font-size:.95em}
-.p-retro{position:absolute;inset:0;background:radial-gradient(circle at 30% 30%,rgba(168,80,42,.32) 0 16%,transparent 17%) 0 0/2.2em 2.2em,radial-gradient(circle at 75% 72%,rgba(150,120,50,.3) 0 12%,transparent 13%) 0 0/2.2em 2.2em,linear-gradient(#e7d7b6,#d6c29b);display:flex;align-items:center;justify-content:center}
+.p-retro{position:absolute;inset:0;background:radial-gradient(circle at 30% 30%,rgba(168,80,42,.32) 0 16%,transparent 17%) 0 0/2.2em 2.2em,radial-gradient(circle at 75% 72%,rgba(150,120,50,.3) 0 12%,transparent 13%) 0 0/2.2em 2.2em,linear-gradient(#e7d7b6,#d6c29b);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:2.4em}
 .p-cartiglio{width:72%;background:#f7efdc;border:1px solid rgba(120,80,40,.4);outline:3px double rgba(120,80,40,.35);outline-offset:3px;padding:1em .8em;text-align:center;box-shadow:0 2px 6px rgba(60,30,10,.2);transform:rotate(-1.5deg)}
 .p-elenco{position:absolute;inset:0;padding:2em 1.9em 1em .9em;display:flex;flex-direction:column;overflow:hidden}
 .pg.sx .p-elenco{padding:2em .8em 1em 1.9em}
@@ -159,6 +159,14 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .g-voce{display:flex;gap:.5em;font-size:.82em;line-height:1.4;color:var(--ink)}
 .g-voce b{flex:none;min-width:1.6em;font-family:var(--fellsc);font-weight:400;font-size:1.05em;color:var(--rust);line-height:1.35}
 .g-voce strong{display:block;font-family:var(--fell);font-style:italic;font-weight:400;font-size:1.25em;line-height:1.15;margin-bottom:.1em}
+.p-pref{display:flex;flex-direction:column;gap:.1em;margin-top:.4em;padding-top:.6em;border-top:1px solid var(--rule)}
+.p-pref button{display:flex;align-items:center;gap:.6em;min-height:2.6em;font-size:.82em;color:var(--ink);text-align:left}
+.p-pref i{flex:none;width:1.1em;height:1.1em;border:1.5px solid var(--ink2);border-radius:2px;display:flex;align-items:center;justify-content:center;font-style:normal;color:var(--ink2);font-family:var(--macchina);line-height:1}
+.p-pref [aria-checked="true"] i::after{content:'✓'}
+.taschino{position:absolute;left:1.2em;right:1.6em;bottom:1.4em;padding:.7em .8em .6em;background:linear-gradient(#ead9b5,#dcc597);border:1px solid rgba(120,80,40,.35);border-top:2px dashed rgba(120,80,40,.45);border-radius:0 0 .5em .5em;box-shadow:0 2px 5px rgba(60,30,10,.2);display:flex;flex-direction:column;gap:.15em}
+.taschino-h{font-family:var(--fellsc);font-size:.75em;letter-spacing:.08em;color:var(--rust);margin-bottom:.2em}
+.taschino button{min-height:2.4em;font-size:.72em;color:var(--ink);text-align:left;border-bottom:1px dashed rgba(120,80,40,.3)}
+.taschino button:last-child{border-bottom:0}
 .p-prova{margin-top:auto;display:flex;flex-direction:column;gap:.45em}
 .p-prova button{min-height:2.8em;border:1px dashed var(--rule);border-radius:1.4em;font-size:.78em;padding:0 1em;color:var(--ink);text-align:left}
 .p-numeri{display:grid;grid-template-columns:auto 1fr;gap:.55em .6em;align-items:baseline;margin-top:1.1em}

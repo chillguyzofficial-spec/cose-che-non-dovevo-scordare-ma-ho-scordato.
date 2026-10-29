@@ -279,7 +279,9 @@
   }
   const nome = () => (S.imp.nome || '').trim();
   function paginaFissa(s, L) {
-    if (s === 0 && L) return `<div class="p-retro"><div class="p-cartiglio"><div style="font-family:var(--fellsc);font-size:.95em;letter-spacing:.06em">Se ritrovata</div><div class="p-piccolo" style="margin:.5em 0">restituire a</div><div style="font-family:var(--mano);font-size:1.4em;color:var(--ink2);border-bottom:1px solid var(--rule)">${nome() ? esc(nome()) : '&nbsp;'}</div><div style="font-family:var(--mano);font-size:.95em;margin-top:.6em;line-height:1.25">Grazie. Non sapevo più di averla.</div></div></div>`;
+    // copertina interna: «Se ritrovata» e il taschino con la copia delle note
+    if (s === 0 && L) return `<div class="p-retro"><div class="p-cartiglio"><div style="font-family:var(--fellsc);font-size:.95em;letter-spacing:.06em">Se ritrovata</div><div class="p-piccolo" style="margin:.5em 0">restituire a</div><div style="font-family:var(--mano);font-size:1.4em;color:var(--ink2);border-bottom:1px solid var(--rule)">${nome() ? esc(nome()) : '&nbsp;'}</div><div style="font-family:var(--mano);font-size:.95em;margin-top:.6em;line-height:1.25">Grazie. Non sapevo più di averla.</div></div>` +
+      `<div class="taschino"><div class="taschino-h">Nel taschino</div><button data-act="esporta">Salva una copia delle note</button><button data-act="importa">Riprendi una copia</button><button data-act="installa">Tienila sul telefono</button></div></div>`;
     if (s === 0) return `<div class="p-centro"><div class="p-occhiello">Agenda settimanale</div><div class="p-fregio">❦</div><div class="p-titolo">Cose Che Non Dovevo Scordare</div><div class="p-sotto">(Ma Ho Scordato)</div><div class="p-filo"></div>` +
       `<div class="p-piccolo">${breve(inizio).replace(/ (\d\d)$/, ' 20$1')}<br>${breve(fine).replace(/ (\d\d)$/, ' 20$1')}</div><div style="flex:1"></div>` +
       `<div class="p-occhiello" style="font-size:.6em">Questa agenda appartiene a</div><button class="p-nome${nome() ? '' : ' vuoto'}" data-act="nome">${nome() ? esc(nome()) : 'tocca e scrivi il tuo nome'}</button>` +
@@ -295,6 +297,7 @@
         voce('V', 'Ricorrenze', '«Ricorda questo giorno»: compleanni e scadenze che tornano ogni anno.') +
         voce('VI', 'Segnalibro', '«Segna», in basso, lascia il nastro sulla pagina.') +
         voce('VII', 'Versi e sorprese', 'Nei giorni speciali scrive un poeta. Tra le pagine c’è qualcosa di nascosto.') +
+        `<div class="p-pref"><button data-act="suoni" role="switch" aria-checked="${!!S.imp.sound}"><i></i>Suoni della carta</button><button data-act="notte" role="switch" aria-checked="${!!S.imp.night}"><i></i>Pagine di sera</button></div>` +
         `<div class="p-prova"><button data-act="oggi">Vai a oggi ›</button><button data-act="nome">${nome() ? 'Cambia il nome' : 'Scrivi il tuo nome'} ›</button></div></div>`;
     }
     if (L) {
@@ -357,26 +360,10 @@
   function chiudiVeli() { veli.forEach(v => { $(v).hidden = true; }); }
   function apriVelo(v) { chiudiVeli(); $(v).hidden = false; }
 
-  function menu() {
-    const bm = S.imp.bookmark, c = S.spread;
-    const voci = [
-      ['suoni', 'Suoni', S.imp.sound ? 'Attivi' : 'Spenti'],
-      ['notte', 'Modalità notte', S.imp.night ? 'Accesa' : 'Spenta'],
-      ['nome', 'Il mio nome', nome() || 'da scrivere'],
-      ['nastro', bm === c ? 'Togli il segnalibro da qui' : 'Metti il segnalibro qui', ''],
-      ['al-nastro', 'Vai alla pagina segnata', bm == null ? 'nessuna' : ''],
-      ['in-fondo', 'Cose scordate e numeri', ''],
-      ['installa', 'Tienila sul telefono', ''],
-      ['esporta', 'Salva una copia delle note', 'file'],
-      ['importa', 'Riprendi una copia', 'file'],
-      ['chiudi-libro', 'Chiudi l’agenda', '']
-    ];
-    $('#menu').innerHTML = '<div class="maniglia"></div>' + voci.map(([a, l, v]) => `<button class="voce" data-act="${a}"><span>${l}</span><small>${esc(v)}</small></button>`).join('');
-    apriVelo('#v-menu');
-  }
   function infoInstalla() {
     if (installa) { installa.prompt(); installa = null; chiudiVeli(); return; }
     const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    apriVelo('#v-menu');
     $('#menu').innerHTML = `<div class="maniglia"></div><div class="dentro"><div class="h-foglio">Tienila sul telefono</div>` +
       `<div class="nota-p" style="font-size:14px;color:var(--ink)">${ios ? 'Tocca <b>Condividi</b> (il quadrato con la freccia) e poi <b>Aggiungi alla schermata Home</b>.' : 'Apri il menu del browser (<b>⋮</b>) e scegli <b>Installa app</b> o <b>Aggiungi a schermata Home</b>.'}</div>` +
       `<div class="nota-p">Così si apre come un’app, funziona anche senza rete e il telefono non cancella le note. Le note restano solo su questo telefono: ogni tanto salvane una copia dal menu.</div>` +
@@ -725,12 +712,12 @@
       case 'vai-giorno': vaiGiorno(k); break;
       case 'nastro': { const on = S.imp.bookmark === S.spread; setImp({ bookmark: on ? null : S.spread }); chiudiVeli(); disegna(); avviso(on ? 'Segnalibro tolto' : 'Segnalibro su questa pagina'); break; }
       case 'al-nastro': chiudiVeli(); if (S.imp.bookmark != null) vai(S.imp.bookmark); break;
-      case 'menu': menu(); break;
+      case 'vai-pagina': chiudiVeli(); vai(k === 'fondo' || b.dataset.p === 'fondo' ? LAST : +b.dataset.p); break;
       case 'cerca': apriCerca(); break;
       case 'nome': chiediNome(); break;
       case 'salva-nome': salvaNome(); break;
-      case 'suoni': setImp({ sound: !S.imp.sound }); sveglia(); menu(); break;
-      case 'notte': setImp({ night: !S.imp.night }); disegna(); menu(); break;
+      case 'suoni': setImp({ sound: !S.imp.sound }); sveglia(); disegna(); avviso(S.imp.sound ? 'Suoni accesi' : 'Suoni spenti'); break;
+      case 'notte': setImp({ night: !S.imp.night }); disegna(); break;
       case 'in-fondo': chiudiVeli(); vai(LAST); break;
       case 'installa': infoInstalla(); break;
       case 'esporta': esporta(); break;

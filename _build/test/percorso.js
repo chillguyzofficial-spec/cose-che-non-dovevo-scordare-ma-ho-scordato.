@@ -113,10 +113,20 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   prova('dalla ricerca al giorno', (await p.textContent('#t-titolo')).includes('2026') || (await p.textContent('#t-titolo')).includes('2027'));
 
   // notte + nome
-  await p.click('[data-act="menu"]'); await p.click('[data-act="notte"]'); await p.click('#v-menu', { position: { x: 20, y: 20 } });
+  // niente menu: le preferenze stanno nella pagina «Come si usa», raggiunta da «Vai a…»
+  await p.click('[data-act="vaia"]'); await p.click('[data-act="vai-pagina"][data-p="1"]'); await attendi(1700);
+  prova('Vai a… porta a Come si usa', (await p.textContent('#t-titolo')) === 'Come si usa');
+  await p.click('.p-pref [data-act="notte"]');
   prova('notte accesa', await p.evaluate(() => document.getElementById('app').classList.contains('notte')));
   await foto('09-notte');
-  await p.click('[data-act="menu"]'); await p.click('[data-act="nome"]'); await p.fill('#nome-campo', 'Giulia'); await p.click('[data-act="salva-nome"]');
+  await p.click('.p-prova [data-act="nome"]'); await p.fill('#nome-campo', 'Giulia'); await p.click('[data-act="salva-nome"]');
+  // il taschino nella copertina interna
+  await p.click('[data-act="prec"]'); await attendi(1100);
+  prova('taschino con la copia delle note', await p.isVisible('.taschino [data-act="esporta"]'));
+  prova('nome nel Se ritrovata', (await p.textContent('.p-retro')).includes('Giulia'));
+  await foto('11-taschino');
+  const [scarico] = await Promise.all([p.waitForEvent('download'), p.click('.taschino [data-act="esporta"]')]);
+  prova('copia delle note scaricata', /note-agenda-.*\.json/.test(scarico.suggestedFilename()));
   // segnalibro: nastro sulla pagina segnata, coda dal lato giusto quando si è altrove
   await p.click('#b-nastro'); await attendi(200);
   prova('nastro sulla pagina segnata', await p.isVisible('.nastro'));

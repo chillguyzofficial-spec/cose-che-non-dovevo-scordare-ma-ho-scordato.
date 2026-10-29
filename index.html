@@ -21,9 +21,8 @@
 <div class="app chiusa" id="app">
 
   <div class="barra-su">
-    <button class="ico ico-menu" data-act="menu" aria-label="Menu"><span></span><span></span><span></span></button>
-    <div class="testata"><div class="testata-titolo" id="t-titolo">Cose Che Non Dovevo Scordare</div><div class="testata-sotto" id="t-sotto"></div></div>
     <button class="ico" data-act="cerca" aria-label="Cerca"><span class="ico-cerca"></span></button>
+    <div class="testata"><div class="testata-titolo" id="t-titolo">Cose Che Non Dovevo Scordare</div><div class="testata-sotto" id="t-sotto"></div></div>
     <button class="chiudi-libro" data-act="chiudi-libro" aria-label="Chiudi l'agenda"><span class="ico-libro"></span><span class="chiudi-testo">Chiudi</span></button>
   </div>
 
@@ -64,13 +63,14 @@
   </div>
 </div>
 
-<!-- menu -->
+<!-- spiegazioni (tienila sul telefono) -->
 <div class="velo" id="v-menu" hidden data-chiudi><div class="foglio-basso" id="menu"></div></div>
 <!-- vai a -->
 <div class="velo" id="v-vaia" hidden data-chiudi><div class="foglio-basso"><div class="maniglia"></div><div class="dentro">
   <div class="h-foglio">Vai a una data</div>
   <input type="date" class="campo" id="vaia-data">
   <div class="mesi" id="mesi"></div>
+  <div class="fila"><button class="chip" data-act="vai-pagina" data-p="1">Come si usa</button><button class="chip" data-act="vai-pagina" data-p="fondo">In fondo: cose scordate e numeri</button></div>
 </div></div></div>
 <!-- nome -->
 <div class="velo" id="v-nome" hidden data-chiudi><div class="foglio-basso"><div class="maniglia"></div><div class="dentro">

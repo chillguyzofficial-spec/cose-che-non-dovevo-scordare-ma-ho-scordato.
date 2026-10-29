@@ -34,7 +34,7 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
     prova(nome + ': pagina del giorno nello schermo', gp);
     if (FOTO) await p.screenshot({ path: path.join(FOTO, nome + '-giorno.png') });
     await p.click('[data-gp="fatto"]'); await p.waitForTimeout(600);
-    await p.click('[data-act="menu"]'); await p.click('[data-act="in-fondo"]'); await p.waitForTimeout(1600);
+    await p.click('[data-act="vaia"]'); await p.click('[data-act="vai-pagina"][data-p="fondo"]'); await p.waitForTimeout(1700);
     prova(nome + ': ultima pagina', (await p.textContent('#pagine')).includes('Cose che ho scordato'));
     if (FOTO && nome === 'iphone-13') await p.screenshot({ path: path.join(FOTO, nome + '-fondo.png') });
     prova(nome + ': nessun errore', !errori.length); if (errori.length) console.log(errori);
