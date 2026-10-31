@@ -1,6 +1,9 @@
 // Novità: scrivere a mano, polaroid, lettera al futuro, copertina personalizzata, copia delle note con tutto
 // uso: node _build/test/novita.js [chromium|webkit] [cartella-foto]
 const pw = require('C:/Users/Claude FK/.claude/projects/hedonè progetto serio/node_modules/playwright');
+
+// «Vai a…»: dal calendario in testa alla pagina; sul frontespizio (senza testa) dalla voce «Mese» della barra
+const vaiAda = async pp => { const h = pp.locator('#pagine .pt [data-act="vaia"]'); if (await h.count()) await h.first().click(); else await pp.click('#piede [data-act="vaia"]'); };
 const path = require('path'), fs = require('fs');
 process.env.PORTA = '8993'; require('../server.js');
 const MOTORE = process.argv[2] || 'chromium', FOTO = process.argv[3]; if (FOTO) fs.mkdirSync(FOTO, { recursive: true });
@@ -29,11 +32,13 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
 
   await p.goto(URL); await attendi(700);
   // ---------- copertina: si decora ad agenda chiusa ----------
-  prova('«Personalizza» ad agenda chiusa', await p.isVisible('.barra-giu .decora'));
-  await p.click('.barra-giu .decora'); await attendi(200);
+  await p.click('.elastico', { force: true }); await attendi(3600);
+  await p.click('#pagine .pt [data-act="altro"]'); await attendi(250);
+  prova('«…» apre il foglio Personalizza', await p.isVisible('#atelier'));
+  await p.click('[data-act="at-scheda"][data-t="copertina"]'); await attendi(2800);
   prova('pannello della copertina', await p.isVisible('#atelier'));
   await p.click('[data-act="at-colore"][data-c="notte"]'); await attendi(100);
-  prova('colore blu notte', (await p.evaluate(() => document.getElementById('libro').style.getPropertyValue('--cop'))) === '#1c2742');
+  prova('colore blu notte', (await p.evaluate(() => document.getElementById('libro').style.getPropertyValue('--cop'))) === '#1f2c48');
   await p.click('[data-act="at-adesivo"][data-t="cuore"]'); await attendi(150);
   prova('adesivo attaccato', await p.locator('#cop-decoro .ades').count() === 1);
   prova('adesivo scelto con i comandi', await p.isVisible('[data-act="at-ruota"]'));
@@ -51,7 +56,7 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   const rit = (await ls('set')).cop.adesivi[0];
   prova('ruotato e ingrandito', rit.r === (dopo.r + 15) % 360 && rit.s > dopo.s, rit);
   await p.click('[data-act="at-ok"]');
-  await p.click('[data-act="at-adesivo"][data-t="stella"]'); await p.click('[data-act="at-ok"]');
+  await p.click('[data-act="at-adesivo"][data-t="luna"]'); await p.click('[data-act="at-ok"]');
   // nome in oro: senza nome lo chiede
   await p.click('[data-act="at-oro"]'); await attendi(150);
   prova('chiede il nome per la copertina', await p.isVisible('#v-nome'));
@@ -73,7 +78,7 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   prova('poi l\u2019agenda si apre', await p.evaluate(() => document.getElementById('app').classList.contains('aperta')));
 
   // ---------- pagina del giorno: a mano ----------
-  await p.click('.barra-giu [data-act="oggi"]'); await attendi(1700);
+  await p.click('#piede [data-v="sett"]'); await attendi(1700);
   await p.click('.giorno[data-k="2026-10-30"]'); await attendi(500);
   prova('«Scrivi a mano» e «Una foto» nella pagina del giorno', await p.isVisible('[data-gp="disegna"]') && await p.isVisible('[data-gp="foto"]'));
   await p.click('.gp-aggiungi [data-gp="disegna"]'); await attendi(300);
@@ -119,10 +124,10 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   prova('nella pagina di oggi: lettera spedita', (await p.textContent('#gp-lettere')).includes('si apre il 5 novembre 2026'));
   await p.click('[data-gp="fatto"]'); await attendi(600);
   // la ricerca non trova le lettere sigillate
-  await p.click('[data-act="cerca"]'); await p.fill('#cerca-campo', 'quel giorno al mare'); await attendi(150);
+  await p.click('#pagine .pt [data-act="cerca"]'); await p.fill('#cerca-campo', 'quel giorno al mare'); await attendi(150);
   prova('lettera sigillata non si trova cercando', (await p.textContent('#cerca-ris')).includes('Niente'));
   await p.click('#v-cerca [data-act="chiudi"]');
-  await p.click('[data-act="vaia"]'); await p.fill('#vaia-data', '2026-11-05'); await p.dispatchEvent('#vaia-data', 'change'); await attendi(1700);
+  await vaiAda(p); await p.fill('#vaia-data', '2026-11-05'); await p.dispatchEvent('#vaia-data', 'change'); await attendi(1700);
   prova('busta della lettera sulla pagina del 5', await p.isVisible('.giorno[data-k="2026-11-05"] .lettera'));
   await p.click('.giorno[data-k="2026-11-05"] .lettera'); await attendi(200);
   prova('prima del giorno resta sigillata', (await p.textContent('#avviso-testo')).includes('Sigillata') && await p.isHidden('#v-sorpresa'));
@@ -130,7 +135,7 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   // ---------- copia delle note con tutto ----------
   // ---------- «Personalizza»: un pannello solo, ogni scheda porta il libro dove serve ----------
   prova('niente più «Sfondo» sparso sulla pagina', await p.locator('.p-sfondo').count() === 0);
-  await p.click('.barra-su .ico-pers'); await attendi(250);
+  await p.click('#pagine .pt [data-act="altro"]'); await attendi(250);
   prova('Personalizza ad agenda aperta: scheda Carta', await p.isVisible('#atelier') && (await p.getAttribute('[data-act="at-scheda"][aria-selected="true"]', 'data-t')) === 'carta');
   prova('tre schede', await p.locator('[data-act="at-scheda"]').count() === 3);
   prova('l’agenda resta aperta sulla carta', await p.evaluate(() => document.getElementById('app').classList.contains('aperta')));
@@ -155,8 +160,8 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   prova('carta avorio dal pannello', await p.evaluate(() => document.documentElement.classList.contains('t-avorio')));
   await p.click('[data-act="tema"][data-t="carta"]');
   await p.click('[data-act="at-fine"]'); await attendi(200);
-  prova('Fatto chiude il pannello', await p.isHidden('#atelier') && await p.isVisible('.barra-su .ico-pers'));
-  await p.click('[data-act="vaia"]'); await p.click('[data-act="vai-pagina"][data-p="0"]'); await attendi(1700);
+  prova('Fatto chiude il pannello', await p.isHidden('#atelier') && await p.isVisible('#piede'));
+  await vaiAda(p); await p.click('[data-act="vai-pagina"][data-p="0"]'); await attendi(1700);
   await foto('07-prima-pagina-fiori');
   const [dl] = await Promise.all([p.waitForEvent('download'), p.click('[data-act="esporta"]')]);
   const copia = JSON.parse(fs.readFileSync(await dl.path(), 'utf8'));
@@ -175,7 +180,7 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   prova('lettera aperta e leggibile', (await q.textContent('#gp-lettere')).includes('ricordati di quel giorno al mare'));
   if (FOTO) await q.screenshot({ path: path.join(FOTO, MOTORE + '-05-lettera-aperta.png') });
   await q.click('[data-gp="fatto"]'); await q.waitForTimeout(600);
-  await q.click('[data-act="vaia"]'); await q.fill('#vaia-data', '2026-10-30'); await q.dispatchEvent('#vaia-data', 'change'); await q.waitForTimeout(1700);
+  await vaiAda(q); await q.fill('#vaia-data', '2026-10-30'); await q.dispatchEvent('#vaia-data', 'change'); await q.waitForTimeout(1700);
   prova('foto ancora lì dopo la riapertura', await q.isVisible('.giorno[data-k="2026-10-30"] .g-polaroid img'));
   const nat = await q.$eval('.giorno[data-k="2026-10-30"] .g-polaroid img', i => i.naturalWidth);
   prova('foto caricata davvero', nat > 0, nat);
@@ -184,12 +189,12 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   const ctx3 = await b.newContext(dev); await ctx3.addInitScript(fissa('2026-10-29'));
   const r = await ctx3.newPage(); r.setDefaultTimeout(6000); r.on('pageerror', e => errori.push(e.message));
   await r.goto(URL); await r.waitForTimeout(700); await r.click('.elastico', { force: true }); await r.waitForTimeout(3600);
-  await r.click('[data-act="vaia"]'); await r.click('[data-act="vai-pagina"][data-p="0"]'); await r.waitForTimeout(1700);
+  await vaiAda(r); await r.click('[data-act="vai-pagina"][data-p="0"]'); await r.waitForTimeout(1700);
   const [sc] = await Promise.all([r.waitForEvent('filechooser'), r.click('[data-act="importa"]')]);
   await sc.setFiles(await dl.path()); await r.waitForTimeout(1200);
   const rip = await r.evaluate(() => ({ dis: !!JSON.parse(localStorage.getItem('ccnds-dis') || '{}')['2026-10-30'], lett: (JSON.parse(localStorage.getItem('ccnds-lettere') || '[]')).length, cop: (JSON.parse(localStorage.getItem('ccnds-set') || '{}').cop || {}).colore }));
   prova('copia ripresa: disegno, lettera, copertina', rip.dis && rip.lett === 1 && rip.cop === 'notte', rip);
-  await r.click('[data-act="vaia"]'); await r.fill('#vaia-data', '2026-10-30'); await r.dispatchEvent('#vaia-data', 'change'); await r.waitForTimeout(1700);
+  await vaiAda(r); await r.fill('#vaia-data', '2026-10-30'); await r.dispatchEvent('#vaia-data', 'change'); await r.waitForTimeout(1700);
   prova('copia ripresa: la foto', await r.isVisible('.giorno[data-k="2026-10-30"] .g-polaroid img'));
 
   prova('nessun errore', !errori.length, errori);

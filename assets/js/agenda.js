@@ -66,17 +66,28 @@
     // sul telefono in verticale si vede una pagina alla volta: pos = facciata; altrimenti pos = doppia pagina
     singolo: false, pos: 0
   };
-  const maxPos = () => S.singolo ? 2 * LAST + 1 : LAST;
-  const spreadDiPos = p => S.singolo ? p >> 1 : p;
-  const posDiSpread = s => S.singolo ? 2 * s : s;
-  // la facciata dove sta un giorno: lun-mer a sinistra, gio-dom a destra
-  const posDiGiorno = g => S.singolo ? 2 * spreadDi(g.i) + (g.dow < 3 ? 0 : 1) : spreadDi(g.i);
+  // le facciate del telefono: la settimana intera su una sola, le pagine fisse (frontespizio, guida, fondo) su due
+  const FAC = [], PRIMA_FAC = [];
+  for (let s = 0; s <= LAST; s++) {
+    PRIMA_FAC[s] = FAC.length;
+    if (s >= PRIMA && s < LAST) FAC.push([s, 'tutta']); else FAC.push([s, 'sx'], [s, 'dx']);
+  }
+  const maxPos = () => S.singolo ? FAC.length - 1 : LAST;
+  const spreadDiPos = p => S.singolo ? FAC[Math.max(0, Math.min(FAC.length - 1, p))][0] : p;
+  const posDiSpread = s => S.singolo ? PRIMA_FAC[s] : s;
+  const posDiGiorno = g => posDiSpread(spreadDi(g.i));
   let flip = null, noClick = false, ptr = null, raf = 0, pronto = false;
   const setImp = p => { Object.assign(S.imp, p); scrivi('set', S.imp); };
-  const PELLI = { cuoio: ['Cuoio', '#4a2c1d'], nero: ['Nero', '#1f1b19'], bosco: ['Verde bosco', '#22382a'], notte: ['Blu notte', '#1c2742'], bordeaux: ['Bordeaux', '#4b1a23'], cipria: ['Cipria', '#a3786b'] };
+  // «stagione»: la pelle cambia colore con la stagione (verde, petrolio, bordeaux, blu notte)
+  // pelli vere (toni scuri e caldi da legatoria), più «su misura» col colore che si vuole; le scritte: oro, argento, rame, bianco, nero o su misura
+  const PELLI = { stagione: ['Segue la stagione', 'conic-gradient(#3f5a3c 0 25%,#2f5f6b 0 50%,#6e2a22 0 75%,#2c4a6e 0)'], cuoio: ['Cuoio', '#4a2c1d'], tabacco: ['Tabacco', '#6b4426'], bordeaux: ['Bordeaux', '#5a1d25'], bosco: ['Verde bosco', '#263d2e'], notte: ['Blu notte', '#1f2c48'], ardesia: ['Ardesia', '#3a4047'], nero: ['Nero', '#1d1a18'] };
+  const SCRITTE = { oro: ['Oro', '#f6dc95', '#c9a24a', '#8a6420'], argento: ['Argento', '#fbfbfb', '#bfc4c9', '#6c7279'], rame: ['Rame', '#f6c7a6', '#b8683f', '#6a3214'], bianco: ['Bianco', '#ffffff', '#efe8dc', '#b9ae9c'], nero: ['Nero', '#5a534d', '#221e1b', '#000000'] };
+  // da un colore scelto a mano, le tre sfumature della scritta in rilievo (chiara, piena, scura)
+  const sfuma = (hex, k) => '#' + [1, 3, 5].map(i => { const v = parseInt(hex.slice(i, i + 2), 16), t = k > 0 ? v + (255 - v) * k : v * (1 + k); return Math.round(Math.max(0, Math.min(255, t))).toString(16).padStart(2, '0'); }).join('');
+  const tinteScritta = s => SCRITTE[s] ? SCRITTE[s].slice(1) : /^#[0-9a-f]{6}$/i.test(s || '') ? [sfuma(s, .45), s, sfuma(s, -.45)] : SCRITTE.oro.slice(1);
   const copFronte = $('.cop-fronte'), decoro = $('#cop-decoro');
-  const cop = () => Object.assign({ colore: 'cuoio', oro: false, adesivi: [], tratti: [] }, S.imp.cop);
-  const personalizzata = () => { const c = cop(); return c.colore !== 'cuoio' || c.oro || c.adesivi.length || c.tratti.length; };
+  const cop = () => Object.assign({ colore: 'stagione', oro: false, adesivi: [], tratti: [] }, S.imp.cop);
+  const personalizzata = () => { const c = cop(); return c.colore !== 'stagione' || c.oro || c.adesivi.length || c.tratti.length; };
   // le misure della copertina senza la rotazione (aperta è girata)
   const altoCop = () => copFronte.offsetWidth ? 1000 * copFronte.offsetHeight / copFronte.offsetWidth : 1500;
   // chi aveva la vecchia «modalità notte» la ritrova come carta nera
@@ -95,12 +106,17 @@
     }
     // su PC il libro è più grande e meno allungato
     const largo = W >= 900;
-    const pw = singolo ? Math.floor(Math.min(W - 36, 480, (H - 40) / (S.atelier ? 1.62 : 1.45)))
-      : Math.max(120, Math.floor(Math.min((W - 46) / 2, largo ? 520 : 440, largo ? (H - 34) / 1.45 : 1e9)));
-    const ph = singolo ? Math.floor(Math.min(H - 40, pw * 1.62)) : Math.max(300, Math.floor(Math.min(H - 34, pw * 3.2)));
-    if (pw === S.pw && ph === S.ph) return;
-    S.pw = pw; S.ph = ph;
-    libro.style.setProperty('--pw', pw + 'px'); libro.style.setProperty('--ph', ph + 'px');
+    // sotto le pagine, dentro la pelle: la barra delle viste, o il foglio «Personalizza» quando è aperto
+    const at = $('#atelier'), sotto = S.atelier && at.offsetHeight ? at.offsetHeight + 6 : largo ? 66 : 58;
+    const Hs = H - sotto;
+    // decorando la copertina il libro chiuso tiene le sue proporzioni (gli adesivi non si spostano);
+    // con il foglio aperto sulle pagine invece resta largo come lo schermo e si accorcia soltanto
+    const pw = singolo ? Math.floor(Math.min(W - 26, 480, S.atelier && S.atelier.tab !== 'copertina' ? 1e9 : (Hs - 26) / (S.atelier ? 1.62 : 1.45)))
+      : Math.max(120, Math.floor(Math.min((W - 46) / 2, largo ? 520 : 440, largo ? (Hs - 34) / 1.45 : 1e9)));
+    const ph = singolo ? Math.floor(Math.min(Hs - 26, pw * 1.62)) : Math.max(300, Math.floor(Math.min(Hs - 34, pw * 3.2)));
+    if (pw === S.pw && ph === S.ph && sotto === S.sotto) return;
+    S.pw = pw; S.ph = ph; S.sotto = sotto;
+    libro.style.setProperty('--pw', pw + 'px'); libro.style.setProperty('--ph', ph + 'px'); scena.style.setProperty('--sotto', sotto + 'px');
     libro.style.setProperty('--fs', Math.max(10, Math.min(largo ? 20 : singolo ? 16 : 17, pw / (singolo ? 21 : 14.5), ph / 30)).toFixed(2) + 'px');
     disegnaCopertina();
     if (S.fase === 'aperta') disegna();
@@ -200,7 +216,7 @@
   function fineFlip(commit) { const f = flip; flip = null; S.flip = null; if (commit && f) { S.pos = f.to; S.spread = spreadDiPos(f.to); } disegna(); }
   const sopprimi = () => { noClick = true; clearTimeout(sopprimi.t); sopprimi.t = setTimeout(() => { noClick = false; }, 80); };
 
-  libro.addEventListener('pointerdown', e => { if (!$('#gp').hidden || (S.atelier && S.atelier.tab === 'copertina')) return; ptr = { x: e.clientX, y: e.clientY, t: performance.now(), drag: false }; });
+  libro.addEventListener('pointerdown', e => { if (!$('#gp').hidden || (S.atelier && S.atelier.tab === 'copertina') || e.target.closest('#piede, #atelier')) return; ptr = { x: e.clientX, y: e.clientY, t: performance.now(), drag: false }; });
   libro.addEventListener('pointermove', e => {
     const P = ptr; if (!P) return;
     const dx = e.clientX - P.x, dy = e.clientY - P.y;
@@ -223,6 +239,36 @@
   };
   libro.addEventListener('pointerup', suSu); libro.addEventListener('pointercancel', suSu);
 
+  // la barra in fondo al libro: «Oggi» apre la pagina di oggi, il sigillo «＋» la apre pronta per scrivere,
+  // «Settimana» torna alla settimana di oggi; «Mese» apre il calendario del mese
+  function apriOggi(scrivere) {
+    const k = giorni[oggiIdx()].key, g = perKey[k], qui = posDiGiorno(g) === S.pos;
+    const fai = () => { apriGiorno(k, pagineEl.querySelector(`.giorno[data-k="${k}"]`)); if (scrivere && !gp.hidden) fuocoRiga(0, 0, false); };
+    if (qui) fai(); else vaiPos(posDiGiorno(g), () => setTimeout(fai, 60));
+  }
+  function vista(v) {
+    if (v === 'mese') apriMese();
+    else vaiGiorno(giorni[oggiIdx()].key);
+  }
+  // il mese: il calendario di quello che si sta guardando (o di oggi), un puntino sui giorni in cui si è scritto
+  function apriMese() {
+    const c = S.spread, d = c >= PRIMA && c < LAST ? giorni[(c - PRIMA) * 7 + 3].d : daKey(oggiKey());
+    S.mese = new Date(d.getFullYear(), d.getMonth(), 1); disegnaMese(); apriVelo('#v-mese');
+  }
+  function disegnaMese() {
+    const m = S.mese, y = m.getFullYear(), mo = m.getMonth(), vuoti = (m.getDay() + 6) % 7, nGiorni = new Date(y, mo + 1, 0).getDate();
+    const primo = daKey(D.INIZIO), ultimo = daKey(D.FINE), puoPrima = new Date(y, mo, 0) >= new Date(primo.getFullYear(), primo.getMonth(), 1), puoDopo = new Date(y, mo + 1, 1) <= ultimo;
+    let celle = '';
+    for (let i = 0; i < vuoti; i++) celle += '<span></span>';
+    for (let g = 1; g <= nGiorni; g++) {
+      const k = ymd(new Date(y, mo, g, 12)), info = perKey[k], dentro = info && info.dentro, n = S.note[k];
+      const scritto = n && (n.text || '').split('\n').some(x => x.replace(CASELLA, '').trim()), ric = ricDi(k).length;
+      celle += dentro ? `<button class="mg${k === oggiKey() ? ' oggi' : ''}${info.festa ? ' festa' : ''}" data-act="vai-giorno" data-k="${k}" aria-label="${lungo(info.d)}${scritto ? ', scritto' : ''}"><b>${g}</b>${scritto || ric ? `<i class="${ric ? 'ric' : ''}"></i>` : ''}</button>` : `<span class="mg fuori">${g}</span>`;
+    }
+    $('#mese').innerHTML = `<div class="m-testa"><button class="m-giro" data-act="mese-prec" aria-label="Mese prima" ${puoPrima ? '' : 'disabled'}>‹</button><div class="h-foglio">${M[mo]} ${y}</div><button class="m-giro" data-act="mese-succ" aria-label="Mese dopo" ${puoDopo ? '' : 'disabled'}>›</button></div>` +
+      `<div class="m-griglia">${['L', 'M', 'M', 'G', 'V', 'S', 'D'].map(x => `<em>${x}</em>`).join('')}${celle}</div>` +
+      '<div class="m-nota"><i></i> scritto · <i class="ric"></i> da ricordare · tocca un giorno per andare alla sua settimana</div>';
+  }
   function vaiGiorno(key, lampo = true) {
     const g = perKey[key]; if (!g) return;
     chiudiVeli();
@@ -246,9 +292,17 @@
     for (const k of keys) { const t = daKey(k); serie = prima && Math.round((t - prima) / 864e5) === 1 ? serie + 1 : 1; lunga = Math.max(lunga, serie); prima = t; }
     let ora = 0; const d = new Date(); d.setHours(12); if (!set.has(ymd(d))) d.setDate(d.getDate() - 1);
     while (set.has(ymd(d))) { ora++; d.setDate(d.getDate() - 1); }
-    let tot = 0, fatte = 0; keys.forEach(k => N[k].text.split('\n').forEach(l => { const c = CASELLA.exec(l); if (c) { tot++; if (c[1] !== ' ') fatte++; } }));
+    let tot = 0, fatte = 0, parole = 0; const dow = [0, 0, 0, 0, 0, 0, 0], mesi = {};
+    keys.forEach(k => {
+      N[k].text.split('\n').forEach(l => { const c = CASELLA.exec(l); if (c) { tot++; if (c[1] !== ' ') fatte++; } parole += l.replace(CASELLA, '').split(/\s+/).filter(Boolean).length; });
+      const d = daKey(k); dow[(d.getDay() + 6) % 7]++; const m = k.slice(0, 7); mesi[m] = (mesi[m] || 0) + 1;
+    });
+    // i mesi dell'agenda, uno per uno, con i giorni scritti
+    const elenco = []; for (let d = new Date(inizio.getFullYear(), inizio.getMonth(), 1); d <= fine; d.setMonth(d.getMonth() + 1)) { const m = ymd(d).slice(0, 7); elenco.push({ m, nome: MS[d.getMonth()], anno: d.getFullYear(), n: mesi[m] || 0 }); }
+    const giornoTop = Math.max(...dow) ? DN[dow.indexOf(Math.max(...dow))] : '';
     const frase = !keys.length ? 'Le pagine aspettano, senza fretta.' : lunga >= 7 ? 'Una settimana intera senza saltare un giorno.' : 'Ogni pagina scritta è una cosa salvata.';
-    return { scritti: keys.length, lunga, ora, caselle: fatte + ' / ' + tot, frase };
+    return { scritti: keys.length, lunga, ora, fatte, tot, parole, mesi: elenco, giornoTop, frase,
+      foto: Object.keys(S.foto).length, disegni: Object.keys(S.dis).length, lettere: S.lettere.length };
   }
   function prossime() {
     const t = oggiKey();
@@ -283,7 +337,21 @@
       (ora ? `<span class="g-ora">${ora}</span>` : '') +
       `<span class="t">${testo ? esc(testo) : '&nbsp;'}</span></div>`;
   }
-  function giornoHTML(g, L, j) {
+  // gli sticker della stagione stanno in fila: ogni settimana ne prende due nuovi (uno in testa, uno su un giorno senza
+  // busta, biglietto né festa), così nessuno torna finché non sono passati tutti; mai lo stesso due volte nella stessa settimana
+  const STK = window.STICKER || {};
+  const stImg = (st, n, cls, r) => { const m = STK[st] && STK[st][n]; return m ? `<img class="${cls}" src="assets/img/sticker/${st}/${n}.webp" alt="" width="${m[0]}" height="${m[1]}" style="--r:${r}deg" loading="lazy" decoding="async">` : ''; };
+  const giro = (st, i) => { const v = Object.keys(STK[st] || {}); return v.length > 1 ? v[i % v.length] : null; };
+  const liberiDi = (w, js) => js.filter(j => { const g = giorni[w * 7 + j]; return g.dentro && !g.biglietto && !g.tema; });
+  function stickerPagina(w, js, L, tutta) {
+    const st = stagione(w + PRIMA), n = giro(st, w * 2 + 1); if (!n) return {};
+    // su PC uno solo per doppia pagina: a sinistra se ha giorni liberi, se no a destra (e niente nella vista «Tutta la settimana»)
+    if (!S.singolo) { if (tutta) return {}; const sx = liberiDi(w, [0, 1, 2]).length; if (L ? !sx : sx) return {}; }
+    const liberi = liberiDi(w, js); if (!liberi.length) return {};
+    const j = liberi[(w * 5 + 2) % liberi.length];
+    return { [j]: stImg(st, n, 'g-sticker' + (n === 'polaroid' ? ' g-sticker-foto' : ''), ((w * 37 + j * 11) % 15) - 7) };
+  }
+  function giornoHTML(g, L, j, deco = '') {
     const n = S.note[g.key], rics = ricDi(g.key), r = rics[0], T = r ? RIC[r.type] || RIC.altro : null;
     const righe = n && n.text ? n.text.split('\n') : [], scritto = righe.some(x => x.replace(CASELLA, '').trim());
     // sulla pagina c'è solo ciò che la persona ha scritto; versi e battute stanno nel biglietto da aprire
@@ -297,7 +365,7 @@
       `<div class="g-testa"><span class="g-num${oggiKey() === g.key ? ' oggi' : ''}">${g.d.getDate()}</span><span class="g-nome">${DN[g.dow]}</span><span class="g-mese">${mese}</span></div>` +
       (g.festa ? `<div class="g-festa">${esc(g.festa)}</div>` : '') +
       (r ? `<div class="g-ric" style="color:${T.c}">${T.g} ${esc(etichetta(r, T))}${rics.length > 1 ? ' +' + (rics.length - 1) : ''}</div>` : '') +
-      `<div class="g-corpo">${corpo}</div>` + attacchi(g) +
+      `<div class="g-corpo">${corpo}</div>` + attacchi(g) + deco +
       (sp && sp.tipo === 'busta' ? `<span class="busta${letto}" data-act="sorpresa" data-k="${g.key}" role="button" aria-label="Una busta con un verso per oggi"></span>` : '') +
       (sp && sp.tipo === 'foglia' ? `<span class="foglia${letto}" data-act="sorpresa" data-k="${g.key}" role="button" aria-label="Qualcosa tra le pagine">❦</span>` : '') +
       (sp && sp.tipo === 'biglietto' ? `<span class="biglietto${letto}" data-act="sorpresa" data-k="${g.key}" role="button" aria-label="Un biglietto tra le pagine">N° ${sp.n}</span>` : '') +
@@ -313,14 +381,18 @@
       (ds ? `<span class="g-disegno">${E.trattiSVG(ds, ALTO_DIS)}</span>` : '') +
       (u ? `<span class="g-polaroid" style="--r:${S.foto[g.key].r || 0}deg"><img src="${u}" alt=""></span>` : '') + '</span>';
   }
-  function settimana(w, L) {
+  function settimana(w, L, tutta) {
     const d0 = giorni[w * 7].d, d6 = giorni[w * 7 + 6].d;
     let titolo, sotto;
-    if (L) { titolo = d0.getMonth() === d6.getMonth() ? M[d0.getMonth()] : M[d0.getMonth()] + ' · ' + M[d6.getMonth()]; sotto = d0.getFullYear() === d6.getFullYear() ? String(d0.getFullYear()) : d0.getFullYear() + ' – ' + d6.getFullYear(); }
+    if (L && !tutta) { titolo = d0.getMonth() === d6.getMonth() ? M[d0.getMonth()] : M[d0.getMonth()] + ' · ' + M[d6.getMonth()]; sotto = d0.getFullYear() === d6.getFullYear() ? String(d0.getFullYear()) : d0.getFullYear() + ' – ' + d6.getFullYear(); }
     else { titolo = 'Settimana ' + settIso(d0); sotto = d0.getDate() + ' ' + MS[d0.getMonth()] + ' – ' + d6.getDate() + ' ' + MS[d6.getMonth()]; }
-    const js = L ? [0, 1, 2] : [3, 4, 5, 6];
-    return `<div class="sett"><div class="sett-testa"><div class="sett-titolo">${titolo}</div><div class="sett-sotto">${sotto}</div><span class="ghirigoro">${DOOD[(w * 3 + (L ? 0 : 1)) % DOOD.length]}</span></div>` +
-      `<div class="giorni">${js.map(j => giornoHTML(giorni[w * 7 + j], L, j)).join('')}</div></div>`;
+    const js = tutta ? [0, 1, 2, 3, 4, 5, 6] : L ? [0, 1, 2] : [3, 4, 5, 6];
+    // in testa: uno sticker della stagione (a giro) sulla pagina col titolo «Settimana N», lo svolazzo sulla sinistra del PC
+    const st = stagione(w + PRIMA), nt = !L && giro(st, w * 2);
+    const testa = nt ? stImg(st, nt, 'sett-ramo', ((w * 13) % 9) - 4) : `<span class="ghirigoro">${DOOD[(w * 3 + (L ? 0 : 1)) % DOOD.length]}</span>`;
+    const deco = stickerPagina(w, js, L, tutta);
+    return `<div class="sett"><div class="sett-testa"><div class="sett-titolo">${titolo}</div><div class="sett-sotto">${sotto}</div>${testa}</div>` +
+      `<div class="giorni">${js.map(j => giornoHTML(giorni[w * 7 + j], L, j, deco[j] || '')).join('')}</div></div>`;
   }
   function linguette(w, L) {
     const js = L ? [0, 1, 2] : [3, 4, 5, 6];
@@ -333,12 +405,12 @@
   const SFONDI = { pallini: 'Pallini', righe: 'Righe', quadretti: 'Quadretti', scacchi: 'Scacchi', fiori: 'Fiorellini', liscio: 'Tinta unita' };
   function paginaFissa(s, L) {
     // copertina interna: «Se ritrovata» e il taschino con la copia delle note
-    if (s === 0 && L) return `<div class="p-retro"><div class="p-cartiglio"><div class="p-ritrovata">Se ritrovata</div><div class="p-piccolo">restituire a</div><button class="p-riga" data-act="nome"><small>nome</small><span>${nome() ? esc(nome()) : ''}</span></button><button class="p-riga" data-act="nome"><small>tel.</small><span>${tel() ? esc(tel()) : ''}</span></button><div class="p-grazie">Grazie. Non sapevo più di averla.</div></div>${SCARABOCCHIO}` +
-      `<div class="taschino"><div class="taschino-h">Nel taschino</div><button data-act="esporta">Salva una copia delle note</button><button data-act="importa">Riprendi una copia</button><button data-act="installa">Tienila sul telefono</button></div></div>`;
+    if (s === 0 && L) return `<div class="p-retro"><button class="p-sfondo" data-act="atelier" data-t="sfondo">◐ Sfondo</button><div class="p-cartiglio"><div class="p-ritrovata">Se ritrovata</div><div class="p-piccolo">restituire a</div><button class="p-riga" data-act="nome"><small>nome</small><span>${nome() ? esc(nome()) : ''}</span></button><button class="p-riga" data-act="nome"><small>tel.</small><span>${tel() ? esc(tel()) : ''}</span></button><div class="p-grazie">Grazie. Non sapevo più di averla.</div></div>${SCARABOCCHIO}` +
+      `<div class="taschino"><div class="taschino-h">Nel taschino</div><button data-act="esporta">Salva una copia delle note</button><button data-act="importa">Riprendi una copia</button><button data-act="installa">Tienila sul telefono</button><button class="taschino-reset" data-act="ricomincia">Ricomincia da capo</button></div></div>`;
     if (s === 0) return `<div class="p-centro"><div class="p-occhiello">Agenda settimanale</div><div class="p-fregio">❦</div><div class="p-titolo">Cose Che Non Dovevo Scordare</div><div class="p-sotto">(Ma Ho Scordato)</div><div class="p-filo"></div>` +
       `<div class="p-piccolo">${breve(inizio).replace(/ (\d\d)$/, ' 20$1')}<br>${breve(fine).replace(/ (\d\d)$/, ' 20$1')}</div><div style="flex:1"></div>` +
       `<div class="p-occhiello" style="font-size:.6em">Questa agenda appartiene a</div><button class="p-nome${nome() ? '' : ' vuoto'}" data-act="nome">${nome() ? esc(nome()) : 'tocca e scrivi il tuo nome'}</button>` +
-      `<div class="p-piccolo">Come si usa: alla pagina dopo ›</div></div>`;
+      `<div class="p-piccolo">Come si usa: alla pagina dopo ›</div>${(() => { const st = stagione(0), n = Object.keys(STK[st] || {})[0]; return n ? stImg(st, n, 'p-sticker', -6) : ''; })()}</div>`;
     if (s === 1) {
       const voce = (n, t, d) => `<div class="g-voce"><b>${n}</b><span><strong>${t}</strong>${d}</span></div>`;
       if (L) return `<div class="p-guida"><div class="p-h">Come si usa</div>` +
@@ -360,9 +432,17 @@
         (mie.length ? `<div class="p-voci mie">${mie.map(t => `<div class="v"><b>✗</b><span>${esc(t)}</span></div>`).join('')}</div>` : `<div class="p-voci" style="color:var(--muted)">Per ora niente. Ottimo segno.</div>`) + `</div>`;
     }
     const st = numeri(), pr = prossime();
-    return `<div class="p-elenco"><div class="p-h">Il mio anno, in numeri</div><div class="p-numeri">` +
-      `<b>${st.scritti}</b><span>giorni in cui ho scritto</span><b>${st.lunga}</b><span>giorni di fila, la serie più lunga</span><b>${st.ora}</b><span>giorni di fila, la serie attuale</span><b>${st.caselle}</b><span>caselle spuntate</span></div>` +
-      `<div style="font-family:var(--mano);color:var(--ink2);margin-top:.9em">${st.frase}</div><div class="p-sez">Giorni da ricordare</div>` +
+    // il mio anno: quattro riquadri, i mesi a barrette (il più pieno in evidenza), qualche curiosità, poi i giorni da ricordare
+    const max = Math.max(1, ...st.mesi.map(m => m.n)), quota = st.tot ? Math.round(100 * st.fatte / st.tot) : 0;
+    const riquadro = (n, t, extra = '') => `<div class="st-box"><b>${n}</b><span>${t}</span>${extra}</div>`;
+    const curiosita = [st.giornoTop && `Scrivo più spesso di <b>${st.giornoTop.toLowerCase()}</b>`, st.parole && `<b>${st.parole.toLocaleString('it-IT')}</b> parole scritte`,
+      st.foto && `<b>${st.foto}</b> ${st.foto === 1 ? 'foto' : 'foto'}`, st.disegni && `<b>${st.disegni}</b> ${st.disegni === 1 ? 'disegno' : 'disegni'}`, st.lettere && `<b>${st.lettere}</b> ${st.lettere === 1 ? 'lettera al futuro' : 'lettere al futuro'}`].filter(Boolean);
+    return `<div class="p-elenco"><div class="p-h">Il mio anno, in numeri</div><div class="st-quattro">` +
+      riquadro(st.scritti, st.scritti === 1 ? 'giorno scritto' : 'giorni scritti') + riquadro(st.ora, 'di fila, adesso') + riquadro(st.lunga, 'di fila, il record') +
+      riquadro(st.tot ? `${st.fatte}<small>/${st.tot}</small>` : '0', 'cose fatte', `<i class="st-barra"><i style="width:${quota}%"></i></i>`) + `</div>` +
+      `<div class="p-sez">Mese per mese</div><div class="st-mesi">${st.mesi.map(m => `<div class="st-mese${m.n && m.n === max ? ' top' : ''}" title="${m.nome} ${m.anno}: ${m.n}"><i style="height:${Math.round(100 * m.n / max)}%"></i><span>${m.nome.charAt(0).toUpperCase()}</span></div>`).join('')}</div>` +
+      (curiosita.length ? `<div class="st-curiosita">${curiosita.join(' · ')}</div>` : '') +
+      `<div class="st-frase">${st.frase}</div><div class="p-sez">Giorni da ricordare</div>` +
       (pr.length ? pr.join('') : `<div style="font-family:var(--mano);color:var(--muted)">Nessuno ancora. Si aggiungono dalla pagina di un giorno.</div>`) + `</div>`;
   }
   const OMBRE = {
@@ -371,20 +451,53 @@
     L: 'linear-gradient(to left,rgba(40,24,10,.7),transparent 75%)',
     R: 'linear-gradient(to right,rgba(40,24,10,.7),transparent 75%)'
   };
+  // titolo e sottotitolo di una doppia pagina (in testa alla carta e per il lettore dello schermo)
+  function testata(c) {
+    if (c >= PRIMA && c < LAST) { const d0 = giorni[(c - PRIMA) * 7].d, d3 = giorni[(c - PRIMA) * 7 + 3].d; return [M[d3.getMonth()] + ' ' + d3.getFullYear(), 'Settimana ' + settIso(d0)]; }
+    if (c === 1) return ['Come si usa', 'Prima di cominciare'];
+    if (c === LAST) return ['In fondo all’agenda', 'Cose scordate e numeri'];
+    return ['Cose Che Non Dovevo Scordare', 'Frontespizio'];
+  }
+  // la stagione di una doppia pagina (le pagine fisse seguono quella di oggi): colori di pelle, nastro e sigillo
+  const STAGIONI = ['inverno', 'inverno', 'primavera', 'primavera', 'primavera', 'estate', 'estate', 'estate', 'autunno', 'autunno', 'autunno', 'inverno'];
+  const stagione = c => STAGIONI[(c >= PRIMA && c < LAST ? giorni[(c - PRIMA) * 7 + 3].d : daKey(oggiKey())).getMonth()];
+  // la testa stampata sulla carta: calendario, titolo, cerca e «…»; in doppia pagina metà a sinistra e metà a destra
+  const ICO = {
+    cal: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4M7.5 13h1M11.5 13h1M15.5 13h1M7.5 16.5h1M11.5 16.5h1"/></svg>',
+    cerca: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>',
+    altro: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></svg>',
+    segna: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10v17l-5-4-5 4z"/></svg>'
+  };
+  function testaPagina(s, lato) {
+    // la facciata «Se ritrovata» non ha testa (ha la sua linguetta «Sfondo»); il frontespizio sì, ma senza titolo ripetuto
+    if (s === 0 && lato === 'sx') return '';
+    const [tt, ts] = testata(s), tit = s === 0 ? '<span class="pt-vuoto"></span>' : `<div class="pt-tit"><b>${tt}</b><small>${ts}</small></div>`;
+    // niente doppioni: «Vai a una data» sta nella barra in fondo («Mese»); qui segnalibro, cerca e «Personalizza» con la sua scritta
+    const segnata = S.imp.bookmark === s;
+    const dx = `<button class="pt-ico pt-segna${segnata ? ' on' : ''}" data-act="nastro" aria-pressed="${segnata}" aria-label="${segnata ? 'Togli il segnalibro' : 'Segna questa pagina'}">${ICO.segna}</button>` +
+      `<button class="pt-ico" data-act="cerca" aria-label="Cerca">${ICO.cerca}</button><button class="pt-pers" data-act="altro">✎ Personalizza</button>`;
+    if (S.singolo) return `<div class="pt">${tit}${dx}</div>`;
+    // su PC, sulla pagina di sinistra: «Tutta la settimana» mostra al volo i sette giorni lì, e si richiude senza cambiare pagina
+    const intera = s >= PRIMA && s < LAST ? `<button class="pt-sett" data-act="sett-intera" aria-pressed="${!!S.settIntera}">${S.settIntera ? '× Chiudi' : '☰ Tutta la settimana'}</button>` : '<span class="pt-vuoto"></span>';
+    return lato === 'sx' ? `<div class="pt">${tit}${intera}</div>` : `<div class="pt"><span class="pt-vuoto"></span>${dx}</div>`;
+  }
   function pagina(s, lato, ruolo) {
     const L = lato === 'sx', statica = ruolo === 'L' || ruolo === 'R';
     let tr = 'none';
     if (!statica) { const a = angoloFlip(); tr = ruolo === 'F' ? `rotateY(${a}deg)` : `rotateY(${a}deg) translateX(100%) rotateY(180deg)`; }
-    const vis = ruolo === 'L' && S.fase !== 'aperta' && S.fase !== 'chiusura' ? 'hidden' : 'visible';
+    // la pagina di sinistra sparisce appena l'agenda comincia a chiudersi: sopra c'è già l'interno della copertina che si alza
+    const vis = ruolo === 'L' && S.fase !== 'aperta' ? 'hidden' : 'visible';
     const aperto = statica && !S.flip && S.fase === 'aperta';
     // angoli da toccare: in doppia pagina uno per lato; con una pagina sola entrambi sulla stessa
     const angolo = (dir, cls) => `<button class="angolo${cls}" data-act="angolo" data-dir="${dir}" aria-label="${dir < 0 ? 'Pagina precedente' : 'Pagina successiva'}"><span></span></button>`;
     const angoli = !aperto ? '' : S.singolo ? (S.pos > 0 ? angolo(-1, ' a-sx') : '') + (S.pos < maxPos() ? angolo(1, ' a-dx') : '')
       : !((s === 0 && L) || (s === LAST && !L)) ? angolo(L ? -1 : 1, '') : '';
-    const sett = s >= PRIMA && s < LAST;
-    return `<div class="pg ${lato}" data-ruolo="${ruolo}" style="left:${ruolo === 'L' || S.singolo ? 0 : '50%'};z-index:${statica ? 1 : 5};transform:${tr};visibility:${vis}">` +
+    // settimana intera: la facciata del telefono, o la pagina di sinistra su PC quando si accende «Tutta la settimana»
+    const sett = s >= PRIMA && s < LAST, tutta = lato === 'tutta' || (sett && L && S.settIntera);
+    const contenuto = sett ? settimana(s - PRIMA, L, tutta) : paginaFissa(s, L);
+    return `<div class="pg ${lato === 'tutta' ? 'dx' : lato}${tutta ? ' tutta' : ''}" data-ruolo="${ruolo}" style="left:${ruolo === 'L' || S.singolo ? 0 : '50%'};z-index:${statica ? 1 : 5};transform:${tr};visibility:${vis}">` +
       (sett && !S.singolo ? linguette(s - PRIMA, L) : '') +
-      `<div class="carta">${sett ? settimana(s - PRIMA, L) : paginaFissa(s, L)}<div class="piega"></div>` + angoli +
+      `<div class="carta">${testaPagina(s, lato)}<div class="pg-corpo${s === 0 && lato === 'sx' ? ' senza-testa' : ''}">${contenuto}</div><div class="piega"></div>` + angoli +
       `<div class="ombra" style="background:${OMBRE[ruolo]}"></div></div></div>`;
   }
 
@@ -394,7 +507,7 @@
     let slot;
     if (S.singolo) {
       // una pagina alla volta: sotto quella che arriva (o resta), sopra quella che gira attorno al dorso
-      const fac = p => [p >> 1, p % 2 ? 'dx' : 'sx'], [cs, cl] = fac(S.pos);
+      const fac = p => FAC[p], [cs, cl] = fac(S.pos);
       if (!f) slot = [pagina(cs, cl, 'R')];
       else { const [ts, tl] = fac(f.to); slot = f.dir > 0 ? [pagina(ts, tl, 'R'), pagina(cs, cl, 'F')] : [pagina(cs, cl, 'R'), pagina(ts, tl, 'F')]; }
     }
@@ -413,14 +526,15 @@
     $('#mz-dx').style.width = (1 + 6 * (1 - c / LAST)).toFixed(1) + 'px';
     const bm = S.imp.bookmark, aperto = S.fase === 'aperta' && !f;
     // il nastro esce dalla cucitura; se la pagina segnata è un'altra, la coda spunta dal lato dove si trova
-    $('#segnalibro').innerHTML = aperto && bm === c ? '<div class="nastro" aria-hidden="true"><span></span></div>'
-      : aperto && bm != null ? `<button class="coda ${bm > c ? 'avanti' : 'indietro'}" data-act="al-nastro" aria-label="Vai alla pagina segnata"><span></span></button>` : '';
-    const bn = $('#b-nastro'); bn.classList.toggle('acceso', bm === c); bn.lastElementChild.textContent = bm === c ? 'Togli' : 'Segna';
-    let tt = 'Cose Che Non Dovevo Scordare', ts = 'Frontespizio';
-    if (c >= PRIMA && c < LAST) { const d0 = giorni[(c - PRIMA) * 7].d, d3 = giorni[(c - PRIMA) * 7 + 3].d; tt = M[d3.getMonth()] + ' ' + d3.getFullYear(); ts = 'Settimana ' + settIso(d0); }
-    else if (c === 1) { tt = 'Come si usa'; ts = 'Prima di cominciare'; }
-    else if (c === LAST) { tt = 'In fondo all’agenda'; ts = 'Cose scordate e numeri'; }
+    // il nastro sta nella piega (in mezzo su PC, sul bordo del dorso sul telefono) solo sulla pagina segnata;
+    // si mette e si toglie col segnalibro in testa alla pagina (o toccando il nastro); se la segnata è un'altra, nella piega pende la coda che porta lì
+    $('#segnalibro').innerHTML = (aperto && bm === c ? `<button class="nastro segna" data-act="nastro" aria-pressed="true" aria-label="Togli il segnalibro da questa pagina"><span></span></button>` : '') +
+      (aperto && bm != null && bm !== c ? `<button class="coda ${bm > c ? 'avanti' : 'indietro'}" data-act="al-nastro" aria-label="Vai alla pagina segnata"><span></span></button>` : '');
+    const [tt, ts] = testata(c);
     $('#t-titolo').textContent = tt; $('#t-sotto').textContent = ts;
+    const st = stagione(c);
+    // la stagione sta anche sulla radice: così la vede la pagina del giorno, che non è dentro il libro
+    for (const el of [app, document.documentElement]) if (!el.classList.contains('st-' + st)) { el.classList.remove('st-primavera', 'st-estate', 'st-autunno', 'st-inverno'); el.classList.add('st-' + st); }
     // il tema sta sulla radice, così vale anche per la pagina del giorno e i fogli
     const rad = document.documentElement;
     libro.className = libro.className.replace(/\bsf-\S+/g, '').trim() + ' sf-' + (SFONDI[S.imp.sfondo] ? S.imp.sfondo : 'pallini');
@@ -431,7 +545,7 @@
   // ---------- veli (menu, vai a, nome, ricerca, sorpresa) ----------
   let installa = null;
   addEventListener('beforeinstallprompt', e => { e.preventDefault(); installa = e; });
-  const veli = ['#v-menu', '#v-vaia', '#v-nome', '#v-cerca', '#v-sorpresa'];
+  const veli = ['#v-menu', '#v-mese', '#v-reset', '#v-vaia', '#v-nome', '#v-cerca', '#v-sorpresa'];
   function chiudiVeli() { veli.forEach(v => { $(v).hidden = true; }); }
   function apriVelo(v) { chiudiVeli(); $(v).hidden = false; }
 
@@ -520,6 +634,17 @@
     $('#avviso').hidden = false; avviso.t = setTimeout(() => { $('#avviso').hidden = true; }, 4200);
   }
 
+  // ricomincia da capo: dopo la conferma restano qualche secondo per «Annulla»; solo dopo si cancella davvero
+  // (le note e le scelte di questo dispositivo, e l'archivio delle foto), poi l'agenda si riapre come nuova
+  function ricomincia() {
+    chiudiVeli();
+    const via = setTimeout(() => {
+      try { Object.keys(localStorage).filter(k => k.startsWith('ccnds-')).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+      const fine = () => location.reload();
+      try { const r = indexedDB.deleteDatabase('ccnds-media'); r.onsuccess = r.onerror = r.onblocked = fine; setTimeout(fine, 1500); } catch (e) { fine(); }
+    }, 4300);
+    avviso('Cancello tutto fra pochi secondi…', () => { clearTimeout(via); avviso('Niente cancellato'); });
+  }
   // ---------- copia delle note ----------
   function esporta() {
     const foto = {}; Object.keys(S.foto).forEach(k => { if (fotoDati[k]) foto[k] = { ...S.foto[k], img: fotoDati[k] }; });
@@ -582,6 +707,8 @@
     $('#gp-titolo').textContent = DN[g.dow];
     $('#gp-mese').textContent = M[g.d.getMonth()].toLowerCase() + ' ' + g.d.getFullYear();
     $('#gp-sett').textContent = 'settimana ' + settIso(g.d);
+    // uno sticker della stagione nello spazio libero della pagina (sul telefono resta nascosto: lo spazio serve a scrivere)
+    { const st = stagione(spreadDi(g.i)), n = giro(st, g.i * 3 + 1); $('#gp-sticker').innerHTML = n ? stImg(st, n, 'gp-stk', ((g.i * 17) % 13) - 6) : ''; }
     $('#gp-festa').textContent = g.festa;
     const tm = g.tema;
     carta.classList.toggle('festivo', !!tm); carta.style.setProperty('--rgb', tm ? tm.rgb : '0,0,0');
@@ -924,9 +1051,11 @@
     if (velo && e.target === velo && velo.hasAttribute('data-chiudi')) { chiudiVeli(); return; }
     const b = e.target.closest('[data-act]'); if (!b) return;
     const a = b.dataset.act, k = b.dataset.k;
-    if (noClick && b.closest('#libro')) return;
+    // le pagine e la copertina (non la barra in fondo né il foglio «Personalizza», che stanno anch'essi nel libro)
+    const sulLibro = b.closest('#libro') && !b.closest('#piede, #atelier');
+    if (noClick && sulLibro) return;
     // mentre si personalizza il libro si guarda e si sfoglia, ma non si apre nient'altro
-    if (S.atelier && b.closest('#libro') && !(a === 'apri' || (S.atelier.tab !== 'copertina' && (a === 'angolo' || a === 'al-nastro')))) return;
+    if (S.atelier && sulLibro && !(a === 'apri' || (S.atelier.tab !== 'copertina' && (a === 'angolo' || a === 'al-nastro')))) return;
     sveglia();
     switch (a) {
       case 'apri': e.stopPropagation(); if (S.atelier) { if (S.atelier.sel != null && !e.target.closest('.ades')) { S.atelier.sel = null; disegnaAtelier(); disegnaCopertina(); } } else apri(); break;
@@ -934,7 +1063,8 @@
       case 'atelier': chiudiVeli(); atelier(b.dataset.t); break;
       case 'at-scheda': vaiScheda(b.dataset.t); break;
       case 'at-fine': fineAtelier(); break;
-      case 'at-colore': setImp({ cop: { ...cop(), colore: b.dataset.c } }); disegnaAtelier(); disegnaCopertina(); break;
+      case 'at-colore': setImp({ cop: { ...cop(), colore: b.dataset.c } }); sistemaScritta(); disegnaAtelier(); disegnaCopertina(); break;
+      case 'at-scritta': setImp({ cop: { ...cop(), scritta: b.dataset.c } }); disegnaAtelier(); disegnaCopertina(); break;
       case 'at-adesivo': attacca(b.dataset.t); break;
       case 'at-ruota': case 'at-piu': case 'at-meno': ritocca(a); break;
       case 'at-togli': { const c = cop(), i = S.atelier.sel; setImp({ cop: { ...c, adesivi: c.adesivi.filter((_, j) => j !== i) } }); S.atelier.sel = null; disegnaAtelier(); disegnaCopertina(); break; }
@@ -948,10 +1078,24 @@
       case 'angolo': vaiPos(S.pos + +b.dataset.dir); break;
       case 'prec': vaiPos(S.pos - 1); break;
       case 'succ': vaiPos(S.pos + 1); break;
-      case 'oggi': vaiGiorno(giorni[oggiIdx()].key); break;
+      case 'oggi': chiudiVeli(); apriOggi(false); break;
+      case 'scrivi-oggi': chiudiVeli(); apriOggi(true); break;
+      case 'vista': chiudiVeli(); vista(b.dataset.v); break;
+      case 'altro': chiudiVeli(); atelier(); break;
+      case 'mese-prec': case 'mese-succ': S.mese = new Date(S.mese.getFullYear(), S.mese.getMonth() + (a === 'mese-prec' ? -1 : 1), 1); disegnaMese(); break;
+      case 'ricomincia': apriVelo('#v-reset'); break;
+      case 'reset-ok': ricomincia(); break;
+      case 'sett-intera': S.settIntera = !S.settIntera; disegna(); break;
       case 'vaia': vaiA(); break;
       case 'vai-giorno': vaiGiorno(k); break;
-      case 'nastro': { const on = S.imp.bookmark === S.spread; setImp({ bookmark: on ? null : S.spread }); chiudiVeli(); disegna(); avviso(on ? 'Segnalibro tolto' : 'Segnalibro su questa pagina'); break; }
+      case 'nastro': {
+        const prima = S.imp.bookmark, on = prima === S.spread;
+        setImp({ bookmark: on ? null : S.spread }); chiudiVeli(); disegna(); suono('penna');
+        // spostato da un'altra pagina: si può tornare indietro
+        const torna = () => { setImp({ bookmark: prima }); disegna(); };
+        avviso(on ? 'Segnalibro tolto' : prima != null ? 'Segnalibro spostato qui' : 'Pagina segnata', on || prima != null ? torna : undefined);
+        break;
+      }
       case 'al-nastro': chiudiVeli(); if (S.imp.bookmark != null) vai(S.imp.bookmark); break;
       case 'vai-pagina': chiudiVeli(); vai(k === 'fondo' || b.dataset.p === 'fondo' ? LAST : +b.dataset.p); break;
       case 'cerca': apriCerca(); break;
@@ -964,7 +1108,7 @@
       case 'installa': infoInstalla(); break;
       case 'esporta': esporta(); break;
       case 'importa': $('#file').click(); break;
-      case 'chiudi-libro': chiudiLibro(); break;
+      case 'chiudi-libro': if (S.atelier) fineAtelier(); chiudiLibro(); break;
       case 'chiudi': chiudiVeli(); break;
     }
   });
@@ -979,19 +1123,38 @@
   const romano = n => [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']].reduce((s, [v, r]) => { while (n >= v) { s += r; n -= v; } return s; }, '');
   $('#cop-anni').textContent = romano(inizio.getFullYear()) + ' · ' + romano(fine.getFullYear());
   // ---------- copertina personalizzata: colore, adesivi, disegno a mano, nome in oro ----------
+  // gli adesivi della copertina: gli sticker della tavola «vari»; quelli disegnati di prima restano solo se erano già attaccati
+  const ADESIVI = { cuore: 'Cuore', rosa: 'Rosa', falena: 'Falena', chiave: 'Chiave', serratura: 'Serratura', luna: 'Luna', stella: 'Stella', saturno: 'Saturno', mongolfiera: 'Mongolfiera', lettere: 'Lettere',
+    ceralacca: 'Ceralacca', libro: 'Libro', 'macchina-scrivere': 'Macchina da scrivere', cassetta: 'Musicassetta', pellicola: 'Pellicola', gatto: 'Gatto', dadi: 'Dadi', palla: 'Palla 8', spirale: 'Spirale', lampione: 'Lampione', fiocco: 'Fiocco' };
+  const adesivo = t => STK.copertina && STK.copertina[t] ? `<img src="assets/img/sticker/copertina/${t}.webp" alt="" draggable="false">` : E.adesivoSVG(t);
+  const luce = hex => { const v = [1, 3, 5].map(i => { const c = parseInt(hex.slice(i, i + 2), 16) / 255; return c <= .03928 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); }); return .2126 * v[0] + .7152 * v[1] + .0722 * v[2]; };
+  const contrasto = (a, b) => { const x = luce(a), y = luce(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+  // la pelle vera di adesso (con «stagione» quella della stagione), e se una scritta ci si legge
+  const pelleOra = () => { const c = cop(), p = c.colore !== 'stagione' && pelleDi(c.colore); return p || getComputedStyle(app).getPropertyValue('--pelle').trim() || '#6e2a22'; };
+  const leggibile = (s, pelle) => contrasto(tinteScritta(s)[1], pelle) >= 2.4;
+  // cambiando pelle, se la scritta di prima non si legge più passa da sola alla più adatta (l'oro se va bene)
+  const sistemaScritta = () => { const c = cop(), pelle = pelleOra(); if (leggibile(c.scritta || 'oro', pelle)) return; const migliore = leggibile('oro', pelle) ? 'oro' : Object.keys(SCRITTE).sort((a, b) => contrasto(tinteScritta(b)[1], pelle) - contrasto(tinteScritta(a)[1], pelle))[0]; setImp({ cop: { ...c, scritta: migliore } }); };
+  const pelleDi = c => PELLI[c] ? PELLI[c][1] : /^#[0-9a-f]{6}$/i.test(c || '') ? c : null;
   function disegnaCopertina() {
-    const c = cop(), A = S.atelier, p = PELLI[c.colore];
-    if (p && c.colore !== 'cuoio') { libro.style.setProperty('--cop', p[1]); libro.style.setProperty('--pelle', p[1]); }
+    const c = cop(), A = S.atelier, p = c.colore !== 'stagione' && pelleDi(c.colore);
+    if (p) { libro.style.setProperty('--cop', p); libro.style.setProperty('--pelle', p); }
     else { libro.style.removeProperty('--cop'); libro.style.removeProperty('--pelle'); }
+    const [s1, s2, s3] = tinteScritta(c.scritta);
+    // lo sfondo intorno al libro intonato alla pelle scelta (con «stagione» resta quello della stagione)
+    if (p) { app.style.setProperty('--desk', sfuma(p, -.4)); app.style.setProperty('--deskEdge', sfuma(p, -.82)); } else { app.style.removeProperty('--desk'); app.style.removeProperty('--deskEdge'); }
+    libro.style.setProperty('--sc1', s1); libro.style.setProperty('--sc2', s2); libro.style.setProperty('--sc3', s3);
     $('#cop-nome').textContent = c.oro ? nome() : '';
     decoro.innerHTML = (c.tratti.length ? E.trattiSVG(c.tratti, altoCop(), 'cop-tratti') : '') +
-      c.adesivi.map((a, i) => `<span class="ades${A && A.sel === i ? ' scelto' : ''}" data-i="${i}" style="--x:${a.x};--y:${a.y};--s:${a.s};--r:${a.r}deg">${E.adesivoSVG(a.t)}</span>`).join('');
+      c.adesivi.map((a, i) => `<span class="ades${A && A.sel === i ? ' scelto' : ''}" data-i="${i}" style="--x:${a.x};--y:${a.y};--s:${a.s};--r:${a.r}deg">${adesivo(a.t)}</span>`).join('');
   }
   // ---------- «Personalizza»: copertina, carta e sfondo in un pannello solo ----------
   // ogni scheda porta il libro dove si vede la cosa che cambia: chiuso per la copertina,
   // aperto sulle pagine per la carta, sulla prima pagina per lo sfondo
   const SCHEDE = [['copertina', 'Copertina'], ['carta', 'Carta'], ['sfondo', 'Sfondo']];
   const CARTE = [['carta', 'Classica'], ['nero', 'Nera'], ['avorio', 'Avorio']];
+  // i colori «su misura»: la copertina cambia mentre si sceglie, il pannello si ridisegna a scelta fatta
+  $('#atelier').addEventListener('input', e => { const k = e.target.classList.contains('at-pelle-su') ? 'colore' : e.target.classList.contains('at-scritta-su') ? 'scritta' : null; if (!k) return; setImp({ cop: { ...cop(), [k]: e.target.value } }); if (k === 'colore') sistemaScritta(); disegnaCopertina(); });
+  $('#atelier').addEventListener('change', e => { if (e.target.type === 'color') disegnaAtelier(); });
   function disegnaAtelier() {
     const c = cop(), A = S.atelier, el = $('#atelier');
     el.hidden = !A; app.classList.toggle('atelier-on', !!A); if (!A) return;
@@ -1004,12 +1167,19 @@
     const tema = S.imp.tema || 'carta', sf = SFONDI[S.imp.sfondo] ? S.imp.sfondo : 'pallini';
     el.innerHTML = `<div class="at-testa"><div class="at-schede" role="tablist" aria-label="Cosa personalizzare">${SCHEDE.map(([t, n]) => `<button data-act="at-scheda" data-t="${t}" role="tab" aria-selected="${A.tab === t}">${n}</button>`).join('')}</div><button class="btn pieno" data-act="at-fine">Fatto</button></div>` +
       (A.tab === 'copertina'
-        ? `<div class="at-riga at-colori" role="radiogroup" aria-label="Colore della copertina">${Object.keys(PELLI).map(k => `<button data-act="at-colore" data-c="${k}" role="radio" aria-checked="${c.colore === k}" aria-label="${PELLI[k][0]}" style="--c:${PELLI[k][1]}"></button>`).join('')}</div>` +
-          `<div class="at-riga at-adesivi" aria-label="Adesivi">${Object.keys(E.ADESIVI).map(t => `<button data-act="at-adesivo" data-t="${t}" aria-label="Attacca: ${E.ADESIVI[t][0]}">${E.adesivoSVG(t)}</button>`).join('')}</div>` +
-          `<div class="at-riga"><button class="btn" data-act="at-disegna">✎ Disegna</button><button class="btn" data-act="at-oro" role="switch" aria-checked="${!!c.oro}">${c.oro ? '✓ ' : ''}Nome in oro</button>${c.tratti.length || c.adesivi.length ? '<button class="btn" data-act="at-pulisci">Togli tutto</button>' : ''}</div>`
+        ? (() => {
+          // pelle e scritte: campioni con il nome sotto, l'ultimo «su misura» apre la scelta del colore
+          const suPelle = /^#/.test(c.colore || ''), suScritta = /^#/.test(c.scritta || ''), scritta = c.scritta || 'oro';
+          const campione = (act, k, nome, sfondo, on) => `<button class="at-camp" data-act="${act}" data-c="${k}" role="radio" aria-checked="${on}"><i style="--c:${sfondo}"></i><span>${nome}</span></button>`;
+          const misura = (cls, valore, on, nome) => `<label class="at-camp at-misura" aria-checked="${on}"><i style="--c:${on ? valore : 'conic-gradient(#e44 0 17%,#eb3 0 33%,#4b5 0 50%,#3bd 0 67%,#55e 0 83%,#d4c 0)'}"></i><span>${nome}</span><input type="color" class="${cls}" value="${on ? valore : '#7a3b2e'}" aria-label="${nome}: scegli il colore"></label>`;
+          return `<div class="at-et">Pelle</div><div class="at-riga at-campioni" role="radiogroup" aria-label="Colore della copertina">${Object.keys(PELLI).map(k => campione('at-colore', k, PELLI[k][0], PELLI[k][1], c.colore === k)).join('')}${misura('at-pelle-su', c.colore, suPelle, 'Su misura')}</div>` +
+            `<div class="at-et">Scritte</div><div class="at-riga at-campioni scritte" role="radiogroup" aria-label="Colore delle scritte">${Object.keys(SCRITTE).filter(k => leggibile(k, pelleOra())).map(k => campione('at-scritta', k, SCRITTE[k][0], `linear-gradient(160deg,${SCRITTE[k][1]},${SCRITTE[k][2]} 55%,${SCRITTE[k][3]})`, scritta === k)).join('')}${misura('at-scritta-su', c.scritta, suScritta, 'Su misura')}</div>` + (suScritta && !leggibile(c.scritta, pelleOra()) ? '<div class="at-avviso">Questo colore si legge poco su questa pelle: prova più chiaro o più scuro.</div>' : '') +
+            `<div class="at-et">Adesivi</div><div class="at-riga at-adesivi" aria-label="Adesivi">${Object.keys(ADESIVI).map(t => `<button data-act="at-adesivo" data-t="${t}" aria-label="Attacca: ${ADESIVI[t]}">${adesivo(t)}</button>`).join('')}</div>` +
+            `<div class="at-riga"><button class="btn" data-act="at-disegna">✎ Disegna</button><button class="btn" data-act="at-oro" role="switch" aria-checked="${!!c.oro}">${c.oro ? '✓ ' : ''}Il mio nome in copertina</button>${c.tratti.length || c.adesivi.length ? '<button class="btn" data-act="at-pulisci">Togli tutto</button>' : ''}</div>`;
+        })()
         : A.tab === 'carta'
           ? `<div class="at-riga at-carte" role="radiogroup" aria-label="Carta delle pagine">${CARTE.map(([t, n]) => `<button data-act="tema" data-t="${t}" role="radio" aria-checked="${tema === t}"><span class="cc-${t}">Aa</span>${n}</button>`).join('')}</div>` +
-            `<div class="at-riga"><button class="btn" data-act="suoni" role="switch" aria-checked="${!!S.imp.sound}">${S.imp.sound ? '✓ ' : ''}Suoni della carta</button></div>`
+            `<div class="at-riga"><button class="btn" data-act="suoni" role="switch" aria-checked="${!!S.imp.sound}">${S.imp.sound ? '✓ ' : ''}Suoni della carta</button><button class="btn at-chiudi" data-act="chiudi-libro">Chiudi l’agenda</button></div>`
           : `<div class="at-riga at-sfondi" role="radiogroup" aria-label="Sfondo della prima pagina">${Object.keys(SFONDI).map(k => `<button data-act="sf" data-s="${k}" role="radio" aria-checked="${sf === k}"><span class="sf-${k}"></span>${SFONDI[k]}</button>`).join('')}</div>` +
             `<div class="at-nota">Lo sfondo della prima pagina. I colori seguono la carta.</div>`);
   }
@@ -1077,8 +1247,8 @@
     return Promise.all(ks.map(id => E.daDataURL(tutte[id]).then(b => { const k = id.slice(5); fotoBlob[k] = b; fotoURL[k] = URL.createObjectURL(b); fotoDati[k] = tutte[id]; })));
   }).then(() => { disegna(); if (GP.key) disegnaExtra(); }).catch(() => {});
 
-  misura(); disegna(); disegnaCopertina();
-  if (window.ResizeObserver) new ResizeObserver(misura).observe(scena); else addEventListener('resize', misura);
+  misura(); disegna(); sistemaScritta(); disegnaCopertina();
+  if (window.ResizeObserver) { new ResizeObserver(misura).observe(scena); new ResizeObserver(() => requestAnimationFrame(misura)).observe($('#atelier')); } else addEventListener('resize', misura);
   const via = () => { pronto = true; $('#sugg').textContent = 'Tocca l’elastico per aprire'; };
   (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(via, via);
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});

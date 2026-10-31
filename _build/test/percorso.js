@@ -1,6 +1,9 @@
 // Percorso completo su iPhone 13 emulato: apertura, scrittura, caselle, salvataggio, poesie, ricerca, notte
 // uso: node _build/test/percorso.js [cartella-foto]
 const pw = require('C:/Users/Claude FK/.claude/projects/hedonè progetto serio/node_modules/playwright');
+
+// «Vai a…»: dal calendario in testa alla pagina; sul frontespizio (senza testa) dalla voce «Mese» della barra
+const vaiAda = async pp => { const h = pp.locator('#pagine .pt [data-act="vaia"]'); if (await h.count()) await h.first().click(); else await pp.click('#piede [data-act="vaia"]'); };
 const path = require('path'), fs = require('fs');
 process.env.PORTA = '8997'; require('../server.js');
 const FOTO = process.argv[2]; if (FOTO) fs.mkdirSync(FOTO, { recursive: true });
@@ -29,7 +32,7 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await foto('02a-come-si-usa');
   // sul telefono una pagina alla volta, larga come lo schermo
   prova('una pagina alla volta sul telefono', await p.evaluate(() => document.getElementById('app').classList.contains('singolo') && document.querySelectorAll('#pagine .pg').length === 1 && document.getElementById('libro').offsetWidth > innerWidth * 0.85));
-  await p.click('.barra-giu [data-act="oggi"]'); await attendi(1700);
+  await p.click('#piede [data-v="sett"]'); await attendi(1700);
   prova('settimana di oggi', (await p.textContent('#t-sotto')) === 'Settimana 44');
   prova('oggi è sulla facciata giusta', await p.isVisible('.giorno[data-k="2026-10-29"] .g-num.oggi'));
   await foto('02-aperta');
@@ -123,11 +126,11 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await p.click('[data-gp="fatto"]'); await attendi(600);
 
   // vado a San Martino (poesia) con Vai a…
-  await p.click('[data-act="vaia"]'); await p.fill('#vaia-data', '2026-11-11'); await attendi(1600);
+  await vaiAda(p); await p.fill('#vaia-data', '2026-11-11'); await attendi(1600);
   prova('San Martino con la busta', await p.isVisible('.giorno[data-k="2026-11-11"] .busta'));
   await foto('06-san-martino');
   // poesia straniera: nella pagina del giorno il biglietto è piegato, si apre e mostra l'originale
-  await p.click('[data-act="vaia"]'); await p.fill('#vaia-data', '2026-11-22'); await attendi(1600);
+  await vaiAda(p); await p.fill('#vaia-data', '2026-11-22'); await attendi(1600);
   await p.click('.giorno[data-k="2026-11-22"]'); await attendi(450);
   prova('biglietto piegato nella pagina del giorno', await p.isVisible('.gp-biglietto') && !(await p.textContent('#gp-poesia')).includes('Cadete'));
   await foto('07a-biglietto-chiuso');
@@ -140,7 +143,7 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
 
   // ricerca
   // si trovano le note e i biglietti già aperti, non quelli ancora chiusi
-  await p.click('[data-act="cerca"]'); await p.fill('#cerca-campo', 'meridiane'); await attendi(150);
+  await p.click('#pagine .pt [data-act="cerca"]'); await p.fill('#cerca-campo', 'meridiane'); await attendi(150);
   prova('ricerca nei biglietti aperti', await p.$$eval('.ris', r => r.length) === 1);
   await p.fill('#cerca-campo', 'nebbia'); await attendi(150);
   prova('i biglietti chiusi restano una sorpresa', await p.$$eval('.ris', r => r.length) === 0);
@@ -152,7 +155,7 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   prova('dalla ricerca al giorno', (await p.textContent('#t-titolo')).includes('2026') || (await p.textContent('#t-titolo')).includes('2027'));
 
   // Natale: carta colorata e disegno, anche nella pagina del giorno
-  await p.click('[data-act="vaia"]'); await p.fill('#vaia-data', '2026-12-25'); await attendi(1700);
+  await vaiAda(p); await p.fill('#vaia-data', '2026-12-25'); await attendi(1700);
   prova('Natale con carta e disegno', await p.evaluate(() => { const g = document.querySelector('.giorno[data-k="2026-12-25"]'); return g.classList.contains('festivo') && !!g.querySelector('.g-illu svg'); }));
   await foto('09a-natale');
   await p.click('.giorno[data-k="2026-12-25"]'); await attendi(450);
@@ -160,27 +163,27 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await foto('09b-natale-giorno');
   await p.click('[data-gp="fatto"]'); await attendi(600);
   // «All'inizio» da qualsiasi pagina, con una sola sfogliata
-  await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="0"]'); await attendi(1300);
+  await vaiAda(p); await p.click('.salti [data-p="0"]'); await attendi(1300);
   prova('all’inizio in un passo', (await p.textContent('#t-sotto')) === 'Frontespizio');
-  await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="1"]'); await attendi(1700);
+  await vaiAda(p); await p.click('.salti [data-p="1"]'); await attendi(1700);
   prova('Vai a… porta a Come si usa', (await p.textContent('#t-titolo')) === 'Come si usa');
   // la carta si sceglie in «Personalizza» (dalla seconda facciata di «Come si usa» o dalla ✎ in alto)
-  await p.click('[data-act="succ"]'); await attendi(1100);
+  await p.keyboard.press('ArrowRight'); await attendi(1100);
   await p.click('.p-prova [data-act="atelier"]'); await attendi(250);
   await p.click('[data-act="tema"][data-t="nero"]');
   prova('carta nera', await p.evaluate(() => document.documentElement.classList.contains('t-nero')));
   await p.click('[data-act="at-fine"]'); await attendi(200);
   await foto('09-nero');
-  await p.click('[data-act="vaia"]'); await p.fill('#vaia-data', '2026-10-30'); await attendi(1700);
+  await vaiAda(p); await p.fill('#vaia-data', '2026-10-30'); await attendi(1700);
   await foto('09c-nero-settimana');
   await p.click('.giorno[data-k="2026-10-30"]'); await attendi(450); await foto('09d-nero-giorno'); await p.click('[data-gp="fatto"]'); await attendi(600);
-  await p.click('.barra-su .ico-pers'); await attendi(250);
+  await p.click('#pagine .pt [data-act="altro"]'); await attendi(250);
   await p.click('[data-act="tema"][data-t="avorio"]');
   prova('carta avorio', await p.evaluate(() => document.documentElement.classList.contains('t-avorio') && !document.documentElement.classList.contains('t-nero')));
   await foto('09e-avorio');
   await p.click('[data-act="tema"][data-t="carta"]'); await p.click('[data-act="at-fine"]'); await attendi(200);
   // il taschino nella copertina interna (la prima facciata)
-  await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="0"]'); await attendi(1300);
+  await vaiAda(p); await p.click('.salti [data-p="0"]'); await attendi(1300);
   // nome e telefono si scrivono sulle righe del «Se ritrovata»
   await p.click('.p-riga >> nth=0'); await p.fill('#nome-campo', 'Giulia'); await p.click('[data-act="salva-nome"]'); await attendi(200);
   prova('taschino con la copia delle note', await p.isVisible('.taschino [data-act="esporta"]'));
@@ -189,18 +192,22 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   const [scarico] = await Promise.all([p.waitForEvent('download'), p.click('.taschino [data-act="esporta"]')]);
   prova('copia delle note scaricata', /note-agenda-.*\.json/.test(scarico.suggestedFilename()));
   // segnalibro: nastro sulla pagina segnata, coda dal lato giusto quando si è altrove
-  await p.click('#b-nastro'); await attendi(200);
-  prova('nastro sulla pagina segnata', await p.isVisible('.nastro'));
+  // il segnalibro sta nella testa della pagina: dalla facciata «Se ritrovata» (senza testa) si passa al frontespizio
+  await p.keyboard.press('ArrowRight'); await attendi(1100);
+  await p.click('#pagine .pt-segna'); await attendi(200);
+  prova('nastro sulla pagina segnata', await p.isVisible('.nastro.segna'));
   await foto('10-segnalibro');
-  await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="fondo"]'); await attendi(1300);
+  await vaiAda(p); await p.click('.salti [data-p="fondo"]'); await attendi(1300);
   prova('coda del nastro a sinistra se la pagina segnata è indietro', await p.isVisible('.coda.indietro'));
   await p.click('.coda'); await attendi(1100);
-  prova('dalla coda alla pagina segnata', await p.isVisible('.nastro'));
-  // «Chiudi» in alto richiude l'agenda
-  await p.click('.chiudi-libro'); await attendi(5000);
+  prova('dalla coda alla pagina segnata', await p.isVisible('.nastro.segna'));
+  // «Chiudi l'agenda» sta nel foglio «…» (sulla facciata «Se ritrovata» lo stesso foglio si apre dalla linguetta «Sfondo»)
+  const altro = p.locator('#pagine .pt [data-act="altro"]');
+  if (await altro.count()) await altro.first().click(); else { await p.click('.p-sfondo'); await attendi(250); await p.click('[data-act="at-scheda"][data-t="carta"]'); }
+  await attendi(250); await p.click('#atelier [data-act="chiudi-libro"]'); await attendi(5000);
   prova('libro richiuso', await p.evaluate(() => document.getElementById('app').classList.contains('chiusa')));
   await p.click('.elastico', { force: true }); await attendi(1800);
-  await p.click('[data-act="prec"]'); await attendi(300);
+  await p.keyboard.press('ArrowLeft'); await attendi(300);
 
   prova('nessun errore in pagina', errori.length === 0); if (errori.length) console.log(errori);
   console.log(`\npercorso: ${ok} ok, ${ko} fallite`);

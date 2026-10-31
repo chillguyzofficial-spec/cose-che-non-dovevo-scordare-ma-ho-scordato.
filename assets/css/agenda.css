@@ -601,3 +601,306 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .sf-scacchi{--sfondo-img:conic-gradient(var(--pois2) 25%,transparent 0 50%,var(--pois2) 0 75%,transparent 0) 0 0/1.8em 1.8em,linear-gradient(var(--retro1),var(--retro2))}
 .sf-fiori{--sfondo-img:radial-gradient(circle,var(--pois2) 0 .14em,transparent .15em) 0 0/2.4em 2.4em,radial-gradient(circle at 50% 30%,var(--pois1) 0 .17em,transparent .18em) 0 0/2.4em 2.4em,radial-gradient(circle at 50% 70%,var(--pois1) 0 .17em,transparent .18em) 0 0/2.4em 2.4em,radial-gradient(circle at 30% 50%,var(--pois1) 0 .17em,transparent .18em) 0 0/2.4em 2.4em,radial-gradient(circle at 70% 50%,var(--pois1) 0 .17em,transparent .18em) 0 0/2.4em 2.4em,linear-gradient(var(--retro1),var(--retro2))}
 .sf-liscio{--sfondo-img:linear-gradient(var(--retro1),var(--retro2))}
+
+/* =====================================================================
+   31/10 — direzione delle grafiche ChatGPT: i comandi stanno sul libro
+   (testa sulla carta, barra sul bordo in fondo), colori per stagione
+   ===================================================================== */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* le stagioni: pelle, scrivania, nastro e sigillo (la copertina segue la stagione se non se n'è scelta un'altra) */
+.app{--acc:#a8473a;--acc-scuro:#7c2a22;--desk:#2c1513;--deskEdge:#110706;--pelle:#6e2a22;--cop:#6e2a22}
+.st-primavera{--acc:#c9707e;--acc-scuro:#8e3a4a;--desk:#232a20;--deskEdge:#0c100b;--pelle:#3f5a3c;--cop:#3f5a3c}
+.st-estate{--acc:#dca233;--acc-scuro:#2f5f6b;--desk:#18272b;--deskEdge:#081013;--pelle:#2f5f6b;--cop:#2f5f6b}
+.st-autunno{--acc:#a8473a;--acc-scuro:#7c2a22;--desk:#2c1513;--deskEdge:#110706;--pelle:#6e2a22;--cop:#6e2a22}
+.st-inverno{--acc:#3d6fa0;--acc-scuro:#2c4a6e;--desk:#161d2a;--deskEdge:#070a10;--pelle:#2c4a6e;--cop:#2c4a6e}
+.t-nero .app{--desk:#0d0b09;--deskEdge:#000}
+.app{background:radial-gradient(120% 85% at 50% 42%,var(--desk),var(--deskEdge));transition:background .8s}
+
+/* il libro occupa lo schermo; sotto le pagine, dentro la pelle, c'è la barra (o il foglio «Personalizza») */
+.libro{margin-bottom:var(--sotto,58px)}
+/* pelle e copertina sono alte quanto tutto il libro, barra compresa: aprendo e chiudendo niente cambia d'altezza
+   (decorando la copertina invece sotto c'è il foglio «Personalizza», e la copertina resta della misura delle pagine) */
+.custodia{bottom:calc(-1 * var(--sotto,58px) - 4px)}
+.cop{bottom:calc(-1 * var(--sotto,58px) - 4px)}
+.atelier-on .custodia,.atelier-on .cop{bottom:-7px}
+.atelier-on.aperta .custodia{bottom:calc(-1 * var(--sotto,58px) - 4px)}
+/* l'invito ad aprire sta sulla copertina, nella pelle vuota sotto il fregio (sotto il libro non c'è più spazio) */
+.suggerimento{top:72%;bottom:auto;z-index:12;color:rgba(233,215,176,.62);text-shadow:0 1px 1px rgba(0,0,0,.5)}
+
+/* la testa stampata sulla carta */
+.pt{position:absolute;left:0;right:0;top:0;height:2.9em;display:flex;align-items:center;gap:.2em;padding:0 .9em 0 1.1em;z-index:2}
+.pg.sx .pt{padding-left:1.9em}.pg.dx:not(.tutta) .pt{padding-right:1.9em}
+.singolo .pg .pt{padding:0 .7em 0 1.2em}
+.pt-ico{flex:none;width:2.4em;height:2.4em;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--ink)}
+.pt-ico svg{width:1.3em;height:1.3em;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.pt-ico:active{background:rgba(0,0,0,.06)}
+.pt-tit{flex:1;min-width:0;text-align:center;line-height:1.1;overflow:hidden}
+.pt-tit b{display:block;font-family:var(--fell);font-style:italic;font-weight:400;font-size:1.22em;color:var(--acc-scuro);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt-tit small{display:flex;align-items:center;justify-content:center;gap:.7em;font-size:.52em;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-top:.25em}
+.pt-tit small::before,.pt-tit small::after{content:'';width:2.6em;border-top:1px solid var(--rule)}
+.pt-vuoto{flex:1}
+.pg-corpo{position:absolute;left:0;right:0;top:2.9em;bottom:0}
+.pg-corpo.senza-testa{top:0}
+.pg .pg-corpo .p-guida,.pg .pg-corpo .p-elenco,.singolo .pg .pg-corpo .p-guida,.singolo .pg .pg-corpo .p-elenco{padding-top:.5em}
+.pg .pg-corpo .p-centro{padding-top:1.4em}
+.singolo .pg .pg-corpo.senza-testa .p-centro{padding-top:2.4em}
+
+/* la settimana dentro una cornice sottile, come nelle grafiche */
+.pg-corpo .sett{inset:0 .7em .7em .7em;border:1px solid var(--rule);border-radius:.7em;background:rgba(255,255,255,.12)}
+.pg.sx .pg-corpo .sett{left:1.7em}.pg.dx:not(.tutta) .pg-corpo .sett{right:1.7em}
+.singolo .pg .pg-corpo .sett{left:1em;right:.7em}
+.pg-corpo .sett-titolo{color:var(--acc-scuro)}
+.pg-corpo .sett-sotto{letter-spacing:.28em}
+.pg .pg-corpo .sett-testa,.singolo .pg .pg-corpo .sett-testa{padding:0 .9em .4em;align-items:flex-start}
+.tutta .sett-testa{height:3.3em}
+.tutta .sett-titolo{font-size:1.6em}
+.tutta .ghirigoro{display:none}
+
+/* il giorno: numero e nome a sinistra, una riga verticale, poi quello che si scrive */
+.giorno{display:grid;grid-template-columns:3.3em minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr);column-gap:.65em;--rgb:150,110,90}
+.pg .giorno,.singolo .pg .giorno{padding:.3em .8em .15em .9em}
+.g-testa{grid-column:1;grid-row:1/-1;flex-direction:column;align-items:flex-start;gap:0;height:auto;border-right:1px solid var(--rule);padding-right:.3em}
+.g-num{font-style:italic;font-size:1.5em;line-height:1.05;min-width:0;text-align:left;padding:0 .12em;margin-left:-.12em}
+.g-num.oggi{box-shadow:0 0 0 1.5px var(--acc)}
+.g-nome{font-family:var(--fell);font-size:.52em;letter-spacing:.16em;text-transform:uppercase;margin-top:.15em}
+.g-mese{font-size:.5em;letter-spacing:.16em}
+.pg.dx .giorno:last-child .g-num,.pg.dx .giorno:last-child .g-nome{color:var(--acc-scuro)}
+.g-festa{grid-column:2;grid-row:1;justify-self:start;max-width:100%;font-size:.5em;letter-spacing:.2em;padding:.25em .7em;margin:.25em 0 .2em;border-radius:.25em;background:rgba(var(--rgb),.16);color:var(--acc-scuro)}
+.g-ric{grid-column:2;grid-row:2}
+.g-corpo{grid-column:2;grid-row:3}
+
+/* il biglietto «N°»: il numero ora ci sta tutto */
+.biglietto{width:auto;height:auto;padding:.3em .6em;white-space:nowrap}
+
+/* il nastro corre lungo il dorso e si tocca per segnare la pagina */
+.nastro{pointer-events:auto;cursor:pointer;width:.9em;left:calc(50% - .45em);top:-12px;height:calc(100% + 12px + var(--sotto,58px) + 1.6em);padding:0;z-index:8}
+.singolo .nastro{left:.55em}
+.nastro span{background:linear-gradient(to bottom,rgba(255,255,255,.18),transparent 1.4em),linear-gradient(90deg,rgba(0,0,0,.28),transparent 30%,rgba(255,255,255,.18) 48%,transparent 62%,rgba(0,0,0,.3)),var(--acc)}
+.nastro.segna::before{content:'';position:absolute;left:50%;top:18px;width:.55em;height:.55em;margin-left:-.275em;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f6dc93,#a07a26 70%);box-shadow:0 1px 2px rgba(0,0,0,.4);z-index:1}
+.coda{top:-14px;height:1.4em;z-index:9}
+.coda span{background:linear-gradient(90deg,rgba(0,0,0,.28),transparent 30%,rgba(255,255,255,.18) 48%,transparent 62%,rgba(0,0,0,.3)),var(--acc)}
+
+/* la barra in fondo al libro: Oggi · Settimana · ＋ · Mese · Diario */
+.piede{position:absolute;left:0;right:0;top:100%;height:calc(var(--sotto,58px) - 6px);margin-top:3px;display:flex;align-items:stretch;
+  background:radial-gradient(140% 90% at 50% 0%,var(--paper),var(--paper2));border-radius:3px 3px 8px 8px;box-shadow:inset 0 2px 4px rgba(60,30,10,.18);
+  pointer-events:none;z-index:3;font-size:16px;isolation:isolate}
+.aperta .piede{pointer-events:auto}
+/* in doppia pagina, ad agenda chiusa, la metà sinistra della barra resterebbe scoperta accanto alla copertina */
+.app:not(.singolo) .piede{transition:opacity .35s}
+.app:not(.singolo).chiusa .piede,.app:not(.singolo).sgancio .piede,.app:not(.singolo).chiusura .piede{opacity:0}
+.atelier-on .piede{display:none}
+.piede>button{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--ink);position:relative}
+.piede>button+button:not(.sigillo):not(.sigillo + button)::before{content:'';position:absolute;left:0;top:22%;bottom:22%;border-left:1px solid var(--rule)}
+.piede svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.piede span{font-family:var(--fell);font-size:13px;line-height:1}
+.piede [aria-current="page"]{color:#fff}
+.piede [aria-current="page"]::after{content:'';position:absolute;inset:14% 6%;z-index:-1;background:var(--acc-scuro);clip-path:polygon(2% 8%,30% 0,62% 6%,98% 1%,100% 50%,97% 94%,64% 100%,32% 93%,0 100%,3% 52%);transform:rotate(-1.5deg)}
+.piede>button.sigillo{flex:none;width:58px;align-self:flex-start;height:58px;margin:-26px 4px 0;border-radius:50%;color:#fff;
+  background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.35),transparent 42%),var(--acc);
+  box-shadow:0 3px 8px rgba(0,0,0,.4),inset 0 0 0 3px rgba(0,0,0,.14),inset 0 0 0 6px rgba(255,255,255,.12)}
+.piede .sigillo span{font-family:var(--macchina);font-size:30px;line-height:1;margin-top:-2px}
+@media (max-width:359px){.piede span{font-size:11.5px}.piede>button.sigillo{width:50px;height:50px}}
+
+/* il foglio «Personalizza»: carta attaccata al libro, al posto della barra */
+.atelier{position:absolute;left:0;right:0;top:100%;margin-top:3px;width:auto;max-width:none;z-index:3;font-size:16px;color:var(--ink);
+  background:radial-gradient(140% 90% at 50% 0%,var(--paper),var(--paper2));border:0;border-radius:3px 3px 10px 10px;box-shadow:inset 0 2px 4px rgba(60,30,10,.18),0 8px 22px rgba(0,0,0,.35)}
+@media (min-width:900px){.atelier{width:auto;max-width:none;margin:3px 0 0;border:0}}
+.chiusa .atelier{left:50%;right:-9px}
+.singolo.chiusa .atelier{left:0;right:0}
+.atelier .btn{color:var(--ink);border-color:var(--rule)}
+.atelier .btn.pieno{background:var(--acc-scuro);color:#fff;border-color:transparent}
+.atelier [role="switch"][aria-checked="true"]{border-color:var(--acc-scuro)}
+.at-testa b{color:var(--acc-scuro)}
+.at-schede{background:rgba(0,0,0,.06)}
+.at-schede button{color:var(--ink)}
+.at-schede button[aria-selected="true"]{background:var(--acc-scuro);color:#fff}
+.at-colori button{border-color:rgba(0,0,0,.15)}
+.at-colori button[aria-checked="true"]{border-color:var(--ink);box-shadow:0 0 0 2px rgba(0,0,0,.12),inset 0 0 8px rgba(0,0,0,.4)}
+.at-adesivi button{background:rgba(0,0,0,.05)}
+.at-carte button,.at-sfondi button{color:var(--ink);border-color:var(--rule)}
+.at-carte button[aria-checked="true"],.at-sfondi button[aria-checked="true"]{border-color:var(--acc-scuro);box-shadow:inset 0 0 0 1px var(--acc-scuro)}
+.cc-nero{box-shadow:none}
+.at-sfondi span{box-shadow:inset 0 0 0 1px var(--rule)}
+.at-nota{color:var(--muted)}
+.at-chiudi{margin-left:auto}
+.atelier{padding:10px 12px 12px;gap:10px}
+.atelier .at-schede button{height:34px;padding:0 11px;font-size:13.5px}
+.atelier .at-testa .btn{padding:0 13px}
+.atelier-on .nastro,.atelier-on .coda{display:none}
+
+/* ritocchi dopo le prime foto: nastro sottile sul bordo, colonna dei giorni più larga, scrittura un po' più piccola sul telefono */
+.nastro,.singolo .nastro{left:.35em;width:.72em}
+/* il segnalibro come uno vero: lungo solo sulla pagina segnata, un pezzetto in alto sulle altre;
+   la coda (porta alla pagina segnata) pende dal bordo destro, dove non copre titolo né pulsanti */
+.nastro.segna::before{display:none}
+/* su PC in mezzo, nella piega tra le due pagine; sul telefono sul bordo del dorso (al centro coprirebbe la scrittura) */
+.app:not(.singolo) .nastro{left:calc(50% - .27em)}
+/* come uno vero: sottile, esce dall'alto e scende per un terzo della pagina, finisce a coda di rondine (non copre barra né sigillo) */
+.nastro,.singolo .nastro{width:.54em;height:calc(12px + 78%)}
+.singolo .nastro{left:.4em}
+.coda,.coda.avanti,.coda.indietro{left:calc(50% - .36em);right:auto;top:-12px;width:.72em;height:calc(12px + 2.6em)}
+.singolo .coda,.singolo .coda.avanti,.singolo .coda.indietro{left:.35em}
+.coda span,.coda.indietro span{width:100%;transform:none;opacity:.92}
+@media (hover:hover){.coda:hover{height:calc(12px + 3.1em)}.coda:hover span{transform:none}}
+/* il segnalibro in testa alla pagina: pieno e colorato quando la pagina è segnata */
+.piede{z-index:9}
+.pt-segna.on{color:var(--acc)}
+.pt-segna.on svg{fill:currentColor}
+/* gli avvisi sopra la barra e il sigillo, non sopra */
+.avviso{bottom:calc(env(safe-area-inset-bottom) + 96px)}
+.singolo .piede{padding-left:1.1em}
+.giorno{grid-template-columns:3.9em minmax(0,1fr)}
+.g-nome{letter-spacing:.1em}
+.tutta .g-corpo{font-size:1.02em}
+.pg .pg-corpo .ghirigoro{left:auto;right:.9em}
+
+/* PC: a sinistra la settimana intera in piccolo, a destra il giorno scelto */
+.pg.sx.tutta .sett-testa{height:3.3em}
+.pg.sx.tutta .sett-titolo{font-size:1.6em}
+.pg.sx.tutta .ghirigoro{display:none}
+.pg.sx.tutta .g-corpo{font-size:1.02em}
+/* PC: il pulsante «Tutta la settimana» nella testa della pagina di sinistra */
+.pt-sett{flex:none;margin-left:auto;height:2.1em;padding:0 .9em;border-radius:1.05em;border:1px solid var(--rule);font-family:var(--fell);font-size:.72em;color:var(--ink);white-space:nowrap}
+.pt-sett[aria-pressed="true"]{background:var(--acc-scuro);border-color:transparent;color:#fff}
+.singolo .pt-sett{display:none}
+
+/* la linguetta «Sfondo» cucita sulla prima pagina */
+.p-sfondo{position:absolute;top:.6em;right:.8em;z-index:2;min-height:2.3em;padding:0 .9em;border-radius:.5em;background:var(--cartiglio);border:1px solid var(--orlo);outline:1px dashed var(--orlo);outline-offset:-4px;font-family:var(--fell);font-size:.66em;letter-spacing:.04em;color:var(--ink);box-shadow:0 1px 3px rgba(60,30,10,.2)}
+
+/* «Personalizza» con la sua scritta, nella testa della pagina */
+.pt-pers{flex:none;height:2.1em;padding:0 .85em;margin-left:.15em;border-radius:1.05em;background:var(--acc-scuro);color:#fff;font-family:var(--fell);font-size:.74em;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.18)}
+.pt-pers:active{transform:scale(.97)}
+.singolo .pg .pt{padding-left:1.4em}
+.singolo .pt-tit{text-align:left}
+.singolo .pt-tit small{justify-content:flex-start}
+.singolo .pt-tit small::before{display:none}
+
+/* sticker della stagione: l'elemento in testa alla settimana e uno solo per pagina, sul bordo destro di un giorno */
+.sett-ramo{position:absolute;right:.5em;top:.15em;height:3.1em;width:auto;max-width:42%;object-fit:contain;transform:rotate(var(--r));pointer-events:none;filter:drop-shadow(0 1px 2px rgba(60,30,10,.25))}
+.g-sticker{position:absolute;right:.7em;top:50%;height:min(84%,3.6em);width:auto;max-width:34%;object-fit:contain;transform:translateY(-50%) rotate(var(--r));pointer-events:none;z-index:0;filter:drop-shadow(0 1px 2px rgba(60,30,10,.28))}
+.g-sticker-foto{height:min(92%,4.2em)}
+.giorno{isolation:isolate}
+.g-sticker{z-index:-1}
+.t-nero .g-sticker,.t-nero .sett-ramo{filter:drop-shadow(0 1px 2px rgba(0,0,0,.5)) brightness(.92)}
+
+/* adesivi della copertina: immagini, intere nel loro riquadro */
+.ades img,.at-adesivi img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;-webkit-user-drag:none}
+.at-adesivi button{width:54px;height:54px}
+
+/* il mese: calendario su un foglio, un puntino sui giorni scritti */
+.m-testa{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.m-testa .h-foglio{flex:1;text-align:center;color:var(--acc-scuro)}
+.m-giro{width:44px;height:44px;border-radius:50%;border:1px solid var(--rule);font-family:var(--fell);font-size:26px;line-height:1;color:var(--ink)}
+.m-giro:disabled{opacity:.25;cursor:default}
+.m-griglia{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.m-griglia em{font-style:normal;text-align:center;font-size:11px;letter-spacing:.14em;color:var(--muted);padding-bottom:4px}
+.mg{position:relative;aspect-ratio:1;max-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-family:var(--fell);font-size:19px;color:var(--ink)}
+button.mg{background:rgba(255,255,255,.18);border:1px solid var(--rule)}
+button.mg:active{background:rgba(0,0,0,.06)}
+.mg.fuori{color:var(--muted);opacity:.4}
+.mg.festa b{color:var(--acc-scuro)}
+.mg.oggi{box-shadow:inset 0 0 0 2px var(--acc)}
+.mg i,.m-nota i{display:block;width:6px;height:6px;border-radius:50%;background:var(--ink2);margin-top:2px}
+.mg i.ric,.m-nota i.ric{background:var(--acc)}
+.m-nota{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:12px;font-size:12px;color:var(--muted)}
+.m-nota i{display:inline-block;margin:0}
+
+/* il mio anno in numeri: riquadri, mesi a barrette, curiosità */
+.st-quattro{display:grid;grid-template-columns:1fr 1fr;gap:.45em;margin-top:.7em}
+.st-box{border:1px solid var(--rule);border-radius:.5em;padding:.45em .6em .5em;background:rgba(255,255,255,.14);display:flex;flex-direction:column;gap:.1em;min-width:0}
+.st-box b{font-family:var(--fell);font-weight:400;font-size:1.75em;line-height:1;color:var(--acc-scuro)}
+.st-box b small{font-size:.5em;color:var(--muted)}
+.st-box span{font-size:.58em;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.st-barra{display:block;height:.28em;border-radius:.14em;background:rgba(0,0,0,.08);overflow:hidden;margin-top:.25em}
+.st-barra i{display:block;height:100%;background:var(--acc)}
+.st-mesi{display:flex;align-items:flex-end;gap:.2em;height:3.6em}
+.st-mese{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:.15em}
+.st-mese i{display:block;width:100%;min-height:2px;border-radius:2px 2px 0 0;background:color-mix(in srgb,var(--acc) 45%,transparent)}
+.st-mese.top i{background:var(--acc-scuro)}
+.st-mese span{font-size:.5em;color:var(--muted);line-height:1}
+.st-curiosita{margin-top:.8em;font-size:.68em;line-height:1.55;color:var(--ink)}
+.st-curiosita b{font-family:var(--fell);font-size:1.25em;font-weight:400;color:var(--acc-scuro)}
+.st-frase{font-family:var(--mano);color:var(--ink2);margin-top:.6em}
+
+/* «Ricomincia da capo» nel taschino, e la sua conferma */
+.taschino .taschino-reset{color:var(--rust)}
+.reset-testo{margin:0 0 10px;font-size:14px;line-height:1.5;color:var(--ink)}
+.reset-fila{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}
+.reset-fila span{flex:1}
+.btn.reset-si{background:#9b2c22;border-color:#9b2c22;color:#fff}
+
+/* lavagna della copertina: la copia della copertina fa da guida SOTTO la tela (prima la copriva e il tratto non si vedeva mentre si disegnava) */
+.lav .cop-copia{z-index:0}
+.lav-foglio canvas{z-index:1}
+
+/* scritte della copertina nel colore scelto (oro, argento, rame, bianco, nero o su misura) */
+.libro{--sc1:#f6dc95;--sc2:#c9a24a;--sc3:#8a6420}
+.oro{background:linear-gradient(180deg,var(--sc1),var(--sc2) 55%,var(--sc3));-webkit-background-clip:text;background-clip:text}
+.cop-filo{background:linear-gradient(90deg,transparent,var(--sc2),transparent)}
+.cop-fregio,.cop-anni{color:var(--sc2)}
+.cop-cucitura{border-color:color-mix(in srgb,var(--sc2) 60%,transparent)}
+
+/* Personalizza › Copertina: campioni ordinati con il nome sotto, in righe che scorrono */
+.at-et{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:-4px}
+.at-campioni{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px;padding-bottom:2px}
+.at-camp{flex:none;width:58px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;line-height:1.15;color:var(--ink);text-align:center;cursor:pointer;position:relative}
+.at-camp i{display:block;width:40px;height:40px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 8px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.25);border:2px solid transparent}
+.at-camp[aria-checked="true"] i{outline:2px solid var(--acc-scuro);outline-offset:2px}
+.at-camp span{max-width:100%}
+.at-campioni.scritte i{border-radius:8px}
+.at-misura input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+/* PC, copertina chiusa: il foglio non è stretto come la copertina, ma largo abbastanza per le schede, centrato sotto */
+.app:not(.singolo).chiusa .atelier{left:calc(75% - 240px);right:auto;width:480px}
+
+/* il frontespizio: una cornice a doppio filo e uno sticker della stagione, come le altre pagine */
+.p-centro::before{content:'';position:absolute;inset:.9em 1.5em .9em .9em;border:1px solid var(--rule);outline:1px solid var(--rule);outline-offset:-5px;border-radius:.4em;pointer-events:none}
+.singolo .p-centro::before{inset:.6em .8em}
+.p-sticker{position:absolute;right:1.6em;bottom:3.6em;height:4.2em;width:auto;max-width:35%;transform:rotate(-6deg);pointer-events:none;filter:drop-shadow(0 1px 2px rgba(60,30,10,.25))}
+
+/* campioni tutti visibili (vanno a capo), e il frontespizio staccato dalla sua cornice */
+.at-campioni{flex-wrap:wrap;overflow:visible}
+.pg .pg-corpo .p-centro{padding-top:2.4em}
+
+/* telefono: il foglio largo quanto lo schermo (non quanto il libro: si ridimensionavano a vicenda senza fermarsi), campioni in una riga che scorre */
+.singolo .atelier,.singolo.chiusa .atelier{left:50%;right:auto;width:min(calc(100vw - 16px),520px);transform:translateX(-50%)}
+.singolo .at-campioni{flex-wrap:nowrap;overflow-x:auto}
+.at-avviso{font-size:12px;color:#9b2c22}
+
+/* =====================================================================
+   31/10 — la pagina del giorno come le pagine del libro: colori della stagione,
+   cornice sottile, sticker nello spazio libero, pulsanti più puliti
+   ===================================================================== */
+:root{--acc:#a8473a;--acc-scuro:#7c2a22}
+.gp-carta{border-radius:6px}
+.gp-carta::after{content:'';position:absolute;inset:10px;border:1px solid var(--rule);border-radius:10px;pointer-events:none}
+.gp-num{color:var(--acc-scuro);font-style:italic}
+.gp-nome{color:var(--ink)}
+.gp-mese{color:var(--acc-scuro)}
+.gp-festa{color:var(--acc-scuro);border:0;background:rgba(150,110,90,.14);border-radius:.25em;padding:6px 11px 5px;letter-spacing:.18em}
+.gp-fatto{background:var(--acc-scuro);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.gp-giro{color:var(--muted)}
+.gp-giro span{color:var(--acc-scuro)}
+.gp-stile{background:linear-gradient(var(--paper) 80%,transparent)}
+.gp-stile button[aria-pressed="true"]{background:var(--acc-scuro);border-color:var(--acc-scuro);color:#fff}
+.gp-dx::before{background:color-mix(in srgb,var(--acc) 55%,transparent)}
+.gp-link{border-style:solid;background:rgba(255,255,255,.22);transition:background .2s}
+.gp-link b,.gp-link svg{color:var(--acc-scuro)}
+@media (hover:hover){.gp-link:hover{background:rgba(255,255,255,.5)}}
+.gp-righe::placeholder,.riga textarea::placeholder{color:color-mix(in srgb,var(--muted) 70%,transparent)}
+.t-nero .gp-link{background:rgba(255,255,255,.04)}
+/* lo sticker: in basso nello spazio libero a sinistra, su PC; sul telefono nascosto */
+#gp-sticker{display:none}
+@media (min-width:860px){
+  #gp-sticker{display:block;position:absolute;left:44px;right:36px;bottom:34px;height:min(30%,210px);pointer-events:none}
+  .gp-stk{position:absolute;left:50%;bottom:0;height:100%;width:auto;max-width:100%;object-fit:contain;transform:translateX(-50%) rotate(var(--r));filter:drop-shadow(0 2px 3px rgba(60,30,10,.28))}
+  .gp-sx{position:relative}
+  .gp-num{font-size:132px}
+}
+/* telefono: margini interni sopra la cornice, niente cornice a filo dei bordi (la pagina è a tutto schermo) */
+@media (max-width:859px){.gp-carta::after{display:none}}
+
+/* telefono: numero e nome del giorno allineati e in proporzione */
+@media (max-width:859px){.gp-data{align-items:center;gap:12px}.gp-num{font-size:70px;line-height:.92;padding-right:2px}}
+@media (max-width:360px){.gp-stile button{padding:0 9px;font-size:12px;gap:5px}}

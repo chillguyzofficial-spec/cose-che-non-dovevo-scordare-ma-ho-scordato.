@@ -20,12 +20,8 @@
 <body>
 <div class="app chiusa" id="app">
 
-  <div class="barra-su">
-    <button class="ico" data-act="cerca" aria-label="Cerca"><span class="ico-cerca"></span></button>
-    <button class="ico ico-pers" data-act="atelier" aria-label="Personalizza: copertina, carta e sfondo">✎</button>
-    <div class="testata"><div class="testata-titolo" id="t-titolo">Cose Che Non Dovevo Scordare</div><div class="testata-sotto" id="t-sotto"></div></div>
-    <button class="chiudi-libro" data-act="chiudi-libro" aria-label="Chiudi l'agenda"><span class="ico-libro"></span><span class="chiudi-testo">Chiudi</span></button>
-  </div>
+  <!-- dove si è: lo legge chi usa un lettore dello schermo (sulla carta c'è già scritto) -->
+  <div class="sr" aria-live="polite"><span id="t-titolo">Cose Che Non Dovevo Scordare</span> · <span id="t-sotto"></span></div>
 
   <div class="scena" id="scena">
     <div class="libro" id="libro">
@@ -53,23 +49,24 @@
         <div class="elastico" data-act="apri"></div>
       </div>
       <div class="luce-notte"></div>
+      <!-- il bordo in fondo al libro: le viste e il sigillo per scrivere oggi -->
+      <nav class="piede" id="piede" aria-label="Viste dell'agenda">
+        <button data-act="oggi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4.5" width="14" height="16" rx="1.5"/><path d="M9 4.5V3h6v1.5M8.5 10h7M8.5 14h5"/></svg><span>Oggi</span></button>
+        <button data-act="vista" data-v="sett" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10 5 7 4.6 3.5 5v13c3.5-.4 6.5 0 8.5 1.5 2-1.5 5-1.9 8.5-1.5V5C17 4.6 14 5 12 6.5zM12 6.5v13"/></svg><span>Settimana</span></button>
+        <button class="sigillo" data-act="scrivi-oggi" aria-label="Scrivi su oggi"><span>＋</span></button>
+        <button data-act="vista" data-v="mese"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4M7.5 13h1M11.5 13h1M15.5 13h1M7.5 16.5h1M11.5 16.5h1"/></svg><span>Mese</span></button>
+        <button data-act="vaia"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span>Vai a…</span></button>
+      </nav>
+      <div class="atelier" id="atelier" hidden></div>
     </div>
     <div class="suggerimento" id="sugg">Preparo le pagine…</div>
   </div>
-
-  <div class="barra-giu">
-    <button class="pill tondo" data-act="prec" aria-label="Pagina precedente">‹</button>
-    <button class="pill" data-act="oggi">Oggi</button>
-    <button class="pill" data-act="vaia">Vai a…</button>
-    <button class="pill" data-act="nastro" id="b-nastro"><span class="nastrino"></span><span>Segna</span></button>
-    <button class="pill tondo" data-act="succ" aria-label="Pagina successiva">›</button>
-    <button class="pill decora" data-act="atelier">✎ Personalizza</button>
-  </div>
-  <div class="atelier" id="atelier" hidden></div>
 </div>
 
 <!-- spiegazioni (tienila sul telefono) -->
 <div class="velo" id="v-menu" hidden data-chiudi><div class="foglio-basso" id="menu"></div></div>
+<!-- il mese: calendario, tocchi un giorno e vai alla sua settimana -->
+<div class="velo" id="v-mese" hidden data-chiudi><div class="foglio-basso"><div class="maniglia"></div><div class="dentro" id="mese"></div></div></div>
 <!-- vai a -->
 <div class="velo" id="v-vaia" hidden data-chiudi><div class="foglio-basso"><div class="maniglia"></div><div class="dentro">
   <div class="h-foglio">Vai a…</div>
@@ -83,6 +80,13 @@
   <input class="campo" id="nome-campo" maxlength="40" placeholder="Il tuo nome" autocomplete="given-name">
   <input class="campo" id="tel-campo" maxlength="24" placeholder="Telefono (se vuoi)" type="tel" inputmode="tel" autocomplete="tel">
   <div class="fila" style="justify-content:flex-end"><button class="btn" data-act="chiudi">Annulla</button><button class="btn pieno" data-act="salva-nome">Scrivi</button></div>
+</div></div></div>
+<!-- ricomincia da capo: si cancella solo dopo la conferma e qualche secondo per tornare indietro -->
+<div class="velo" id="v-reset" hidden data-chiudi><div class="foglio-basso"><div class="maniglia"></div><div class="dentro">
+  <div class="h-foglio">Ricominciare da capo?</div>
+  <p class="reset-testo">Da questo telefono (o computer) si cancellano <b>tutte</b> le note, le cose da ricordare, i disegni, le foto, le lettere al futuro, il segnalibro e la copertina decorata. L’agenda torna come nuova.</p>
+  <p class="reset-testo">Se vuoi poterle riprendere, salva prima una copia: si recupera da «Riprendi una copia», nel taschino.</p>
+  <div class="reset-fila"><button class="btn" data-act="esporta">Salva prima una copia</button><span></span><button class="btn" data-act="chiudi">Annulla</button><button class="btn reset-si" data-act="reset-ok">Cancella tutto</button></div>
 </div></div></div>
 <!-- ricerca -->
 <div class="velo alto" id="v-cerca" hidden data-chiudi><div class="cerca-box">
@@ -113,6 +117,7 @@
         <div id="gp-ricordi"></div>
         <div id="gp-lettere"></div>
         <div id="gp-versioni"></div>
+        <div id="gp-sticker" aria-hidden="true"></div>
       </section>
       <section class="gp-dx" id="gp-dx">
         <div class="gp-stile" role="group" aria-label="Tipo di riga">
@@ -134,6 +139,7 @@
 <script src="assets/js/dati.js"></script>
 <script src="assets/js/illustrazioni.js"></script>
 <script src="assets/js/extra.js"></script>
+<script src="assets/js/sticker.js"></script>
 <script src="assets/js/agenda.js"></script>
 </body>
 </html>
