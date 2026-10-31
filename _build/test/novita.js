@@ -29,7 +29,7 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
 
   await p.goto(URL); await attendi(700);
   // ---------- copertina: si decora ad agenda chiusa ----------
-  prova('«Decora la copertina» ad agenda chiusa', await p.isVisible('.barra-giu .decora'));
+  prova('«Personalizza» ad agenda chiusa', await p.isVisible('.barra-giu .decora'));
   await p.click('.barra-giu .decora'); await attendi(200);
   prova('pannello della copertina', await p.isVisible('#atelier'));
   await p.click('[data-act="at-colore"][data-c="notte"]'); await attendi(100);
@@ -128,14 +128,35 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   prova('prima del giorno resta sigillata', (await p.textContent('#avviso-testo')).includes('Sigillata') && await p.isHidden('#v-sorpresa'));
 
   // ---------- copia delle note con tutto ----------
-  await p.click('[data-act="vaia"]'); await p.click('[data-act="vai-pagina"][data-p="0"]'); await attendi(1700);
-  // sfondo della prima pagina a scelta
-  await p.click('.p-sfondo'); await attendi(200);
-  prova('scelta dello sfondo: 6 motivi', await p.locator('.sfondi button').count() === 6);
-  await p.click('.sfondi [data-s="fiori"]'); await attendi(150);
+  // ---------- «Personalizza»: un pannello solo, ogni scheda porta il libro dove serve ----------
+  prova('niente più «Sfondo» sparso sulla pagina', await p.locator('.p-sfondo').count() === 0);
+  await p.click('.barra-su .ico-pers'); await attendi(250);
+  prova('Personalizza ad agenda aperta: scheda Carta', await p.isVisible('#atelier') && (await p.getAttribute('[data-act="at-scheda"][aria-selected="true"]', 'data-t')) === 'carta');
+  prova('tre schede', await p.locator('[data-act="at-scheda"]').count() === 3);
+  prova('l’agenda resta aperta sulla carta', await p.evaluate(() => document.getElementById('app').classList.contains('aperta')));
+  await p.click('.giorno >> nth=0', { force: true }); await attendi(300);
+  prova('mentre si personalizza i giorni non si aprono', await p.isHidden('#gp'));
+  await p.click('[data-act="at-scheda"][data-t="sfondo"]'); await attendi(1500);
+  prova('scheda Sfondo: va alla prima pagina', (await p.textContent('#t-sotto')) === 'Frontespizio' && await p.isVisible('.p-retro'));
+  prova('scelta dello sfondo: 6 motivi', await p.locator('.at-sfondi button').count() === 6);
+  await p.click('.at-sfondi [data-s="righe"]'); await attendi(150);
+  await p.click('.at-sfondi [data-s="fiori"]'); await attendi(150);
   if (FOTO) await p.screenshot({ path: path.join(FOTO, MOTORE + '-06-sfondi.png') });
-  await p.click('#v-menu [data-act="chiudi"]'); await attendi(150);
   prova('prima pagina a fiorellini', (await p.$eval('.p-retro', e => getComputedStyle(e).backgroundImage)).split('radial-gradient').length - 1 === 5);
+  prova('una sola classe di sfondo sul libro', (await p.$eval('#libro', e => e.className.match(/\bsf-\S+/g).join(' '))) === 'sf-fiori');
+  await p.click('.at-sfondi [data-s="pallini"]'); await attendi(150);
+  prova('si torna ai pallini (prima non si poteva)', (await p.$eval('.p-retro', e => getComputedStyle(e).backgroundImage)).split('radial-gradient').length - 1 === 2);
+  await p.click('.at-sfondi [data-s="fiori"]'); await attendi(150);
+  await p.click('[data-act="at-scheda"][data-t="copertina"]'); await attendi(2600);
+  prova('scheda Copertina: l’agenda si chiude', await p.evaluate(() => document.getElementById('app').classList.contains('chiusa')) && await p.isVisible('[data-act="at-colore"]'));
+  await p.click('[data-act="at-scheda"][data-t="carta"]'); await attendi(3800);
+  prova('scheda Carta: l’agenda si riapre', await p.evaluate(() => document.getElementById('app').classList.contains('aperta')));
+  await p.click('[data-act="tema"][data-t="avorio"]'); await attendi(100);
+  prova('carta avorio dal pannello', await p.evaluate(() => document.documentElement.classList.contains('t-avorio')));
+  await p.click('[data-act="tema"][data-t="carta"]');
+  await p.click('[data-act="at-fine"]'); await attendi(200);
+  prova('Fatto chiude il pannello', await p.isHidden('#atelier') && await p.isVisible('.barra-su .ico-pers'));
+  await p.click('[data-act="vaia"]'); await p.click('[data-act="vai-pagina"][data-p="0"]'); await attendi(1700);
   await foto('07-prima-pagina-fiori');
   const [dl] = await Promise.all([p.waitForEvent('download'), p.click('[data-act="esporta"]')]);
   const copia = JSON.parse(fs.readFileSync(await dl.path(), 'utf8'));

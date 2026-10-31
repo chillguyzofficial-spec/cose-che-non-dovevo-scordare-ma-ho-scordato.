@@ -147,14 +147,14 @@
 
   // ---------- copertina ----------
   function setFase(f) { S.fase = f; app.classList.remove('chiusa', 'sgancio', 'apertura', 'aperta', 'chiusura'); app.classList.add(f); }
-  function apri() {
+  function apri(dest) {
     if (S.fase !== 'chiusa' || !pronto) return;
     sveglia(); suono('elastico'); setFase('sgancio');
     setTimeout(() => {
       setFase('apertura'); disegna();
       setTimeout(() => suono('posa'), 950);
       // la prima volta si apre su «Come si usa», poi sempre sulla settimana di oggi
-      const meta = S.imp.visto ? posDiGiorno(giorni[oggiIdx()]) : posDiSpread(1); setImp({ visto: true });
+      const meta = dest != null ? dest : S.imp.visto ? posDiGiorno(giorni[oggiIdx()]) : posDiSpread(1); setImp({ visto: true });
       setTimeout(() => { setFase('aperta'); disegna(); setTimeout(() => vaiPos(meta), 260); }, 1200);
     }, 430);
   }
@@ -200,7 +200,7 @@
   function fineFlip(commit) { const f = flip; flip = null; S.flip = null; if (commit && f) { S.pos = f.to; S.spread = spreadDiPos(f.to); } disegna(); }
   const sopprimi = () => { noClick = true; clearTimeout(sopprimi.t); sopprimi.t = setTimeout(() => { noClick = false; }, 80); };
 
-  libro.addEventListener('pointerdown', e => { if (!$('#gp').hidden || S.atelier) return; ptr = { x: e.clientX, y: e.clientY, t: performance.now(), drag: false }; });
+  libro.addEventListener('pointerdown', e => { if (!$('#gp').hidden || (S.atelier && S.atelier.tab === 'copertina')) return; ptr = { x: e.clientX, y: e.clientY, t: performance.now(), drag: false }; });
   libro.addEventListener('pointermove', e => {
     const P = ptr; if (!P) return;
     const dx = e.clientX - P.x, dy = e.clientY - P.y;
@@ -331,16 +331,9 @@
   const SCARABOCCHIO = `<svg class="p-scarabocchio" viewBox="0 0 120 70" aria-hidden="true"><path d="M8 52c10-2 18-12 16-20s-12-6-12 2 12 14 24 10 22-20 20-28-12-6-12 4 10 24 26 24 20-8 26-14"/><path d="M98 14l3 7 7 1-5 5 1 7-6-4-6 4 1-7-5-5 7-1z"/><path d="M14 62c22 3 50 2 78-3"/></svg>`;
   // lo sfondo della prima pagina (e del retro della copertina): si sceglie, e prende i colori della carta
   const SFONDI = { pallini: 'Pallini', righe: 'Righe', quadretti: 'Quadretti', scacchi: 'Scacchi', fiori: 'Fiorellini', liscio: 'Tinta unita' };
-  function sceltaSfondo() {
-    const ora = SFONDI[S.imp.sfondo] ? S.imp.sfondo : 'pallini';
-    $('#menu').innerHTML = `<div class="maniglia"></div><div class="dentro"><div class="h-foglio">Lo sfondo della prima pagina</div>` +
-      `<div class="sfondi" role="radiogroup" aria-label="Sfondo">${Object.keys(SFONDI).map(k => `<button data-act="sf" data-s="${k}" role="radio" aria-checked="${ora === k}"><span class="sf-${k}"></span>${SFONDI[k]}</button>`).join('')}</div>` +
-      `<div class="nota-p">I colori seguono la carta scelta: classica, nera o avorio.</div>` +
-      `<div class="fila" style="justify-content:flex-end"><button class="btn pieno" data-act="chiudi">Fatto</button></div></div>`;
-  }
   function paginaFissa(s, L) {
     // copertina interna: «Se ritrovata» e il taschino con la copia delle note
-    if (s === 0 && L) return `<div class="p-retro"><button class="p-sfondo" data-act="sfondo">◐ Sfondo</button><div class="p-cartiglio"><div class="p-ritrovata">Se ritrovata</div><div class="p-piccolo">restituire a</div><button class="p-riga" data-act="nome"><small>nome</small><span>${nome() ? esc(nome()) : ''}</span></button><button class="p-riga" data-act="nome"><small>tel.</small><span>${tel() ? esc(tel()) : ''}</span></button><div class="p-grazie">Grazie. Non sapevo più di averla.</div></div>${SCARABOCCHIO}` +
+    if (s === 0 && L) return `<div class="p-retro"><div class="p-cartiglio"><div class="p-ritrovata">Se ritrovata</div><div class="p-piccolo">restituire a</div><button class="p-riga" data-act="nome"><small>nome</small><span>${nome() ? esc(nome()) : ''}</span></button><button class="p-riga" data-act="nome"><small>tel.</small><span>${tel() ? esc(tel()) : ''}</span></button><div class="p-grazie">Grazie. Non sapevo più di averla.</div></div>${SCARABOCCHIO}` +
       `<div class="taschino"><div class="taschino-h">Nel taschino</div><button data-act="esporta">Salva una copia delle note</button><button data-act="importa">Riprendi una copia</button><button data-act="installa">Tienila sul telefono</button></div></div>`;
     if (s === 0) return `<div class="p-centro"><div class="p-occhiello">Agenda settimanale</div><div class="p-fregio">❦</div><div class="p-titolo">Cose Che Non Dovevo Scordare</div><div class="p-sotto">(Ma Ho Scordato)</div><div class="p-filo"></div>` +
       `<div class="p-piccolo">${breve(inizio).replace(/ (\d\d)$/, ' 20$1')}<br>${breve(fine).replace(/ (\d\d)$/, ' 20$1')}</div><div style="flex:1"></div>` +
@@ -358,9 +351,8 @@
         voce('VI', 'Da ricordare', '«Ricorda questo giorno»: appuntamenti, visite, compleanni, scadenze.') +
         voce('VII', 'Buste e biglietti', 'Tra le pagine, buste e biglietti da aprire: un verso o una battuta.') +
         voce('VIII', 'Lettere al futuro', 'Scrivila, sigillala: si apre solo nel giorno che scegli.') +
-        `<div class="p-pref"><button data-act="suoni" role="switch" aria-checked="${!!S.imp.sound}"><i></i>Suoni della carta</button>` +
-        `<div class="p-temi" role="radiogroup" aria-label="Carta"><span>Carta</span>${[['carta', 'Classica'], ['nero', 'Nera'], ['avorio', 'Avorio']].map(([t, n]) => `<button data-act="tema" data-t="${t}" role="radio" aria-checked="${S.imp.tema === t}">${n}</button>`).join('')}</div></div>` +
-        `<div class="p-prova"><button data-act="oggi">Vai a oggi ›</button><button data-act="atelier">Decora la copertina ›</button></div></div>`;
+        voce('IX', 'Personalizza', '«✎» in alto: copertina, carta, sfondo e suoni, tutto in un posto.') +
+        `<div class="p-prova"><button data-act="oggi">Vai a oggi ›</button><button data-act="atelier">Personalizza l’agenda ›</button></div></div>`;
     }
     if (L) {
       const mie = scordate();
@@ -431,7 +423,7 @@
     $('#t-titolo').textContent = tt; $('#t-sotto').textContent = ts;
     // il tema sta sulla radice, così vale anche per la pagina del giorno e i fogli
     const rad = document.documentElement;
-    libro.className = libro.className.replace(/sf-S+/g, '').trim() + ' sf-' + (SFONDI[S.imp.sfondo] ? S.imp.sfondo : 'pallini');
+    libro.className = libro.className.replace(/\bsf-\S+/g, '').trim() + ' sf-' + (SFONDI[S.imp.sfondo] ? S.imp.sfondo : 'pallini');
     rad.classList.toggle('t-nero', S.imp.tema === 'nero'); rad.classList.toggle('t-avorio', S.imp.tema === 'avorio');
     document.querySelector('meta[name="theme-color"]').content = S.imp.tema === 'nero' ? '#000000' : '#3a2216';
   }
@@ -933,12 +925,15 @@
     const b = e.target.closest('[data-act]'); if (!b) return;
     const a = b.dataset.act, k = b.dataset.k;
     if (noClick && b.closest('#libro')) return;
+    // mentre si personalizza il libro si guarda e si sfoglia, ma non si apre nient'altro
+    if (S.atelier && b.closest('#libro') && !(a === 'apri' || (S.atelier.tab !== 'copertina' && (a === 'angolo' || a === 'al-nastro')))) return;
     sveglia();
     switch (a) {
       case 'apri': e.stopPropagation(); if (S.atelier) { if (S.atelier.sel != null && !e.target.closest('.ades')) { S.atelier.sel = null; disegnaAtelier(); disegnaCopertina(); } } else apri(); break;
       case 'lettera': e.stopPropagation(); apriLettera(b.dataset.id); break;
-      case 'atelier': chiudiVeli(); atelier(); break;
-      case 'at-fine': S.atelier = null; disegnaAtelier(); disegnaCopertina(); break;
+      case 'atelier': chiudiVeli(); atelier(b.dataset.t); break;
+      case 'at-scheda': vaiScheda(b.dataset.t); break;
+      case 'at-fine': fineAtelier(); break;
       case 'at-colore': setImp({ cop: { ...cop(), colore: b.dataset.c } }); disegnaAtelier(); disegnaCopertina(); break;
       case 'at-adesivo': attacca(b.dataset.t); break;
       case 'at-ruota': case 'at-piu': case 'at-meno': ritocca(a); break;
@@ -962,10 +957,9 @@
       case 'cerca': apriCerca(); break;
       case 'nome': chiediNome(); break;
       case 'salva-nome': salvaNome(); break;
-      case 'suoni': setImp({ sound: !S.imp.sound }); sveglia(); disegna(); avviso(S.imp.sound ? 'Suoni accesi' : 'Suoni spenti'); break;
-      case 'tema': setImp({ tema: b.dataset.t }); disegna(); break;
-      case 'sfondo': apriVelo('#v-menu'); sceltaSfondo(); break;
-      case 'sf': setImp({ sfondo: b.dataset.s }); disegna(); sceltaSfondo(); break;
+      case 'suoni': setImp({ sound: !S.imp.sound }); sveglia(); disegna(); disegnaAtelier(); avviso(S.imp.sound ? 'Suoni accesi' : 'Suoni spenti'); break;
+      case 'tema': setImp({ tema: b.dataset.t }); disegna(); disegnaAtelier(); break;
+      case 'sf': setImp({ sfondo: b.dataset.s }); disegna(); disegnaAtelier(); break;
       case 'in-fondo': chiudiVeli(); vai(LAST); break;
       case 'installa': infoInstalla(); break;
       case 'esporta': esporta(); break;
@@ -975,7 +969,7 @@
     }
   });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { if (!gp.hidden) chiudiGiorno(); else chiudiVeli(); return; }
+    if (e.key === 'Escape') { if (!gp.hidden) chiudiGiorno(); else if (S.atelier && veli.every(v => $(v).hidden)) fineAtelier(); else chiudiVeli(); return; }
     if (!gp.hidden || veli.some(v => !$(v).hidden)) return;
     if (e.key === 'ArrowRight') vaiPos(S.pos + 1);
     if (e.key === 'ArrowLeft') vaiPos(S.pos - 1);
@@ -993,22 +987,51 @@
     decoro.innerHTML = (c.tratti.length ? E.trattiSVG(c.tratti, altoCop(), 'cop-tratti') : '') +
       c.adesivi.map((a, i) => `<span class="ades${A && A.sel === i ? ' scelto' : ''}" data-i="${i}" style="--x:${a.x};--y:${a.y};--s:${a.s};--r:${a.r}deg">${E.adesivoSVG(a.t)}</span>`).join('');
   }
+  // ---------- «Personalizza»: copertina, carta e sfondo in un pannello solo ----------
+  // ogni scheda porta il libro dove si vede la cosa che cambia: chiuso per la copertina,
+  // aperto sulle pagine per la carta, sulla prima pagina per lo sfondo
+  const SCHEDE = [['copertina', 'Copertina'], ['carta', 'Carta'], ['sfondo', 'Sfondo']];
+  const CARTE = [['carta', 'Classica'], ['nero', 'Nera'], ['avorio', 'Avorio']];
   function disegnaAtelier() {
     const c = cop(), A = S.atelier, el = $('#atelier');
     el.hidden = !A; app.classList.toggle('atelier-on', !!A); if (!A) return;
-    const a = A.sel != null && c.adesivi[A.sel];
-    el.innerHTML = `<div class="at-testa"><b>${a ? 'Trascinalo dove vuoi' : 'La tua copertina'}</b><button class="btn pieno" data-act="${a ? 'at-ok' : 'at-fine'}">${a ? 'Ok' : 'Fatto'}</button></div>` +
-      (a ? `<div class="at-riga at-sel"><button class="btn" data-act="at-ruota">↻ Ruota</button><button class="btn" data-act="at-piu" aria-label="Più grande">＋</button><button class="btn" data-act="at-meno" aria-label="Più piccolo">－</button><button class="btn" data-act="at-togli">Togli</button></div>`
-        : `<div class="at-riga at-colori" role="radiogroup" aria-label="Colore della copertina">${Object.keys(PELLI).map(k => `<button data-act="at-colore" data-c="${k}" role="radio" aria-checked="${c.colore === k}" aria-label="${PELLI[k][0]}" style="--c:${PELLI[k][1]}"></button>`).join('')}</div>` +
+    const a = A.tab === 'copertina' && A.sel != null && c.adesivi[A.sel];
+    if (a) {
+      el.innerHTML = `<div class="at-testa"><b>Trascinalo dove vuoi</b><button class="btn pieno" data-act="at-ok">Ok</button></div>` +
+        `<div class="at-riga at-sel"><button class="btn" data-act="at-ruota">↻ Ruota</button><button class="btn" data-act="at-piu" aria-label="Più grande">＋</button><button class="btn" data-act="at-meno" aria-label="Più piccolo">－</button><button class="btn" data-act="at-togli">Togli</button></div>`;
+      return;
+    }
+    const tema = S.imp.tema || 'carta', sf = SFONDI[S.imp.sfondo] ? S.imp.sfondo : 'pallini';
+    el.innerHTML = `<div class="at-testa"><div class="at-schede" role="tablist" aria-label="Cosa personalizzare">${SCHEDE.map(([t, n]) => `<button data-act="at-scheda" data-t="${t}" role="tab" aria-selected="${A.tab === t}">${n}</button>`).join('')}</div><button class="btn pieno" data-act="at-fine">Fatto</button></div>` +
+      (A.tab === 'copertina'
+        ? `<div class="at-riga at-colori" role="radiogroup" aria-label="Colore della copertina">${Object.keys(PELLI).map(k => `<button data-act="at-colore" data-c="${k}" role="radio" aria-checked="${c.colore === k}" aria-label="${PELLI[k][0]}" style="--c:${PELLI[k][1]}"></button>`).join('')}</div>` +
           `<div class="at-riga at-adesivi" aria-label="Adesivi">${Object.keys(E.ADESIVI).map(t => `<button data-act="at-adesivo" data-t="${t}" aria-label="Attacca: ${E.ADESIVI[t][0]}">${E.adesivoSVG(t)}</button>`).join('')}</div>` +
-          `<div class="at-riga"><button class="btn" data-act="at-disegna">✎ Disegna</button><button class="btn" data-act="at-oro" role="switch" aria-checked="${!!c.oro}">${c.oro ? '✓ ' : ''}Nome in oro</button>${c.tratti.length || c.adesivi.length ? '<button class="btn" data-act="at-pulisci">Togli tutto</button>' : ''}</div>`);
+          `<div class="at-riga"><button class="btn" data-act="at-disegna">✎ Disegna</button><button class="btn" data-act="at-oro" role="switch" aria-checked="${!!c.oro}">${c.oro ? '✓ ' : ''}Nome in oro</button>${c.tratti.length || c.adesivi.length ? '<button class="btn" data-act="at-pulisci">Togli tutto</button>' : ''}</div>`
+        : A.tab === 'carta'
+          ? `<div class="at-riga at-carte" role="radiogroup" aria-label="Carta delle pagine">${CARTE.map(([t, n]) => `<button data-act="tema" data-t="${t}" role="radio" aria-checked="${tema === t}"><span class="cc-${t}">Aa</span>${n}</button>`).join('')}</div>` +
+            `<div class="at-riga"><button class="btn" data-act="suoni" role="switch" aria-checked="${!!S.imp.sound}">${S.imp.sound ? '✓ ' : ''}Suoni della carta</button></div>`
+          : `<div class="at-riga at-sfondi" role="radiogroup" aria-label="Sfondo della prima pagina">${Object.keys(SFONDI).map(k => `<button data-act="sf" data-s="${k}" role="radio" aria-checked="${sf === k}"><span class="sf-${k}"></span>${SFONDI[k]}</button>`).join('')}</div>` +
+            `<div class="at-nota">Lo sfondo della prima pagina. I colori seguono la carta.</div>`);
   }
-  function atelier() {
-    if (S.atelier) return;
-    // ad agenda aperta prima si richiude, poi si decora
-    if (S.fase !== 'chiusa') { if (S.fase === 'aperta') chiudiLibro(); const t0 = Date.now(), aspetta = () => S.fase === 'chiusa' ? atelier() : Date.now() - t0 < 5000 && setTimeout(aspetta, 150); setTimeout(aspetta, 150); return; }
-    S.atelier = { sel: null }; disegnaAtelier(); disegnaCopertina();
+  function atelier(tab) {
+    if (S.atelier) { vaiScheda(tab || S.atelier.tab); return; }
+    if (!SCHEDE.some(([t]) => t === tab)) tab = S.fase === 'chiusa' ? 'copertina' : 'carta';
+    S.atelier = { sel: null, tab }; disegnaAtelier(); disegnaCopertina(); libroPer(tab);
   }
+  function vaiScheda(tab) {
+    const A = S.atelier; if (!A || A.tab === tab) return;
+    A.tab = tab; A.sel = null; disegnaAtelier(); disegnaCopertina(); libroPer(tab);
+  }
+  // porta il libro dove serve; se sta ancora girando aspetta (e lascia perdere se nel frattempo si è cambiata scheda)
+  function libroPer(tab) {
+    const A = S.atelier; if (!A || A.tab !== tab) return;
+    const fermo = () => (S.fase === 'aperta' || S.fase === 'chiusa') && !flip;
+    if (!fermo()) { const t0 = Date.now(), aspetta = () => fermo() ? libroPer(tab) : Date.now() - t0 < 6000 && setTimeout(aspetta, 120); setTimeout(aspetta, 120); return; }
+    if (tab === 'copertina') { if (S.fase === 'aperta') chiudiLibro(); return; }
+    if (S.fase === 'chiusa') apri(tab === 'sfondo' ? 0 : null);
+    else if (tab === 'sfondo') vaiPos(0);
+  }
+  function fineAtelier() { S.atelier = null; disegnaAtelier(); disegnaCopertina(); if (S.fase === 'aperta') disegna(); }
   function attacca(t) {
     const c = cop(), h = altoCop(), n = c.adesivi.length;
     setImp({ cop: { ...c, adesivi: [...c.adesivi, { t, x: Math.round(380 + Math.random() * 240), y: Math.round(h * (0.3 + Math.random() * 0.4)), s: 230, r: Math.round(Math.random() * 24 - 12) }] } });

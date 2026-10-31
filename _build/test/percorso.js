@@ -162,23 +162,23 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   // «All'inizio» da qualsiasi pagina, con una sola sfogliata
   await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="0"]'); await attendi(1300);
   prova('all’inizio in un passo', (await p.textContent('#t-sotto')) === 'Frontespizio');
-  // niente menu: le preferenze stanno nella pagina «Come si usa», raggiunta da «Vai a…»
   await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="1"]'); await attendi(1700);
   prova('Vai a… porta a Come si usa', (await p.textContent('#t-titolo')) === 'Come si usa');
-  // le preferenze sono sulla seconda facciata di «Come si usa»
+  // la carta si sceglie in «Personalizza» (dalla seconda facciata di «Come si usa» o dalla ✎ in alto)
   await p.click('[data-act="succ"]'); await attendi(1100);
-  await p.click('.p-temi [data-t="nero"]');
+  await p.click('.p-prova [data-act="atelier"]'); await attendi(250);
+  await p.click('[data-act="tema"][data-t="nero"]');
   prova('carta nera', await p.evaluate(() => document.documentElement.classList.contains('t-nero')));
+  await p.click('[data-act="at-fine"]'); await attendi(200);
   await foto('09-nero');
   await p.click('[data-act="vaia"]'); await p.fill('#vaia-data', '2026-10-30'); await attendi(1700);
   await foto('09c-nero-settimana');
   await p.click('.giorno[data-k="2026-10-30"]'); await attendi(450); await foto('09d-nero-giorno'); await p.click('[data-gp="fatto"]'); await attendi(600);
-  await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="1"]'); await attendi(1700);
-  await p.click('[data-act="succ"]'); await attendi(1100);
-  await p.click('.p-temi [data-t="avorio"]');
+  await p.click('.barra-su .ico-pers'); await attendi(250);
+  await p.click('[data-act="tema"][data-t="avorio"]');
   prova('carta avorio', await p.evaluate(() => document.documentElement.classList.contains('t-avorio') && !document.documentElement.classList.contains('t-nero')));
   await foto('09e-avorio');
-  await p.click('.p-temi [data-t="carta"]');
+  await p.click('[data-act="tema"][data-t="carta"]'); await p.click('[data-act="at-fine"]'); await attendi(200);
   // il taschino nella copertina interna (la prima facciata)
   await p.click('[data-act="vaia"]'); await p.click('.salti [data-p="0"]'); await attendi(1300);
   // nome e telefono si scrivono sulle righe del «Se ritrovata»
