@@ -113,7 +113,7 @@
     // con il foglio aperto sulle pagine invece resta largo come lo schermo e si accorcia soltanto
     const pw = singolo ? Math.floor(Math.min(W - 26, 480, S.atelier && S.atelier.tab !== 'copertina' ? 1e9 : (Hs - 26) / (S.atelier ? 1.62 : 1.45)))
       : Math.max(120, Math.floor(Math.min((W - 46) / 2, largo ? 520 : 440, largo ? (Hs - 34) / 1.45 : 1e9)));
-    const ph = singolo ? Math.floor(Math.min(Hs - 26, pw * 1.62)) : Math.max(300, Math.floor(Math.min(Hs - 34, pw * 3.2)));
+    const ph = singolo ? Math.floor(Math.min(Hs - 26, pw * 1.62)) : Math.max(S.atelier ? 200 : 300, Math.floor(Math.min(Hs - 34, pw * 3.2)));
     if (pw === S.pw && ph === S.ph && sotto === S.sotto) return;
     S.pw = pw; S.ph = ph; S.sotto = sotto;
     libro.style.setProperty('--pw', pw + 'px'); libro.style.setProperty('--ph', ph + 'px'); scena.style.setProperty('--sotto', sotto + 'px');
@@ -342,7 +342,8 @@
   const STK = window.STICKER || {};
   const stImg = (st, n, cls, r) => { const m = STK[st] && STK[st][n]; return m ? `<img class="${cls}" src="assets/img/sticker/${st}/${n}.webp" alt="" width="${m[0]}" height="${m[1]}" style="--r:${r}deg" loading="lazy" decoding="async">` : ''; };
   const giro = (st, i) => { const v = Object.keys(STK[st] || {}); return v.length > 1 ? v[i % v.length] : null; };
-  const liberiDi = (w, js) => js.filter(j => { const g = giorni[w * 7 + j]; return g.dentro && !g.biglietto && !g.tema; });
+  // un giorno è libero per uno sticker se non ha busta, biglietto, festa né cose scritte (lo sticker non copre mai la scrittura)
+  const liberiDi = (w, js) => js.filter(j => { const g = giorni[w * 7 + j], n = S.note[g.key]; return g.dentro && !g.biglietto && !g.tema && !(n && (n.text || '').split('\n').some(x => x.replace(CASELLA, '').trim())); });
   function stickerPagina(w, js, L, tutta) {
     const st = stagione(w + PRIMA), n = giro(st, w * 2 + 1); if (!n) return {};
     // su PC uno solo per doppia pagina: a sinistra se ha giorni liberi, se no a destra (e niente nella vista «Tutta la settimana»)

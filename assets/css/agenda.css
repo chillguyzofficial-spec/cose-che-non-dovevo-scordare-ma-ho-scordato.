@@ -904,3 +904,14 @@ button.mg:active{background:rgba(0,0,0,.06)}
 /* telefono: numero e nome del giorno allineati e in proporzione */
 @media (max-width:859px){.gp-data{align-items:center;gap:12px}.gp-num{font-size:70px;line-height:.92;padding-right:2px}}
 @media (max-width:360px){.gp-stile button{padding:0 9px;font-size:12px;gap:5px}}
+
+/* lo sticker della pagina del giorno sta DOPO il contenuto (prima era fisso in basso e copriva il modulo «Ricorda questo giorno» aperto) */
+@media (min-width:860px){
+  .gp-sx{display:flex;flex-direction:column}
+  #gp-sticker{position:static;margin-top:auto;padding-top:22px;height:auto;flex:none;left:auto;right:auto;bottom:auto}
+  .gp-stk{position:static;display:block;margin:0 auto;height:min(190px,24vh);transform:rotate(var(--r))}
+}
+
+/* PC: Personalizza più largo a copertina chiusa, pelle e scritte in una riga sola (sui PC bassi usciva sotto lo schermo) */
+.app:not(.singolo).chiusa .atelier{left:calc(75% - 330px);width:660px}
+.app:not(.singolo) .at-campioni{flex-wrap:nowrap;overflow-x:auto}

@@ -1,7 +1,7 @@
 // Server locale per provare l'agenda: node _build/server.js  ->  http://localhost:8996
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'), PORTA = +process.env.PORTA || 8996;
-const TIPI = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.woff2': 'font/woff2' };
+const TIPI = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2' };
 http.createServer((q, r) => {
   let f = path.join(ROOT, decodeURIComponent(q.url.split('?')[0]));
   if (!f.startsWith(ROOT)) { r.writeHead(403); return r.end(); }
