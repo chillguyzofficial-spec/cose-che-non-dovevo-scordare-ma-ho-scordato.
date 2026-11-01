@@ -745,7 +745,8 @@
   function disegnaRicordi() {
     const mie = ricDi(GP.key), F = GP.forma;
     let h = mie.length ? '<div class="gp-h">Da ricordare</div>' : '';
-    h += mie.map(r => { const T = RIC[r.type] || RIC.altro; return `<div class="ricordo" style="color:${T.c}"><span>${T.g} ${esc(etichetta(r, T))}</span><small>${r.yearly ? 'ogni anno' : 'solo quest’anno'}</small><button class="ric-cal" data-gp="al-calendario" data-id="${r.id}" aria-label="Metti ${esc(r.label || T.n)} nel calendario del telefono, con l’avviso">Al calendario</button><button data-gp="togli-ric" data-id="${r.id}" aria-label="Togli ${esc(r.label || T.n)}">×</button></div>`; }).join('');
+    h += mie.map(r => { const T = RIC[r.type] || RIC.altro; return `<div class="ricordo" style="color:${T.c}"><span>${T.g} ${esc(etichetta(r, T))}</span><small>${r.yearly ? 'ogni anno' : 'solo quest’anno'}</small><button class="ric-cal" data-gp="al-calendario" data-id="${r.id}" aria-label="Metti ${esc(r.label || T.n)} nel calendario, con l’avviso" aria-expanded="${GP.cal === r.id}">Al calendario</button><button data-gp="togli-ric" data-id="${r.id}" aria-label="Togli ${esc(r.label || T.n)}">×</button>` +
+      (GP.cal === r.id ? `<div class="ric-dove"><button class="piccolo-btn" data-gp="cal-telefono" data-id="${r.id}">${/iPhone|iPad|iPod/.test(navigator.userAgent) ? 'Calendario iPhone' : 'Calendario del telefono'}</button><button class="piccolo-btn" data-gp="cal-google" data-id="${r.id}">Google Calendar</button></div>` : '') + `</div>`; }).join('');
     if (F) {
       const ph = RIC[F.type].ph || (F.type === 'compleanno' ? 'Di chi? Es. Marta' : F.type === 'scadenza' ? 'Cosa scade? Es. bollo auto' : 'Cosa ricordi? Es. anniversario');
       h += `<div class="gp-forma"><div class="gp-h">Ricorda questo giorno</div>` +
@@ -766,31 +767,39 @@
     scrivi('rem', S.ric); GP.forma = null; disegnaRicordi();
     $('#gp-salvato').textContent = 'Ricordo aggiunto';
   }
-  // ---------- al calendario del telefono: l'avviso lo dà il calendario (l'agenda non ha un server) ----------
-  // con l'ora: un'ora di durata, avviso un'ora prima; senza ora: tutto il giorno, avviso alle 9 del giorno prima
-  function alCalendario(r) {
+  // ---------- al calendario: l'avviso lo dà il calendario (l'agenda non ha un server) ----------
+  // con l'ora: un'ora di durata; senza ora: tutto il giorno. Compleanni e ricorrenze ogni anno
+  function evento(r) {
     const T = RIC[r.type] || RIC.altro, d = r.date.replace(/-/g, ''), p = n => String(n).padStart(2, '0');
-    const testo = s => s.replace(/[\\;,]/g, c => '\\' + c).replace(/\n/g, '\\n');
-    let quando;
-    if (r.ora) {
-      const [h, m] = r.ora.split(':').map(Number), fine = h < 23 ? p(h + 1) + p(m) : '2359';
-      quando = [`DTSTART:${d}T${p(h)}${p(m)}00`, `DTEND:${d}T${fine}00`];
-    } else { const x = daKey(r.date); x.setDate(x.getDate() + 1); quando = [`DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${ymd(x).replace(/-/g, '')}`]; }
-    const titolo = r.label ? (r.type === 'compleanno' ? 'Compleanno di ' + r.label : r.label) : T.n;
+    let inizio, fine;
+    if (r.ora) { const [h, m] = r.ora.split(':').map(Number); inizio = `${d}T${p(h)}${p(m)}00`; fine = `${d}T${h < 23 ? p(h + 1) + p(m) : '2359'}00`; }
+    else { const x = daKey(r.date); x.setDate(x.getDate() + 1); inizio = d; fine = ymd(x).replace(/-/g, ''); }
+    return { titolo: r.label ? (r.type === 'compleanno' ? 'Compleanno di ' + r.label : r.label) : T.n, nota: T.n + ' · dall’agenda', inizio, fine };
+  }
+  // Google Calendar: si apre nel browser, va bene su ogni telefono (gli avvisi sono quelli scelti in Google Calendar)
+  function alGoogle(r) {
+    const e = evento(r), q = new URLSearchParams({ action: 'TEMPLATE', text: e.titolo, dates: e.inizio + '/' + e.fine, details: e.nota });
+    if (r.yearly) q.set('recur', 'RRULE:FREQ=YEARLY');
+    window.open('https://calendar.google.com/calendar/render?' + q, '_blank', 'noopener');
+  }
+  // calendario del telefono (file .ics): avviso un'ora prima con l'ora, alle 9 del giorno prima senza
+  function alCalendario(r) {
+    const e = evento(r), testo = s => s.replace(/[\\;,]/g, c => '\\' + c).replace(/\n/g, '\\n');
+    const quando = r.ora ? [`DTSTART:${e.inizio}`, `DTEND:${e.fine}`] : [`DTSTART;VALUE=DATE:${e.inizio}`, `DTEND;VALUE=DATE:${e.fine}`];
     const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Cose Che Non Dovevo Scordare//IT', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',
       `UID:${r.id}@cose-che-non-dovevo-scordare`, 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z', ...quando,
-      ...(r.yearly ? ['RRULE:FREQ=YEARLY'] : []), 'SUMMARY:' + testo(titolo), 'DESCRIPTION:' + testo(T.n + ' · dall’agenda'),
-      'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + testo(titolo), 'TRIGGER:' + (r.ora ? '-PT1H' : '-PT15H'), 'END:VALARM',
+      ...(r.yearly ? ['RRULE:FREQ=YEARLY'] : []), 'SUMMARY:' + testo(e.titolo), 'DESCRIPTION:' + testo(e.nota),
+      'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + testo(e.titolo), 'TRIGGER:' + (r.ora ? '-PT1H' : '-PT15H'), 'END:VALARM',
       'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
-    // iPhone: aprendo l'evento, iOS chiede «Aggiungi al calendario» (dall'app installata si apre in una finestrella, l'agenda resta dov'è)
+    // iPhone: l'evento va aperto nella stessa pagina (in una finestra nuova iOS mostra una pagina bianca), poi iOS chiede «Aggiungi»
     if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-      const url = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
-      if (navigator.standalone) window.open(url, '_blank'); else location.href = url;
+      const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(ics)));
+      location.assign('data:text/calendar;charset=utf-8;base64,' + b64);
       return;
     }
     // altrove si scarica il file .ics e lo apre il calendario
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
-    a.download = (titolo.replace(/[\\/:*?"<>|]/g, '').trim().slice(0, 40) || 'ricordo') + '.ics'; document.body.appendChild(a); a.click();
+    a.download = (e.titolo.replace(/[\\/:*?"<>|]/g, '').trim().slice(0, 40) || 'ricordo') + '.ics'; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
     avviso('Aprilo per metterlo nel calendario');
   }
@@ -1067,7 +1076,8 @@
     else if (a === 'tipo-ric') { GP.forma.type = b.dataset.t; GP.forma.yearly = b.dataset.t === 'compleanno' || b.dataset.t === 'altro'; disegnaRicordi(); }
     else if (a === 'ogni-anno') { GP.forma.yearly = !GP.forma.yearly; disegnaRicordi(); }
     else if (a === 'aggiungi-ric') aggiungiRic();
-    else if (a === 'al-calendario') { const r = S.ric.find(x => x.id === b.dataset.id); if (r) alCalendario(r); }
+    else if (a === 'al-calendario') { GP.cal = GP.cal === b.dataset.id ? null : b.dataset.id; disegnaRicordi(); }
+    else if (a === 'cal-telefono' || a === 'cal-google') { const r = S.ric.find(x => x.id === b.dataset.id); if (r) (a === 'cal-google' ? alGoogle : alCalendario)(r); }
     else if (a === 'togli-ric') { S.ric = S.ric.filter(r => r.id !== b.dataset.id); scrivi('rem', S.ric); disegnaRicordi(); }
     else if (a === 'versioni') { GP.versioni = !GP.versioni; disegnaVersioni(); }
     else if (a === 'ripristina') {

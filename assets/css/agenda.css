@@ -366,6 +366,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 /* il nome sopra; sotto «ogni anno», Al calendario e × (sul telefono stretto non c'entra tutto in una riga) */
 .ricordo{flex-wrap:wrap;row-gap:0;margin-bottom:6px}
 .ricordo span{flex:1 1 100%;min-width:0;overflow-wrap:anywhere}
+.ric-dove{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 6px}
+.ricordo .ric-dove .piccolo-btn{width:auto;height:34px;font-size:12px;color:var(--ink);border-radius:17px}
 .ricordo .ric-cal{width:auto;height:30px;padding:0 10px;border:1px solid currentColor;border-radius:15px;font-family:var(--macchina);font-size:11px;letter-spacing:.04em;color:inherit;opacity:.85;flex:none}
 .gp-link{display:inline-flex;align-items:center;gap:8px;min-height:42px;margin-top:14px;padding:0 16px;border:1px dashed var(--rule);border-radius:21px;font-size:14px;color:var(--ink)}
 .gp-link b{font-family:var(--fell);font-weight:400;font-size:20px;color:var(--rust);line-height:1}
