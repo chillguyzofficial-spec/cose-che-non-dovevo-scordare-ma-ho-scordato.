@@ -702,7 +702,7 @@
   function disegnaRicordi() {
     const mie = ricDi(GP.key), F = GP.forma;
     let h = mie.length ? '<div class="gp-h">Da ricordare</div>' : '';
-    h += mie.map(r => { const T = RIC[r.type] || RIC.altro; return `<div class="ricordo" style="color:${T.c}"><span>${T.g} ${esc(etichetta(r, T))}</span><small>${r.yearly ? 'ogni anno' : 'solo quest’anno'}</small><button class="ric-cal" data-gp="al-calendario" data-id="${r.id}" aria-label="Metti ${esc(r.label || T.n)} in Google Calendar">Al calendario</button><button data-gp="togli-ric" data-id="${r.id}" aria-label="Togli ${esc(r.label || T.n)}">×</button></div>`; }).join('');
+    h += mie.map(r => { const T = RIC[r.type] || RIC.altro; return `<div class="ricordo" style="color:${T.c}"><span>${T.g} ${esc(etichetta(r, T))}</span><small>${r.yearly ? 'ogni anno' : 'solo quest’anno'}</small><a class="ric-cal" href="${esc(linkGoogle(r))}" target="_blank" rel="noopener" aria-label="Metti ${esc(r.label || T.n)} in Google Calendar">Al calendario</a><button data-gp="togli-ric" data-id="${r.id}" aria-label="Togli ${esc(r.label || T.n)}">×</button></div>`; }).join('');
     if (F) {
       const ph = RIC[F.type].ph || (F.type === 'compleanno' ? 'Di chi? Es. Marta' : F.type === 'scadenza' ? 'Cosa scade? Es. bollo auto' : 'Cosa ricordi? Es. anniversario');
       h += `<div class="gp-forma"><div class="gp-h">Ricorda questo giorno</div>` +
@@ -732,10 +732,15 @@
     else { const x = daKey(r.date); x.setDate(x.getDate() + 1); inizio = d; fine = ymd(x).replace(/-/g, ''); }
     return { titolo: r.label ? (r.type === 'compleanno' ? 'Compleanno di ' + r.label : r.label) : T.n, nota: T.n + ' · dall’agenda', inizio, fine };
   }
-  function alGoogle(r) {
-    const e = evento(r), q = new URLSearchParams({ action: 'TEMPLATE', text: e.titolo, dates: e.inizio + '/' + e.fine, details: e.nota });
+  // è un link vero che si apre fuori (target _blank): dall'app installata su iPhone, aperto via script, l'agenda andava su Google e al ritorno restava bianca
+  function linkGoogle(r) {
+    const e = evento(r);
+    // con l'ora: in UTC (con la Z) più il fuso del telefono, se no Google non mette l'ora
+    const utc = s => new Date(`${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}T${s.slice(9, 11)}:${s.slice(11, 13)}:00`).toISOString().replace(/[-:]|\.\d{3}/g, '');
+    const q = new URLSearchParams({ action: 'TEMPLATE', text: e.titolo, dates: r.ora ? utc(e.inizio) + '/' + utc(e.fine) : e.inizio + '/' + e.fine, details: e.nota });
+    try { q.set('ctz', Intl.DateTimeFormat().resolvedOptions().timeZone); } catch (_) {}
     if (r.yearly) q.set('recur', 'RRULE:FREQ=YEARLY');
-    window.open('https://calendar.google.com/calendar/render?' + q, '_blank', 'noopener');
+    return 'https://calendar.google.com/calendar/render?' + q;
   }
   // ---------- lettere al futuro: si sigillano e si aprono solo dal giorno scelto ----------
   const lungo = d => d.getDate() + ' ' + M[d.getMonth()].toLowerCase() + ' ' + d.getFullYear();
@@ -1010,7 +1015,6 @@
     else if (a === 'tipo-ric') { GP.forma.type = b.dataset.t; GP.forma.yearly = b.dataset.t === 'compleanno' || b.dataset.t === 'altro'; disegnaRicordi(); }
     else if (a === 'ogni-anno') { GP.forma.yearly = !GP.forma.yearly; disegnaRicordi(); }
     else if (a === 'aggiungi-ric') aggiungiRic();
-    else if (a === 'al-calendario') { const r = S.ric.find(x => x.id === b.dataset.id); if (r) alGoogle(r); }
     else if (a === 'togli-ric') { S.ric = S.ric.filter(r => r.id !== b.dataset.id); scrivi('rem', S.ric); disegnaRicordi(); }
     else if (a === 'versioni') { GP.versioni = !GP.versioni; disegnaVersioni(); }
     else if (a === 'ripristina') {
