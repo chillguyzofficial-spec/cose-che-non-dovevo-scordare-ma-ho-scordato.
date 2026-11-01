@@ -400,18 +400,34 @@
     return `<div class="linguette">${js.map(j => { const g = giorni[w * 7 + j]; return `<div style="flex:${L ? 1 : j < 5 ? 1 : 0.8};min-height:0;padding-top:${g.dow * 0.5}em"><div class="linguetta" data-act="giorno" data-k="${g.key}" style="background:${TABC[g.dow]}">${DT[g.dow]}</div></div>`; }).join('')}</div>`;
   }
   const nome = () => (S.imp.nome || '').trim(), tel = () => (S.imp.tel || '').trim();
-  // uno scarabocchio a penna sul frontespizio: un ricciolo con una stellina
-  const SCARABOCCHIO = `<svg class="p-scarabocchio" viewBox="0 0 120 70" aria-hidden="true"><path d="M8 52c10-2 18-12 16-20s-12-6-12 2 12 14 24 10 22-20 20-28-12-6-12 4 10 24 26 24 20-8 26-14"/><path d="M98 14l3 7 7 1-5 5 1 7-6-4-6 4 1-7-5-5 7-1z"/><path d="M14 62c22 3 50 2 78-3"/></svg>`;
-  // lo sfondo della prima pagina (e del retro della copertina): si sceglie, e prende i colori della carta
-  const SFONDI = { pallini: 'Pallini', righe: 'Righe', quadretti: 'Quadretti', scacchi: 'Scacchi', fiori: 'Fiorellini', liscio: 'Tinta unita' };
+  // il risguardo (la carta dentro la copertina): si sceglie, i colori sono quelli della carta e della stagione
+  const SFONDI = { marmo: 'Marmorizzata', fiorentina: 'Fiorentina', squame: 'Squame', rigatino: 'Rigatino', notte: 'Notte stellata', liscio: 'Tinta unita' };
+  const sfondo = () => SFONDI[S.imp.sfondo] ? S.imp.sfondo : 'marmo';
+  // gli angoli incisi delle cornici (ex libris e frontespizio)
+  const ANGOLI = '<i class="ang a1"></i><i class="ang a2"></i><i class="ang a3"></i><i class="ang a4"></i>';
+  // il fregio del frontespizio: due volute simmetriche e una losanga
+  const FREGIO = `<svg class="fr-fregio" viewBox="0 0 160 24" aria-hidden="true"><path d="M6 12h42M112 12h42"/><path d="M48 12c8 0 10-8 18-8 6 0 7 7 2 7-4 0-4-4-1-5M48 12c8 0 10 8 18 8 6 0 7-7 2-7-4 0-4 4-1 5M112 12c-8 0-10-8-18-8-6 0-7 7-2 7 4 0 4-4 1-5M112 12c-8 0-10 8-18 8-6 0-7-7-2-7 4 0 4 4 1 5"/><path class="pieno" d="M80 4l5 8-5 8-5-8z"/></svg>`;
+  // il sigillo di ceralacca con l'iniziale di chi la usa (senza nome, un fiore)
+  const CERA = (() => { let d = ''; for (let i = 0; i < 48; i++) { const a = i / 48 * Math.PI * 2, r = 46 + Math.sin(i * 2.3) * 1.6 + (i % 3 ? 0 : 1.8); d += (i ? 'L' : 'M') + (50 + r * Math.cos(a)).toFixed(1) + ' ' + (50 + r * Math.sin(a)).toFixed(1); } return d + 'Z'; })();
+  const ceralacca = () => { const ini = nome() ? esc([...nome()][0].toUpperCase()) : '❦';
+    return `<svg class="ceralacca" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="cera-g" cx="36%" cy="30%" r="78%"><stop offset="0" style="stop-color:var(--acc)"/><stop offset=".8" style="stop-color:var(--acc-scuro)"/></radialGradient></defs><path d="${CERA}" fill="url(#cera-g)"/><circle class="cera-giro" cx="50" cy="50" r="34"/><circle class="cera-giro" cx="50" cy="50" r="30"/><text class="cera-luce" x="50.8" y="51.6">${ini}</text><text x="50" y="50">${ini}</text></svg>`; };
+  // nome o telefono lunghi: si scrivono più piccoli invece di finire coi puntini
+  const piccolo = (s, n) => s.length > n ? ` class="lungo" style="--l:${Math.max(.62, n / s.length).toFixed(2)}"` : '';
+  // la data lunga: «29 ottobre 2026»
+  const lunga = d => d.getDate() + ' ' + M[d.getMonth()].toLowerCase() + ' ' + d.getFullYear();
   function paginaFissa(s, L) {
-    // copertina interna: «Se ritrovata» e il taschino con la copia delle note
-    if (s === 0 && L) return `<div class="p-retro"><button class="p-sfondo" data-act="atelier" data-t="sfondo">◐ Sfondo</button><div class="p-cartiglio"><div class="p-ritrovata">Se ritrovata</div><div class="p-piccolo">restituire a</div><button class="p-riga" data-act="nome"><small>nome</small><span>${nome() ? esc(nome()) : ''}</span></button><button class="p-riga" data-act="nome"><small>tel.</small><span>${tel() ? esc(tel()) : ''}</span></button><div class="p-grazie">Grazie. Non sapevo più di averla.</div></div>${SCARABOCCHIO}` +
-      `<div class="taschino"><div class="taschino-h">Nel taschino</div><button data-act="esporta">Salva una copia delle note</button><button data-act="importa">Riprendi una copia</button><button data-act="installa">Tienila sul telefono</button><button class="taschino-reset" data-act="ricomincia">Ricomincia da capo</button></div></div>`;
-    if (s === 0) return `<div class="p-centro"><div class="p-occhiello">Agenda settimanale</div><div class="p-fregio">❦</div><div class="p-titolo">Cose Che Non Dovevo Scordare</div><div class="p-sotto">(Ma Ho Scordato)</div><div class="p-filo"></div>` +
-      `<div class="p-piccolo">${breve(inizio).replace(/ (\d\d)$/, ' 20$1')}<br>${breve(fine).replace(/ (\d\d)$/, ' 20$1')}</div><div style="flex:1"></div>` +
-      `<div class="p-occhiello" style="font-size:.6em">Questa agenda appartiene a</div><button class="p-nome${nome() ? '' : ' vuoto'}" data-act="nome">${nome() ? esc(nome()) : 'tocca e scrivi il tuo nome'}</button>` +
-      `<div class="p-piccolo">Come si usa: alla pagina dopo ›</div>${(() => { const st = stagione(0), n = Object.keys(STK[st] || {})[0]; return n ? stImg(st, n, 'p-sticker', -6) : ''; })()}</div>`;
+    // copertina interna: il risguardo, l'ex libris «Se ritrovata» e la tasca con i cartoncini
+    if (s === 0 && L) {
+      const carta = (act, b, t, i, r, cls = '') => `<button class="cartoncino${cls}" data-act="${act}" style="--i:${i};--r:${r}deg"><b>${b}</b>${t}</button>`;
+      return `<div class="p-retro"><div class="risguardo sf-${sfondo()}"><i></i></div><button class="p-sfondo" data-act="atelier" data-t="sfondo">◐ Sfondo</button>` +
+        `<div class="exl"><span class="scotch s1"></span><span class="scotch s2"></span>${ANGOLI}<div class="exl-h">Se ritrovata</div><div class="exl-sotto">restituire a</div>` +
+        `<button class="p-riga" data-act="nome"><small>nome</small><span${piccolo(nome(), 14)}>${nome() ? esc(nome()) : ''}</span></button><button class="p-riga" data-act="nome"><small>tel.</small><span${piccolo(tel(), 15)}>${tel() ? esc(tel()) : ''}</span></button><div class="p-grazie">Grazie. Non sapevo più di averla.</div></div>` +
+        `<div class="taschino">${carta('esporta', 'Salva', 'una copia delle note', 0, -1.4)}${carta('importa', 'Riprendi', 'una copia', 1, .9)}${carta('installa', 'Tienila', 'sul telefono', 2, -.6)}${carta('ricomincia', 'Ricomincia', 'da capo', 3, 1.2, ' taschino-reset')}` +
+        `<div class="tasca-fronte"><span class="tasca-h">Nel taschino</span></div></div></div>`;
+    }
+    if (s === 0) return `<div class="p-centro fr">${ANGOLI}<div class="fr-aria"></div><div class="p-occhiello">Agenda settimanale</div>${FREGIO}<div class="fr-titolo"><span>Cose Che Non Dovevo</span><span class="fr-grande">Scordare</span></div><div class="fr-aggiunta"><i>‸</i>(Ma Ho Scordato)</div>` +
+      `<div style="flex:1"></div>` +
+      `<div class="fr-prop">${ceralacca()}<div class="p-occhiello">Questa agenda appartiene a</div><button class="p-nome${nome() ? '' : ' vuoto'}${nome().length > 16 ? ' lungo' : ''}" data-act="nome">${nome() ? esc(nome()) : 'tocca e scrivi il tuo nome'}</button></div><div class="fr-date"><span>dal ${lunga(inizio)}</span><span>al ${lunga(fine)}</span></div><div class="p-piccolo">Come si usa: alla pagina dopo ›</div></div>`;
     if (s === 1) {
       const voce = (n, t, d) => `<div class="g-voce"><b>${n}</b><span><strong>${t}</strong>${d}</span></div>`;
       if (L) return `<div class="p-guida"><div class="p-h">Come si usa</div>` +
@@ -538,7 +554,7 @@
     for (const el of [app, document.documentElement]) if (!el.classList.contains('st-' + st)) { el.classList.remove('st-primavera', 'st-estate', 'st-autunno', 'st-inverno'); el.classList.add('st-' + st); }
     // il tema sta sulla radice, così vale anche per la pagina del giorno e i fogli
     const rad = document.documentElement;
-    libro.className = libro.className.replace(/\bsf-\S+/g, '').trim() + ' sf-' + (SFONDI[S.imp.sfondo] ? S.imp.sfondo : 'pallini');
+    libro.className = libro.className.replace(/\bsf-\S+/g, '').trim() + ' sf-' + sfondo();
     rad.classList.toggle('t-nero', S.imp.tema === 'nero'); rad.classList.toggle('t-avorio', S.imp.tema === 'avorio');
     document.querySelector('meta[name="theme-color"]').content = S.imp.tema === 'nero' ? '#000000' : '#3a2216';
   }
@@ -1165,7 +1181,7 @@
         `<div class="at-riga at-sel"><button class="btn" data-act="at-ruota">↻ Ruota</button><button class="btn" data-act="at-piu" aria-label="Più grande">＋</button><button class="btn" data-act="at-meno" aria-label="Più piccolo">－</button><button class="btn" data-act="at-togli">Togli</button></div>`;
       return;
     }
-    const tema = S.imp.tema || 'carta', sf = SFONDI[S.imp.sfondo] ? S.imp.sfondo : 'pallini';
+    const tema = S.imp.tema || 'carta', sf = sfondo();
     el.innerHTML = `<div class="at-testa"><div class="at-schede" role="tablist" aria-label="Cosa personalizzare">${SCHEDE.map(([t, n]) => `<button data-act="at-scheda" data-t="${t}" role="tab" aria-selected="${A.tab === t}">${n}</button>`).join('')}</div><button class="btn pieno" data-act="at-fine">Fatto</button></div>` +
       (A.tab === 'copertina'
         ? (() => {
@@ -1181,8 +1197,8 @@
         : A.tab === 'carta'
           ? `<div class="at-riga at-carte" role="radiogroup" aria-label="Carta delle pagine">${CARTE.map(([t, n]) => `<button data-act="tema" data-t="${t}" role="radio" aria-checked="${tema === t}"><span class="cc-${t}">Aa</span>${n}</button>`).join('')}</div>` +
             `<div class="at-riga"><button class="btn" data-act="suoni" role="switch" aria-checked="${!!S.imp.sound}">${S.imp.sound ? '✓ ' : ''}Suoni della carta</button><button class="btn at-chiudi" data-act="chiudi-libro">Chiudi l’agenda</button></div>`
-          : `<div class="at-riga at-sfondi" role="radiogroup" aria-label="Sfondo della prima pagina">${Object.keys(SFONDI).map(k => `<button data-act="sf" data-s="${k}" role="radio" aria-checked="${sf === k}"><span class="sf-${k}"></span>${SFONDI[k]}</button>`).join('')}</div>` +
-            `<div class="at-nota">Lo sfondo della prima pagina. I colori seguono la carta.</div>`);
+          : `<div class="at-riga at-sfondi" role="radiogroup" aria-label="Sfondo della prima pagina">${Object.keys(SFONDI).map(k => `<button data-act="sf" data-s="${k}" role="radio" aria-checked="${sf === k}"><span class="risguardo sf-${k}"><i></i></span>${SFONDI[k]}</button>`).join('')}</div>` +
+            `<div class="at-nota">La carta dentro la copertina. I colori seguono la carta e la stagione.</div>`);
   }
   function atelier(tab) {
     if (S.atelier) { vaiScheda(tab || S.atelier.tab); return; }

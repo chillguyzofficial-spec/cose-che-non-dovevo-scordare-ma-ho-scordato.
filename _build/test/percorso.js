@@ -189,7 +189,7 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   prova('taschino con la copia delle note', await p.isVisible('.taschino [data-act="esporta"]'));
   prova('nome nel Se ritrovata', (await p.textContent('.p-retro')).includes('Giulia'));
   await foto('11-taschino');
-  const [scarico] = await Promise.all([p.waitForEvent('download'), p.click('.taschino [data-act="esporta"]')]);
+  const [scarico] = await Promise.all([p.waitForEvent('download'), p.click('.taschino [data-act="esporta"]', { position: { x: 40, y: 12 } })]);
   prova('copia delle note scaricata', /note-agenda-.*\.json/.test(scarico.suggestedFilename()));
   // segnalibro: nastro sulla pagina segnata, coda dal lato giusto quando si è altrove
   // il segnalibro sta nella testa della pagina: dalla facciata «Se ritrovata» (senza testa) si passa al frontespizio

@@ -915,3 +915,124 @@ button.mg:active{background:rgba(0,0,0,.06)}
 /* PC: Personalizza più largo a copertina chiusa, pelle e scritte in una riga sola (sui PC bassi usciva sotto lo schermo) */
 .app:not(.singolo).chiusa .atelier{left:calc(75% - 330px);width:660px}
 .app:not(.singolo) .at-campioni{flex-wrap:nowrap;overflow-x:auto}
+
+/* =====================================================================
+   01/11 — copertina interna e frontespizio rifatti: un risguardo vero
+   (marmorizzata, fiorentina, squame, rigatino, notte stellata) al posto dei pallini,
+   l'ex libris «Se ritrovata», la tasca di pelle con i cartoncini, il frontespizio da libro
+   ===================================================================== */
+:root{
+  --m-mA:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='600' viewBox='0 0 400 600'%3E%3Cfilter id='f' x='-50%25' y='-30%25' width='200%25' height='160%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.0032 .009' numOctaves='3' seed='7' result='t'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='t' scale='200' xChannelSelector='R' yChannelSelector='G'/%3E%3CfeGaussianBlur stdDeviation='0.8'/%3E%3C/filter%3E%3Cg filter='url(%23f)'%3E%3Crect x='-200' y='-80' width='800' height='12'/%3E%3Crect x='-200' y='-59' width='800' height='4'/%3E%3Crect x='-200' y='-39' width='800' height='18'/%3E%3Crect x='-200' y='-14' width='800' height='3'/%3E%3Crect x='-200' y='1' width='800' height='8'/%3E%3Crect x='-200' y='29' width='800' height='12'/%3E%3Crect x='-200' y='50' width='800' height='4'/%3E%3Crect x='-200' y='70' width='800' height='18'/%3E%3Crect x='-200' y='95' width='800' height='3'/%3E%3Crect x='-200' y='110' width='800' height='8'/%3E%3Crect x='-200' y='138' width='800' height='12'/%3E%3Crect x='-200' y='159' width='800' height='4'/%3E%3Crect x='-200' y='179' width='800' height='18'/%3E%3Crect x='-200' y='204' width='800' height='3'/%3E%3Crect x='-200' y='219' width='800' height='8'/%3E%3Crect x='-200' y='247' width='800' height='12'/%3E%3Crect x='-200' y='268' width='800' height='4'/%3E%3Crect x='-200' y='288' width='800' height='18'/%3E%3Crect x='-200' y='313' width='800' height='3'/%3E%3Crect x='-200' y='328' width='800' height='8'/%3E%3Crect x='-200' y='356' width='800' height='12'/%3E%3Crect x='-200' y='377' width='800' height='4'/%3E%3Crect x='-200' y='397' width='800' height='18'/%3E%3Crect x='-200' y='422' width='800' height='3'/%3E%3Crect x='-200' y='437' width='800' height='8'/%3E%3Crect x='-200' y='465' width='800' height='12'/%3E%3Crect x='-200' y='486' width='800' height='4'/%3E%3Crect x='-200' y='506' width='800' height='18'/%3E%3Crect x='-200' y='531' width='800' height='3'/%3E%3Crect x='-200' y='546' width='800' height='8'/%3E%3Crect x='-200' y='574' width='800' height='12'/%3E%3Crect x='-200' y='595' width='800' height='4'/%3E%3Crect x='-200' y='615' width='800' height='18'/%3E%3Crect x='-200' y='640' width='800' height='3'/%3E%3Crect x='-200' y='655' width='800' height='8'/%3E%3Crect x='-200' y='683' width='800' height='12'/%3E%3C/g%3E%3C/svg%3E");
+  --m-mB:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='600' viewBox='0 0 400 600'%3E%3Cfilter id='f' x='-50%25' y='-30%25' width='200%25' height='160%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.0032 .009' numOctaves='3' seed='7' result='t'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='t' scale='200' xChannelSelector='R' yChannelSelector='G'/%3E%3CfeGaussianBlur stdDeviation='0.3'/%3E%3C/filter%3E%3Cg filter='url(%23f)'%3E%3Crect x='-200' y='-80' width='800' height='1'/%3E%3Crect x='-200' y='-64' width='800' height='1.6'/%3E%3Crect x='-200' y='-36.4' width='800' height='0.8'/%3E%3Crect x='-200' y='-24.599999999999998' width='800' height='1.2'/%3E%3Crect x='-200' y='-2.3999999999999986' width='800' height='1'/%3E%3Crect x='-200' y='13.600000000000001' width='800' height='1.6'/%3E%3Crect x='-200' y='41.2' width='800' height='0.8'/%3E%3Crect x='-200' y='53' width='800' height='1.2'/%3E%3Crect x='-200' y='75.2' width='800' height='1'/%3E%3Crect x='-200' y='91.2' width='800' height='1.6'/%3E%3Crect x='-200' y='118.80000000000001' width='800' height='0.8'/%3E%3Crect x='-200' y='130.60000000000002' width='800' height='1.2'/%3E%3Crect x='-200' y='152.8' width='800' height='1'/%3E%3Crect x='-200' y='168.8' width='800' height='1.6'/%3E%3Crect x='-200' y='196.4' width='800' height='0.8'/%3E%3Crect x='-200' y='208.20000000000002' width='800' height='1.2'/%3E%3Crect x='-200' y='230.4' width='800' height='1'/%3E%3Crect x='-200' y='246.4' width='800' height='1.6'/%3E%3Crect x='-200' y='274' width='800' height='0.8'/%3E%3Crect x='-200' y='285.8' width='800' height='1.2'/%3E%3Crect x='-200' y='308' width='800' height='1'/%3E%3Crect x='-200' y='324' width='800' height='1.6'/%3E%3Crect x='-200' y='351.6' width='800' height='0.8'/%3E%3Crect x='-200' y='363.40000000000003' width='800' height='1.2'/%3E%3Crect x='-200' y='385.6' width='800' height='1'/%3E%3Crect x='-200' y='401.6' width='800' height='1.6'/%3E%3Crect x='-200' y='429.20000000000005' width='800' height='0.8'/%3E%3Crect x='-200' y='441.00000000000006' width='800' height='1.2'/%3E%3Crect x='-200' y='463.20000000000005' width='800' height='1'/%3E%3Crect x='-200' y='479.20000000000005' width='800' height='1.6'/%3E%3Crect x='-200' y='506.80000000000007' width='800' height='0.8'/%3E%3Crect x='-200' y='518.6' width='800' height='1.2'/%3E%3Crect x='-200' y='540.8000000000001' width='800' height='1'/%3E%3Crect x='-200' y='556.8000000000001' width='800' height='1.6'/%3E%3Crect x='-200' y='584.4000000000001' width='800' height='0.8'/%3E%3Crect x='-200' y='596.2' width='800' height='1.2'/%3E%3Crect x='-200' y='618.4000000000001' width='800' height='1'/%3E%3Crect x='-200' y='634.4000000000001' width='800' height='1.6'/%3E%3Crect x='-200' y='662.0000000000001' width='800' height='0.8'/%3E%3Crect x='-200' y='673.8000000000001' width='800' height='1.2'/%3E%3Crect x='-200' y='696.0000000000001' width='800' height='1'/%3E%3C/g%3E%3C/svg%3E");
+  --m-mC:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='600' viewBox='0 0 400 600'%3E%3Cfilter id='f' x='-50%25' y='-30%25' width='200%25' height='160%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.0025 .007' numOctaves='3' seed='23' result='t'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='t' scale='240' xChannelSelector='R' yChannelSelector='G'/%3E%3CfeGaussianBlur stdDeviation='2'/%3E%3C/filter%3E%3Cg filter='url(%23f)'%3E%3Crect x='-200' y='-80' width='800' height='26'/%3E%3Crect x='-200' y='-20' width='800' height='10'/%3E%3Crect x='-200' y='38' width='800' height='34'/%3E%3Crect x='-200' y='100' width='800' height='26'/%3E%3Crect x='-200' y='160' width='800' height='10'/%3E%3Crect x='-200' y='218' width='800' height='34'/%3E%3Crect x='-200' y='280' width='800' height='26'/%3E%3Crect x='-200' y='340' width='800' height='10'/%3E%3Crect x='-200' y='398' width='800' height='34'/%3E%3Crect x='-200' y='460' width='800' height='26'/%3E%3Crect x='-200' y='520' width='800' height='10'/%3E%3Crect x='-200' y='578' width='800' height='34'/%3E%3Crect x='-200' y='640' width='800' height='26'/%3E%3C/g%3E%3C/svg%3E");
+  --m-gig:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cg id='g' transform='translate(2 2)'%3E%3Cpath d='M10 1c2.2 3 2.2 6 0 9-2.2-3-2.2-6 0-9zM9 10.4c-3-1.4-6.2-.4-7.2 2.8 2-1.3 4-1.1 5.2.9-.1-1.7.6-2.9 2-3.7zM11 10.4c3-1.4 6.2-.4 7.2 2.8-2-1.3-4-1.1-5.2.9.1-1.7-.6-2.9-2-3.7zM6 10.6h8v1.7H6zM10 12.3c-1.1 2.2-1.1 4.4 0 6.6 1.1-2.2 1.1-4.4 0-6.6z'/%3E%3C/g%3E%3Cuse href='%23g' x='24' y='24'/%3E%3C/svg%3E");
+  --m-gigB:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cg transform='translate(36 12)'%3E%3Ccircle r='1.6'/%3E%3Ccircle cx='4' r='.9'/%3E%3Ccircle cx='-4' r='.9'/%3E%3Ccircle cy='4' r='.9'/%3E%3Ccircle cy='-4' r='.9'/%3E%3C/g%3E%3Cg transform='translate(12 36)'%3E%3Ccircle r='1.6'/%3E%3Ccircle cx='4' r='.9'/%3E%3Ccircle cx='-4' r='.9'/%3E%3Ccircle cy='4' r='.9'/%3E%3Ccircle cy='-4' r='.9'/%3E%3C/g%3E%3C/svg%3E");
+  --m-sqA:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath fill='none' stroke='%23000' stroke-width='1.6' d='M1 20a19 19 0 0 1 38 0M-19 40a19 19 0 0 1 38 0M21 40a19 19 0 0 1 38 0M-19 0a19 19 0 0 1 38 0M21 0a19 19 0 0 1 38 0M1 60a19 19 0 0 1 38 0'/%3E%3C/svg%3E");
+  --m-sqB:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath fill='none' stroke='%23000' stroke-width='1' d='M8 20a12 12 0 0 1 24 0M-12 40a12 12 0 0 1 24 0M28 40a12 12 0 0 1 24 0M-12 0a12 12 0 0 1 24 0M28 0a12 12 0 0 1 24 0M8 60a12 12 0 0 1 24 0'/%3E%3C/svg%3E");
+  --m-notteA:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cpath transform='translate(0.0 53.6) scale(1.9)' d='M0-1.6L.35-.35 1.6 0 .35.35 0 1.6-.35.35-1.6 0-.35-.35z'/%3E%3Cpath transform='translate(5.4 103.3) scale(2.2)' d='M0-1.6L.35-.35 1.6 0 .35.35 0 1.6-.35.35-1.6 0-.35-.35z'/%3E%3Cpath transform='translate(62.1 56.1) scale(2.3)' d='M0-1.6L.35-.35 1.6 0 .35.35 0 1.6-.35.35-1.6 0-.35-.35z'/%3E%3Cpath transform='translate(33.8 26.2) scale(2.9)' d='M0-1.6L.35-.35 1.6 0 .35.35 0 1.6-.35.35-1.6 0-.35-.35z'/%3E%3Cpath transform='translate(16.9 45.6) scale(2.6)' d='M0-1.6L.35-.35 1.6 0 .35.35 0 1.6-.35.35-1.6 0-.35-.35z'/%3E%3Cpath transform='translate(99.2 45.9) scale(1.4)' d='M0-1.6L.35-.35 1.6 0 .35.35 0 1.6-.35.35-1.6 0-.35-.35z'/%3E%3Cpath transform='translate(26.1 88.2) scale(2.6)' d='M0-1.6L.35-.35 1.6 0 .35.35 0 1.6-.35.35-1.6 0-.35-.35z'/%3E%3Cpath transform='translate(66.5 57.4) scale(1.8)' d='M0-1.6L.35-.35 1.6 0 .35.35 0 1.6-.35.35-1.6 0-.35-.35z'/%3E%3Cpath transform='translate(36.9 95.5) scale(1.2)' d='M0-1.6L.35-.35 1.6 0 .35.35 0 1.6-.35.35-1.6 0-.35-.35z'/%3E%3C/svg%3E");
+  --m-notteB:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Ccircle cx='23.2' cy='69.1' r='0.73'/%3E%3Ccircle cx='1.6' cy='46.1' r='0.83'/%3E%3Ccircle cx='62.7' cy='11.6' r='0.67'/%3E%3Ccircle cx='115.1' cy='38.5' r='0.84'/%3E%3Ccircle cx='2.2' cy='86.1' r='0.78'/%3E%3Ccircle cx='113.9' cy='34.4' r='0.40'/%3E%3Ccircle cx='95.9' cy='113.8' r='0.74'/%3E%3Ccircle cx='120.0' cy='96.1' r='0.56'/%3E%3Ccircle cx='30.6' cy='73.9' r='0.31'/%3E%3Ccircle cx='114.2' cy='99.8' r='0.51'/%3E%3Ccircle cx='104.9' cy='0.2' r='0.70'/%3E%3Ccircle cx='114.1' cy='66.0' r='0.71'/%3E%3Ccircle cx='61.1' cy='102.4' r='0.56'/%3E%3Ccircle cx='111.3' cy='119.8' r='0.56'/%3E%3Ccircle cx='97.3' cy='60.9' r='0.44'/%3E%3Ccircle cx='5.7' cy='6.2' r='0.80'/%3E%3Ccircle cx='13.1' cy='42.1' r='0.63'/%3E%3Ccircle cx='45.2' cy='56.7' r='0.36'/%3E%3Ccircle cx='45.5' cy='20.9' r='0.64'/%3E%3Ccircle cx='66.1' cy='111.0' r='0.36'/%3E%3Ccircle cx='117.5' cy='119.3' r='0.76'/%3E%3Ccircle cx='67.8' cy='44.3' r='0.82'/%3E%3Ccircle cx='77.5' cy='60.3' r='0.48'/%3E%3Ccircle cx='63.9' cy='30.8' r='0.88'/%3E%3Ccircle cx='68.3' cy='109.2' r='0.39'/%3E%3Ccircle cx='19.1' cy='115.4' r='0.71'/%3E%3C/svg%3E");
+  --m-ang:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' d='M3 37V17C3 9 9 3 17 3h20'/%3E%3Cpath fill='none' stroke='%23000' stroke-width='1.1' stroke-linecap='round' d='M9.5 31V18c0-4.7 3.8-8.5 8.5-8.5h13'/%3E%3Cpath d='M9.5 5.5l2.2 4-2.2 4-2.2-4z' transform='rotate(-45 9.5 9.5)'/%3E%3C/svg%3E");
+}
+.libro{--sfondo-img:linear-gradient(var(--retro1),var(--retro2))}
+.libro.sf-notte{--sfondo-img:linear-gradient(color-mix(in srgb,var(--pelle) 85%,#000),color-mix(in srgb,var(--pelle) 60%,#000))}
+.p-retro{background:none;padding-top:3.2em}
+.p-retro>*{position:relative}
+.risguardo{position:absolute !important;inset:0;overflow:hidden;background:linear-gradient(170deg,var(--retro1),var(--retro2));box-shadow:inset -1.2em 0 1.6em -1em rgba(40,20,5,.28)}
+.risguardo::before,.risguardo::after{content:'';position:absolute;inset:0}
+.sf-marmo::before{background:color-mix(in srgb,var(--acc-scuro) 58%,transparent);-webkit-mask:var(--m-mA) center/cover no-repeat;mask:var(--m-mA) center/cover no-repeat}
+.sf-marmo::after{background:color-mix(in srgb,var(--oro) 75%,transparent);-webkit-mask:var(--m-mB) center/cover no-repeat;mask:var(--m-mB) center/cover no-repeat}
+.sf-fiorentina::before{background:color-mix(in srgb,var(--acc-scuro) 42%,transparent);-webkit-mask:var(--m-gig) 0 0/3em 3em;mask:var(--m-gig) 0 0/3em 3em}
+.sf-fiorentina::after{background:color-mix(in srgb,var(--oro) 70%,transparent);-webkit-mask:var(--m-gigB) 0 0/3em 3em;mask:var(--m-gigB) 0 0/3em 3em}
+.sf-squame::before{background:color-mix(in srgb,var(--acc-scuro) 40%,transparent);-webkit-mask:var(--m-sqA) 0 0/2.2em 2.2em;mask:var(--m-sqA) 0 0/2.2em 2.2em}
+.sf-squame::after{background:color-mix(in srgb,var(--oro) 65%,transparent);-webkit-mask:var(--m-sqB) 0 0/2.2em 2.2em;mask:var(--m-sqB) 0 0/2.2em 2.2em}
+.sf-rigatino::before{background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--acc-scuro) 32%,transparent) 0 1px,transparent 1px .5em)}
+.sf-rigatino::after{background:repeating-linear-gradient(90deg,transparent 0 2.1em,color-mix(in srgb,var(--oro) 60%,transparent) 2.1em 2.3em,transparent 2.3em 2.5em,color-mix(in srgb,var(--oro) 60%,transparent) 2.5em 2.55em,transparent 2.55em 4.4em)}
+.risguardo.sf-notte{background:radial-gradient(120% 90% at 30% 20%,color-mix(in srgb,var(--pelle) 92%,#fff),color-mix(in srgb,var(--pelle) 55%,#000))}
+.sf-notte::before{background:var(--oro);-webkit-mask:var(--m-notteA) 0 0/7em 7em;mask:var(--m-notteA) 0 0/7em 7em}
+.sf-notte::after{background:color-mix(in srgb,var(--oro) 55%,#fff);opacity:.5;-webkit-mask:var(--m-notteB) 0 0/7em 7em;mask:var(--m-notteB) 0 0/7em 7em}
+.at-sfondi span.risguardo{position:relative !important;inset:auto;font-size:10px}
+
+/* l'ex libris «Se ritrovata»: cartoncino inciso, fissato con due strisce di nastro */
+.exl{width:78%;padding:1.5em 1.5em 1.2em;text-align:center;color:var(--ink);background:radial-gradient(120% 80% at 30% 0,rgba(255,255,255,.35),transparent 60%),var(--cartiglio);box-shadow:0 .15em .3em rgba(40,20,5,.18),0 .6em 1.4em -.4em rgba(40,20,5,.35);transform:rotate(-1.2deg)}
+.exl::before{content:'';position:absolute;inset:.55em;border:1px solid color-mix(in srgb,var(--acc-scuro) 55%,transparent);box-shadow:inset 0 0 0 .22em var(--cartiglio),inset 0 0 0 calc(.22em + 1px) color-mix(in srgb,var(--acc-scuro) 35%,transparent);pointer-events:none}
+.ang{position:absolute;width:1.7em;height:1.7em;background:var(--acc-scuro);-webkit-mask:var(--m-ang) center/contain no-repeat;mask:var(--m-ang) center/contain no-repeat;pointer-events:none}
+.exl .ang{--o:.3em}
+.ang.a1{top:var(--o);left:var(--o)}.ang.a2{top:var(--o);right:var(--o);transform:scaleX(-1)}
+.ang.a3{bottom:var(--o);left:var(--o);transform:scaleY(-1)}.ang.a4{bottom:var(--o);right:var(--o);transform:scale(-1)}
+.exl-h{font-family:var(--fellsc);font-size:1.3em;letter-spacing:.1em;line-height:1.1;margin-top:.2em}
+.exl-sotto{display:flex;align-items:center;justify-content:center;gap:.7em;font-family:var(--fell);font-style:italic;font-size:.88em;color:var(--muted);margin:.25em 0 .4em}
+.exl-sotto::before,.exl-sotto::after{content:'';width:2.4em;border-top:1px solid var(--rule)}
+.exl .p-riga{min-height:2.4em}
+.exl .p-riga small{font-family:var(--fellsc);font-size:.72em;letter-spacing:.14em;text-transform:none;color:var(--ink)}
+.exl .p-riga span{font-size:1.35em}
+.exl .p-grazie{font-size:1em;margin-top:.9em;color:var(--ink)}
+.scotch{position:absolute !important;top:-.55em;width:4.2em;height:1.25em;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.18) 0 .3em,transparent .3em .6em),color-mix(in srgb,var(--acc) 45%,rgba(250,240,220,.7));opacity:.88;box-shadow:0 1px 1px rgba(40,20,5,.12);clip-path:polygon(0 8%,4% 0,9% 10%,14% 0,100% 0,96% 12%,100% 25%,95% 40%,100% 55%,96% 72%,100% 88%,95% 100%,0 100%,4% 85%,0 70%,5% 52%,0 35%,4% 20%);pointer-events:none}
+.scotch.s1{left:-1.3em;transform:rotate(-38deg)}.scotch.s2{right:-1.3em;transform:rotate(34deg)}
+
+/* il taschino: una tasca di pelle cucita, i cartoncini spuntano e si toccano */
+.taschino{position:absolute !important;left:1.4em;right:1.9em;bottom:1.3em;height:15.2em;padding:0;background:none;border:0;border-radius:0;box-shadow:none;display:block;font-size:.8em}
+.taschino .cartoncino{position:absolute;left:5%;right:5%;top:calc(var(--i) * 2.6em);bottom:0;min-height:0;display:flex;align-items:baseline;gap:.45em;padding:.6em 1.1em 0;border:1px solid color-mix(in srgb,var(--orlo) 70%,transparent);border-radius:.35em .35em 0 0;font-family:var(--macchina);font-size:.95em;color:var(--ink);text-align:left;
+  background:linear-gradient(transparent 2.15em,color-mix(in srgb,var(--acc) 45%,transparent) 2.15em calc(2.15em + 1px),transparent calc(2.15em + 1px)),color-mix(in srgb,var(--cartiglio) 80%,var(--cc,#fff));
+  box-shadow:0 -.1em .35em rgba(40,20,5,.16);transform:rotate(var(--r));transform-origin:50% 100%;transition:transform .2s}
+.taschino .cartoncino b{font-family:var(--fell);font-style:italic;font-weight:400;font-size:1.22em;color:var(--acc-scuro)}
+.taschino .cartoncino:nth-of-type(1){--cc:#ffffff}.taschino .cartoncino:nth-of-type(2){--cc:#b9cdb4}.taschino .cartoncino:nth-of-type(3){--cc:#e9bfb2}.taschino .cartoncino:nth-of-type(4){--cc:#d9c08f}
+.taschino .taschino-reset,.taschino .taschino-reset b{color:var(--rust)}
+@media (hover:hover){.taschino .cartoncino:hover{transform:rotate(var(--r)) translateY(-.35em)}}
+.taschino .cartoncino:active{transform:rotate(var(--r)) translateY(-.2em)}
+.tasca-fronte{position:absolute;left:0;right:0;bottom:0;height:5.6em;z-index:5;display:flex;align-items:flex-end;justify-content:center;padding-bottom:1.3em;border-radius:.2em .2em .6em .6em;
+  background:radial-gradient(120% 140% at 30% 0,rgba(255,220,180,.16),transparent 60%),radial-gradient(rgba(0,0,0,.22) .6px,transparent 1.2px) 0 0/4px 4px,var(--pelle);
+  box-shadow:inset 0 .15em .2em rgba(255,255,255,.12),inset 0 -.6em 1.2em rgba(0,0,0,.3);
+  -webkit-mask:radial-gradient(circle 1.7em at 50% 0,transparent 97%,#000 100%);mask:radial-gradient(circle 1.7em at 50% 0,transparent 97%,#000 100%)}
+.tasca-fronte::after{content:'';position:absolute;inset:.5em;border:1.5px dashed color-mix(in srgb,var(--sc2,#c9a24a) 65%,transparent);border-radius:.15em .15em .4em .4em;-webkit-mask:radial-gradient(circle 2.2em at 50% -.5em,transparent 97%,#000 100%);mask:radial-gradient(circle 2.2em at 50% -.5em,transparent 97%,#000 100%)}
+.tasca-h{font-family:var(--fellsc);font-size:1.05em;letter-spacing:.22em;background:linear-gradient(180deg,var(--sc1,#f6dc95),var(--sc2,#c9a24a) 55%,var(--sc3,#8a6420));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.6))}
+.p-sfondo{z-index:6}
+
+/* il frontespizio: cornice incisa con gli angoli, titolo da libro, l'aggiunta a penna e il sigillo */
+.p-centro.fr::before{inset:1em 1.6em 1em 1em;border:1px solid color-mix(in srgb,var(--acc-scuro) 50%,transparent);outline:0;border-radius:0;box-shadow:inset 0 0 0 .25em var(--paper),inset 0 0 0 calc(.25em + 1px) color-mix(in srgb,var(--acc-scuro) 30%,transparent)}
+.fr .ang{width:2em;height:2em}
+.fr .ang.a1{top:.7em;left:.7em}.fr .ang.a2{top:.7em;right:1.3em}.fr .ang.a3{bottom:.7em;left:.7em}.fr .ang.a4{bottom:.7em;right:1.3em}
+.singolo .p-centro.fr::before{inset:.7em .9em}
+.singolo .fr .ang.a1,.singolo .fr .ang.a3{left:.4em}.singolo .fr .ang.a2,.singolo .fr .ang.a4{right:.6em}
+.singolo .fr .ang.a1,.singolo .fr .ang.a2{top:.4em}.singolo .fr .ang.a3,.singolo .fr .ang.a4{bottom:.4em}
+.fr .p-occhiello{font-size:.58em;letter-spacing:.32em;margin-top:.6em}
+.fr-fregio{width:7em;height:auto;margin:.8em 0 1em;fill:none;stroke:var(--acc-scuro);stroke-width:1.1;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.fr-fregio .pieno{fill:var(--acc);stroke:none}
+.fr-titolo{display:flex;flex-direction:column;align-items:center;font-family:var(--fell);font-style:italic;color:var(--ink);line-height:1}
+.fr-titolo span{font-size:1.5em;text-wrap:balance}
+.fr-titolo .fr-grande{font-size:3.1em;line-height:1;color:var(--acc-scuro);letter-spacing:-.01em;margin-top:.05em}
+.fr-aggiunta{position:relative;align-self:flex-end;margin:-.15em 12% 0 0;font-family:var(--mano);font-size:1.45em;line-height:1;color:var(--ink2);transform:rotate(-6deg)}
+.fr-aggiunta i{position:absolute;left:-.55em;top:-.45em;font-style:normal;font-size:1.1em;color:var(--ink2)}
+.fr-date{display:flex;flex-direction:column;align-items:center;gap:.15em;margin-top:1.6em;padding:.55em 1.4em;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);font-family:var(--fell);font-style:italic;font-size:.84em;color:var(--muted)}
+.fr-prop{display:flex;flex-direction:column;align-items:center;width:100%}
+.fr-prop .p-occhiello{font-size:.56em}
+.fr .p-nome{font-size:1.6em;min-width:68%;margin:.15em 0 1.1em}
+.fr .p-nome.vuoto{font-size:1em}
+.ceralacca{width:3.9em;height:3.9em;margin-bottom:.6em;transform:rotate(-9deg);filter:drop-shadow(0 .14em .14em rgba(40,10,5,.45))}
+.ceralacca text{font-family:var(--fellsc);font-size:44px;text-anchor:middle;dominant-baseline:central;fill:color-mix(in srgb,var(--acc-scuro) 70%,#000)}
+.ceralacca .cera-luce{fill:rgba(255,225,205,.38)}
+.cera-giro{fill:none;stroke:rgba(0,0,0,.2);stroke-width:1.4}
+.cera-giro+.cera-giro{stroke:rgba(255,230,210,.18)}
+.p-retro>.p-sfondo{position:absolute}
+.risguardo>i{position:absolute;inset:0}
+.sf-marmo>i{background:color-mix(in srgb,var(--acc) 26%,transparent);-webkit-mask:var(--m-mC) center/cover no-repeat;mask:var(--m-mC) center/cover no-repeat}
+.sf-marmo::before{background:color-mix(in srgb,var(--acc-scuro) 42%,transparent)}
+.sf-marmo::after{background:color-mix(in srgb,var(--oro) 90%,transparent)}
+.tasca-fronte{left:-.25em;right:-.25em;bottom:-.35em}
+.fr-aria{flex:.45}
+.fr .fr-date{margin:0 0 .9em;padding:.4em 1.4em;font-size:.8em}
+.fr .p-nome{margin-bottom:.9em}
+.taschino{filter:drop-shadow(0 .3em .4em rgba(30,10,0,.32))}
+/* carta nera: i rossi scuri diventano quelli chiari della stagione, l'oro del marmo più quieto */
+.t-nero .taschino .cartoncino b,.t-nero .fr-titolo .fr-grande{color:var(--acc)}
+.t-nero .taschino .cartoncino{background:color-mix(in srgb,var(--cartiglio) 86%,var(--cc,#fff))}
+.t-nero .sf-marmo::after{opacity:.55}
+/* testo lungo sulle righe dell'ex libris e sul nome del frontespizio */
+.exl .p-riga span.lungo{font-size:calc(1.35em * var(--l))}
+.fr .p-nome.lungo{font-size:1.25em;white-space:normal;text-wrap:balance;line-height:1.15;padding-bottom:.15em}
+/* le scritte piccole non scendono sotto una misura leggibile (sul telefono arrivavano a 8 px) */
+.fr .p-occhiello,.fr-prop .p-occhiello{font-size:max(.58em,10.5px)}
+.fr .p-piccolo{font-size:max(.64em,11.5px)}
+.fr .fr-date{font-size:max(.8em,12px)}
+.p-sfondo{font-size:max(.66em,12px)}
+.exl .p-riga small{font-size:max(.72em,11px)}
+.taschino{font-size:max(.8em,12.5px)}

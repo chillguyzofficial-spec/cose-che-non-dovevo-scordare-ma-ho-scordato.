@@ -144,14 +144,14 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   await p.click('[data-act="at-scheda"][data-t="sfondo"]'); await attendi(1500);
   prova('scheda Sfondo: va alla prima pagina', (await p.textContent('#t-sotto')) === 'Frontespizio' && await p.isVisible('.p-retro'));
   prova('scelta dello sfondo: 6 motivi', await p.locator('.at-sfondi button').count() === 6);
-  await p.click('.at-sfondi [data-s="righe"]'); await attendi(150);
-  await p.click('.at-sfondi [data-s="fiori"]'); await attendi(150);
+  await p.click('.at-sfondi [data-s="rigatino"]'); await attendi(150);
+  await p.click('.at-sfondi [data-s="fiorentina"]'); await attendi(150);
   if (FOTO) await p.screenshot({ path: path.join(FOTO, MOTORE + '-06-sfondi.png') });
-  prova('prima pagina a fiorellini', (await p.$eval('.p-retro', e => getComputedStyle(e).backgroundImage)).split('radial-gradient').length - 1 === 5);
-  prova('una sola classe di sfondo sul libro', (await p.$eval('#libro', e => e.className.match(/\bsf-\S+/g).join(' '))) === 'sf-fiori');
-  await p.click('.at-sfondi [data-s="pallini"]'); await attendi(150);
-  prova('si torna ai pallini (prima non si poteva)', (await p.$eval('.p-retro', e => getComputedStyle(e).backgroundImage)).split('radial-gradient').length - 1 === 2);
-  await p.click('.at-sfondi [data-s="fiori"]'); await attendi(150);
+  prova('risguardo fiorentino', await p.$eval('.p-retro .risguardo', e => e.classList.contains('sf-fiorentina') && getComputedStyle(e, '::before').maskImage.includes('svg')));
+  prova('una sola classe di sfondo sul libro', (await p.$eval('#libro', e => e.className.match(/\bsf-\S+/g).join(' '))) === 'sf-fiorentina');
+  await p.click('.at-sfondi [data-s="marmo"]'); await attendi(150);
+  prova('si torna alla marmorizzata (prima non si poteva)', await p.$eval('.p-retro .risguardo', e => e.classList.contains('sf-marmo')));
+  await p.click('.at-sfondi [data-s="fiorentina"]'); await attendi(150);
   await p.click('[data-act="at-scheda"][data-t="copertina"]'); await attendi(2600);
   prova('scheda Copertina: l’agenda si chiude', await p.evaluate(() => document.getElementById('app').classList.contains('chiusa')) && await p.isVisible('[data-act="at-colore"]'));
   await p.click('[data-act="at-scheda"][data-t="carta"]'); await attendi(3800);
@@ -162,10 +162,10 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   await p.click('[data-act="at-fine"]'); await attendi(200);
   prova('Fatto chiude il pannello', await p.isHidden('#atelier') && await p.isVisible('#piede'));
   await vaiAda(p); await p.click('[data-act="vai-pagina"][data-p="0"]'); await attendi(1700);
-  await foto('07-prima-pagina-fiori');
-  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('[data-act="esporta"]')]);
+  await foto('07-prima-pagina-fiorentina');
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('[data-act="esporta"]', { position: { x: 40, y: 12 } })]);
   const copia = JSON.parse(fs.readFileSync(await dl.path(), 'utf8'));
-  prova('copia: disegni, foto, lettere, copertina', copia.version === 3 && copia.dis['2026-10-30'] && copia.foto['2026-10-30'] && copia.foto['2026-10-30'].img.startsWith('data:image/jpeg') && copia.lettere.length === 1 && copia.copertina.adesivi.length === 2 && copia.sfondo === 'fiori');
+  prova('copia: disegni, foto, lettere, copertina', copia.version === 3 && copia.dis['2026-10-30'] && copia.foto['2026-10-30'] && copia.foto['2026-10-30'].img.startsWith('data:image/jpeg') && copia.lettere.length === 1 && copia.copertina.adesivi.length === 2 && copia.sfondo === 'fiorentina');
 
   // ---------- riapro l'app il 5 novembre: la lettera si apre, la foto c'è ancora ----------
   const st = await ctx.storageState({ indexedDB: true }); await p.close();
@@ -190,7 +190,7 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   const r = await ctx3.newPage(); r.setDefaultTimeout(6000); r.on('pageerror', e => errori.push(e.message));
   await r.goto(URL); await r.waitForTimeout(700); await r.click('.elastico', { force: true }); await r.waitForTimeout(3600);
   await vaiAda(r); await r.click('[data-act="vai-pagina"][data-p="0"]'); await r.waitForTimeout(1700);
-  const [sc] = await Promise.all([r.waitForEvent('filechooser'), r.click('[data-act="importa"]')]);
+  const [sc] = await Promise.all([r.waitForEvent('filechooser'), r.click('[data-act="importa"]', { position: { x: 40, y: 12 } })]);
   await sc.setFiles(await dl.path()); await r.waitForTimeout(1200);
   const rip = await r.evaluate(() => ({ dis: !!JSON.parse(localStorage.getItem('ccnds-dis') || '{}')['2026-10-30'], lett: (JSON.parse(localStorage.getItem('ccnds-lettere') || '[]')).length, cop: (JSON.parse(localStorage.getItem('ccnds-set') || '{}').cop || {}).colore }));
   prova('copia ripresa: disegno, lettera, copertina', rip.dis && rip.lett === 1 && rip.cop === 'notte', rip);
