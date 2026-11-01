@@ -186,11 +186,9 @@ const prova = (nome, cond) => { if (cond) ok++; else { ko++; console.log('  ✗ 
   await vaiAda(p); await p.click('.salti [data-p="0"]'); await attendi(1300);
   // nome e telefono si scrivono sulle righe del «Se ritrovata»
   await p.click('.p-riga >> nth=0'); await p.fill('#nome-campo', 'Giulia'); await p.click('[data-act="salva-nome"]'); await attendi(200);
-  prova('taschino con la copia delle note', await p.isVisible('.taschino [data-act="esporta"]'));
+  prova('taschino con solo Ricomincia da capo', await p.locator('.taschino .cartoncino').count() === 1 && await p.isVisible('.taschino [data-act="ricomincia"]'));
   prova('nome nel Se ritrovata', (await p.textContent('.p-retro')).includes('Giulia'));
   await foto('11-taschino');
-  const [scarico] = await Promise.all([p.waitForEvent('download'), p.click('.taschino [data-act="esporta"]', { position: { x: 40, y: 12 } })]);
-  prova('copia delle note scaricata', /note-agenda-.*\.json/.test(scarico.suggestedFilename()));
   // segnalibro: nastro sulla pagina segnata, coda dal lato giusto quando si è altrove
   // il segnalibro sta nella testa della pagina: dalla facciata «Se ritrovata» (senza testa) si passa al frontespizio
   await p.keyboard.press('ArrowRight'); await attendi(1100);

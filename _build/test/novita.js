@@ -1,4 +1,4 @@
-// Novità: scrivere a mano, polaroid, lettera al futuro, copertina personalizzata, copia delle note con tutto
+// Novità: scrivere a mano, polaroid, lettera al futuro, copertina personalizzata, taschino con solo Ricomincia
 // uso: node _build/test/novita.js [chromium|webkit] [cartella-foto]
 const pw = require('C:/Users/Claude FK/.claude/projects/hedonè progetto serio/node_modules/playwright');
 
@@ -163,9 +163,11 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   prova('Fatto chiude il pannello', await p.isHidden('#atelier') && await p.isVisible('#piede'));
   await vaiAda(p); await p.click('[data-act="vai-pagina"][data-p="0"]'); await attendi(1700);
   await foto('07-prima-pagina-fiorentina');
-  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('[data-act="esporta"]', { position: { x: 40, y: 12 } })]);
-  const copia = JSON.parse(fs.readFileSync(await dl.path(), 'utf8'));
-  prova('copia: disegni, foto, lettere, copertina', copia.version === 3 && copia.dis['2026-10-30'] && copia.foto['2026-10-30'] && copia.foto['2026-10-30'].img.startsWith('data:image/jpeg') && copia.lettere.length === 1 && copia.copertina.adesivi.length === 2 && copia.sfondo === 'fiorentina');
+  // il taschino ha solo «Ricomincia da capo» (niente copie, niente «tienila sul telefono»)
+  prova('taschino: solo Ricomincia', await p.locator('.taschino .cartoncino').count() === 1 && await p.isVisible('.taschino [data-act="ricomincia"]'));
+  await p.click('.taschino [data-act="ricomincia"]', { position: { x: 40, y: 12 } }); await attendi(300);
+  prova('Ricomincia: cancellazione irreversibile, senza copia', (await p.textContent('#v-reset')).includes('irreversibile') && !(await p.locator('#v-reset [data-act="esporta"]').count()));
+  await p.click('#v-reset [data-act="chiudi"]'); await attendi(200);
 
   // ---------- riapro l'app il 5 novembre: la lettera si apre, la foto c'è ancora ----------
   const st = await ctx.storageState({ indexedDB: true }); await p.close();
@@ -184,18 +186,6 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   prova('foto ancora lì dopo la riapertura', await q.isVisible('.giorno[data-k="2026-10-30"] .g-polaroid img'));
   const nat = await q.$eval('.giorno[data-k="2026-10-30"] .g-polaroid img', i => i.naturalWidth);
   prova('foto caricata davvero', nat > 0, nat);
-
-  // ---------- un telefono nuovo riprende la copia ----------
-  const ctx3 = await b.newContext(dev); await ctx3.addInitScript(fissa('2026-10-29'));
-  const r = await ctx3.newPage(); r.setDefaultTimeout(6000); r.on('pageerror', e => errori.push(e.message));
-  await r.goto(URL); await r.waitForTimeout(700); await r.click('.elastico', { force: true }); await r.waitForTimeout(3600);
-  await vaiAda(r); await r.click('[data-act="vai-pagina"][data-p="0"]'); await r.waitForTimeout(1700);
-  const [sc] = await Promise.all([r.waitForEvent('filechooser'), r.click('[data-act="importa"]', { position: { x: 40, y: 12 } })]);
-  await sc.setFiles(await dl.path()); await r.waitForTimeout(1200);
-  const rip = await r.evaluate(() => ({ dis: !!JSON.parse(localStorage.getItem('ccnds-dis') || '{}')['2026-10-30'], lett: (JSON.parse(localStorage.getItem('ccnds-lettere') || '[]')).length, cop: (JSON.parse(localStorage.getItem('ccnds-set') || '{}').cop || {}).colore }));
-  prova('copia ripresa: disegno, lettera, copertina', rip.dis && rip.lett === 1 && rip.cop === 'notte', rip);
-  await vaiAda(r); await r.fill('#vaia-data', '2026-10-30'); await r.dispatchEvent('#vaia-data', 'change'); await r.waitForTimeout(1700);
-  prova('copia ripresa: la foto', await r.isVisible('.giorno[data-k="2026-10-30"] .g-polaroid img'));
 
   prova('nessun errore', !errori.length, errori);
   console.log(`\nnovità (${MOTORE}): ${ok} ok, ${ko} fallite`);

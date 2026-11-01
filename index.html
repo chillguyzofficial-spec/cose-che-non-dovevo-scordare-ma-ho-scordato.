@@ -85,8 +85,8 @@
 <div class="velo" id="v-reset" hidden data-chiudi><div class="foglio-basso"><div class="maniglia"></div><div class="dentro">
   <div class="h-foglio">Ricominciare da capo?</div>
   <p class="reset-testo">Da questo telefono (o computer) si cancellano <b>tutte</b> le note, le cose da ricordare, i disegni, le foto, le lettere al futuro, il segnalibro e la copertina decorata. L’agenda torna come nuova.</p>
-  <p class="reset-testo">Se vuoi poterle riprendere, salva prima una copia: si recupera da «Riprendi una copia», nel taschino.</p>
-  <div class="reset-fila"><button class="btn" data-act="esporta">Salva prima una copia</button><span></span><button class="btn" data-act="chiudi">Annulla</button><button class="btn reset-si" data-act="reset-ok">Cancella tutto</button></div>
+  <p class="reset-testo"><b>La cancellazione è irreversibile:</b> quello che hai scritto non si potrà più recuperare.</p>
+  <div class="reset-fila"><span></span><button class="btn" data-act="chiudi">Annulla</button><button class="btn reset-si" data-act="reset-ok">Cancella tutto</button></div>
 </div></div></div>
 <!-- ricerca -->
 <div class="velo alto" id="v-cerca" hidden data-chiudi><div class="cerca-box">
@@ -133,7 +133,6 @@
 </div>
 
 <div class="avviso" id="avviso" hidden role="status"><span id="avviso-testo"></span><button id="avviso-annulla" hidden>Annulla</button></div>
-<input type="file" accept="application/json,.json" id="file" hidden>
 <input type="file" accept="image/*" id="foto-file" hidden>
 
 <script src="assets/js/dati.js"></script>
