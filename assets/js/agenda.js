@@ -571,7 +571,7 @@
     const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
     apriVelo('#v-menu');
     $('#menu').innerHTML = `<div class="maniglia"></div><div class="dentro"><div class="h-foglio">Tienila sul telefono</div>` +
-      `<div class="nota-p" style="font-size:14px;color:var(--ink)">${ios ? 'Tocca <b>Condividi</b> (il quadrato con la freccia) e poi <b>Aggiungi alla schermata Home</b>.' : 'Apri il menu del browser (<b>⋮</b>) e scegli <b>Installa app</b> o <b>Aggiungi a schermata Home</b>.'}</div>` +
+      `<div class="nota-p" style="font-size:14px;color:var(--ink)">${ios ? 'In Safari tocca <b>Condividi</b> (il quadrato con la freccia; se non lo vedi, è sotto i tre puntini <b>···</b> accanto all’indirizzo) e poi <b>Aggiungi alla schermata Home</b>.' : 'Apri il menu del browser (<b>⋮</b>) e scegli <b>Installa app</b> o <b>Aggiungi a schermata Home</b>.'}</div>` +
       `<div class="nota-p">Così si apre come un’app, funziona anche senza rete e il telefono non cancella le note. Le note restano solo su questo telefono: ogni tanto salvane una copia dal menu.</div>` +
       `<div class="fila" style="justify-content:flex-end"><button class="btn pieno" data-act="chiudi">Ho capito</button></div></div>`;
   }
@@ -745,7 +745,7 @@
   function disegnaRicordi() {
     const mie = ricDi(GP.key), F = GP.forma;
     let h = mie.length ? '<div class="gp-h">Da ricordare</div>' : '';
-    h += mie.map(r => { const T = RIC[r.type] || RIC.altro; return `<div class="ricordo" style="color:${T.c}"><span>${T.g} ${esc(etichetta(r, T))}</span><small>${r.yearly ? 'ogni anno' : 'solo quest’anno'}</small><button data-gp="togli-ric" data-id="${r.id}" aria-label="Togli ${esc(r.label || T.n)}">×</button></div>`; }).join('');
+    h += mie.map(r => { const T = RIC[r.type] || RIC.altro; return `<div class="ricordo" style="color:${T.c}"><span>${T.g} ${esc(etichetta(r, T))}</span><small>${r.yearly ? 'ogni anno' : 'solo quest’anno'}</small><button class="ric-cal" data-gp="al-calendario" data-id="${r.id}" aria-label="Metti ${esc(r.label || T.n)} nel calendario del telefono, con l’avviso">Al calendario</button><button data-gp="togli-ric" data-id="${r.id}" aria-label="Togli ${esc(r.label || T.n)}">×</button></div>`; }).join('');
     if (F) {
       const ph = RIC[F.type].ph || (F.type === 'compleanno' ? 'Di chi? Es. Marta' : F.type === 'scadenza' ? 'Cosa scade? Es. bollo auto' : 'Cosa ricordi? Es. anniversario');
       h += `<div class="gp-forma"><div class="gp-h">Ricorda questo giorno</div>` +
@@ -765,6 +765,34 @@
     S.ric = [...S.ric, { id: Date.now().toString(36), date: GP.key, type: F.type, label: F.label.trim(), yearly: F.yearly, ...(RIC[F.type].ora && F.ora ? { ora: F.ora } : {}) }];
     scrivi('rem', S.ric); GP.forma = null; disegnaRicordi();
     $('#gp-salvato').textContent = 'Ricordo aggiunto';
+  }
+  // ---------- al calendario del telefono: l'avviso lo dà il calendario (l'agenda non ha un server) ----------
+  // con l'ora: un'ora di durata, avviso un'ora prima; senza ora: tutto il giorno, avviso alle 9 del giorno prima
+  function alCalendario(r) {
+    const T = RIC[r.type] || RIC.altro, d = r.date.replace(/-/g, ''), p = n => String(n).padStart(2, '0');
+    const testo = s => s.replace(/[\\;,]/g, c => '\\' + c).replace(/\n/g, '\\n');
+    let quando;
+    if (r.ora) {
+      const [h, m] = r.ora.split(':').map(Number), fine = h < 23 ? p(h + 1) + p(m) : '2359';
+      quando = [`DTSTART:${d}T${p(h)}${p(m)}00`, `DTEND:${d}T${fine}00`];
+    } else { const x = daKey(r.date); x.setDate(x.getDate() + 1); quando = [`DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${ymd(x).replace(/-/g, '')}`]; }
+    const titolo = r.label ? (r.type === 'compleanno' ? 'Compleanno di ' + r.label : r.label) : T.n;
+    const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Cose Che Non Dovevo Scordare//IT', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',
+      `UID:${r.id}@cose-che-non-dovevo-scordare`, 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z', ...quando,
+      ...(r.yearly ? ['RRULE:FREQ=YEARLY'] : []), 'SUMMARY:' + testo(titolo), 'DESCRIPTION:' + testo(T.n + ' · dall’agenda'),
+      'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + testo(titolo), 'TRIGGER:' + (r.ora ? '-PT1H' : '-PT15H'), 'END:VALARM',
+      'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+    // iPhone: aprendo l'evento, iOS chiede «Aggiungi al calendario» (dall'app installata si apre in una finestrella, l'agenda resta dov'è)
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+      const url = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+      if (navigator.standalone) window.open(url, '_blank'); else location.href = url;
+      return;
+    }
+    // altrove si scarica il file .ics e lo apre il calendario
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+    a.download = (titolo.replace(/[\\/:*?"<>|]/g, '').trim().slice(0, 40) || 'ricordo') + '.ics'; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+    avviso('Aprilo per metterlo nel calendario');
   }
   // ---------- lettere al futuro: si sigillano e si aprono solo dal giorno scelto ----------
   const lungo = d => d.getDate() + ' ' + M[d.getMonth()].toLowerCase() + ' ' + d.getFullYear();
@@ -1039,6 +1067,7 @@
     else if (a === 'tipo-ric') { GP.forma.type = b.dataset.t; GP.forma.yearly = b.dataset.t === 'compleanno' || b.dataset.t === 'altro'; disegnaRicordi(); }
     else if (a === 'ogni-anno') { GP.forma.yearly = !GP.forma.yearly; disegnaRicordi(); }
     else if (a === 'aggiungi-ric') aggiungiRic();
+    else if (a === 'al-calendario') { const r = S.ric.find(x => x.id === b.dataset.id); if (r) alCalendario(r); }
     else if (a === 'togli-ric') { S.ric = S.ric.filter(r => r.id !== b.dataset.id); scrivi('rem', S.ric); disegnaRicordi(); }
     else if (a === 'versioni') { GP.versioni = !GP.versioni; disegnaVersioni(); }
     else if (a === 'ripristina') {
