@@ -109,11 +109,19 @@
     // sotto le pagine, dentro la pelle: la barra delle viste, o il foglio «Personalizza» quando è aperto
     const at = $('#atelier'), sotto = S.atelier && at.offsetHeight ? at.offsetHeight + 6 : largo ? 66 : 58;
     const Hs = H - sotto;
-    // decorando la copertina il libro chiuso tiene le sue proporzioni (gli adesivi non si spostano);
-    // con il foglio aperto sulle pagine invece resta largo come lo schermo e si accorcia soltanto
-    const pw = singolo ? Math.floor(Math.min(W - 26, 480, S.atelier && S.atelier.tab !== 'copertina' ? 1e9 : (Hs - 26) / (S.atelier ? 1.62 : 1.45)))
-      : Math.max(120, Math.floor(Math.min((W - 46) / 2, largo ? 520 : 440, largo ? (Hs - 34) / 1.45 : 1e9)));
-    const ph = singolo ? Math.floor(Math.min(Hs - 26, pw * 1.62)) : Math.max(S.atelier ? 200 : 300, Math.floor(Math.min(Hs - 34, pw * 3.2)));
+    // con il foglio aperto sulle pagine il libro resta largo come lo schermo e si accorcia soltanto
+    const dimensioni = (Hs, at) => {
+      const pw = singolo ? Math.floor(Math.min(W - 26, 480, at ? 1e9 : (Hs - 26) / 1.45))
+        : Math.max(120, Math.floor(Math.min((W - 46) / 2, largo ? 520 : 440, largo ? (Hs - 34) / 1.45 : 1e9)));
+      return [pw, singolo ? Math.floor(Math.min(Hs - 26, pw * 1.62)) : Math.max(at ? 200 : 300, Math.floor(Math.min(Hs - 34, pw * 3.2)))];
+    };
+    let [pw, ph] = dimensioni(Hs, S.atelier);
+    // decorando la copertina il libro chiuso ha la stessa forma che avrà dopo, solo più piccolo: gli adesivi e il disegno
+    // (misurati sulla larghezza) restano dove li metti. Da chiusa la copertina scende anche sulla barra: alta ph + sotto + 11, larga pw + 9
+    if (S.atelier && S.atelier.tab === 'copertina') {
+      const s0 = largo ? 66 : 58, [pw0, ph0] = dimensioni(H - s0, null), R = (ph0 + s0 + 11) / (pw0 + 9);
+      pw = Math.max(40, Math.floor(Math.min(pw0, (Hs - 12) / R - 9))); ph = Math.round(R * (pw + 9) - 14);
+    }
     if (pw === S.pw && ph === S.ph && sotto === S.sotto) return;
     S.pw = pw; S.ph = ph; S.sotto = sotto;
     libro.style.setProperty('--pw', pw + 'px'); libro.style.setProperty('--ph', ph + 'px'); scena.style.setProperty('--sotto', sotto + 'px');

@@ -45,7 +45,6 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   const prima = (await ls('set')).cop.adesivi[0];
   const ad = await p.$eval('#cop-decoro .ades', e => e.getBoundingClientRect().toJSON());
   const cv = await p.$eval('.cop-fronte', e => { const r = e.getBoundingClientRect(); return r.height / r.width; });
-  prova('copertina con le proporzioni del telefono mentre si decora', Math.abs(cv - 1.62) < 0.08, cv);
   await p.mouse.move(ad.x + ad.width / 2, ad.y + ad.height / 2); await p.mouse.down();
   await p.mouse.move(ad.x + ad.width / 2 - 60, ad.y + ad.height / 2 - 80, { steps: 8 }); await p.mouse.up(); await attendi(150);
   const dopo = (await ls('set')).cop.adesivi[0];
@@ -72,7 +71,10 @@ const fissa = giorno => `(() => { const D = Date; const fisso = new D('${giorno}
   prova('disegno sulla copertina', await p.locator('#cop-decoro .cop-tratti path').count() === 1);
   prova('tratto salvato in bianco', (await ls('set')).cop.tratti[0].c === 'bianco');
   await foto('02-copertina-decorata');
-  await p.click('[data-act="at-fine"]'); await attendi(200);
+  await p.click('[data-act="at-fine"]'); await attendi(1200);
+  // mentre si decora la copertina ha la stessa forma che ha da chiusa: adesivi e disegno restano dove li hai messi
+  const cvChiusa = await p.$eval('.cop-fronte', e => { const r = e.getBoundingClientRect(); return r.height / r.width; });
+  prova('copertina: stessa forma decorando e da chiusa', Math.abs(cv - cvChiusa) < 0.02, [cv, cvChiusa]);
   prova('pannello chiuso', await p.isHidden('#atelier'));
   await p.click('.elastico', { force: true }); await attendi(3600);
   prova('poi l\u2019agenda si apre', await p.evaluate(() => document.getElementById('app').classList.contains('aperta')));
