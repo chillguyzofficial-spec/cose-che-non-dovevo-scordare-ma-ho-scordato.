@@ -253,7 +253,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .salti button{min-height:58px;border:1px solid var(--rule);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:var(--ink)}
 .salti b{font-family:var(--fell);font-weight:400;font-size:20px;line-height:1;color:var(--rust)}
 .suggerimento{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:12px;letter-spacing:.08em;color:#bfa47a;transition:opacity .4s;pointer-events:none;opacity:0}
-.chiusa .suggerimento{opacity:1}
+.chiusa .suggerimento.mostra{opacity:1}
 
 /* ---------- fogli dal basso (menu, vai a, ricorrenze, nome) ---------- */
 .velo{position:fixed;inset:0;z-index:40;background:rgba(15,9,5,.55);display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
@@ -630,7 +630,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--oro);outli
 .atelier-on .custodia,.atelier-on .cop{bottom:-7px}
 .atelier-on.aperta .custodia{bottom:calc(-1 * var(--sotto,58px) - 4px)}
 /* l'invito ad aprire sta sulla copertina, nella pelle vuota sotto il fregio (sotto il libro non c'è più spazio) */
-.suggerimento{top:72%;bottom:auto;z-index:12;color:rgba(233,215,176,.62);text-shadow:0 1px 1px rgba(0,0,0,.5)}
+/* il suggerimento è un biglietto che compare all'apertura e sparisce da solo, non una scritta fissa sulla copertina */
+.suggerimento{top:calc(18px + env(safe-area-inset-top,0px));bottom:auto;z-index:12;left:50%;right:auto;transform:translate(-50%,-8px);padding:9px 16px;border-radius:18px;background:rgba(22,11,6,.66);color:#f0dfba;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.35);transition:opacity .45s,transform .45s}
+.chiusa .suggerimento.mostra{transform:translate(-50%,0)}
 
 /* la testa stampata sulla carta */
 .pt{position:absolute;left:0;right:0;top:0;height:2.9em;display:flex;align-items:center;gap:.2em;padding:0 .9em 0 1.1em;z-index:2}

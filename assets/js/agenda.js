@@ -1264,7 +1264,8 @@
 
   misura(); disegna(); sistemaScritta(); disegnaCopertina();
   if (window.ResizeObserver) { new ResizeObserver(misura).observe(scena); new ResizeObserver(() => requestAnimationFrame(misura)).observe($('#atelier')); } else addEventListener('resize', misura);
-  const via = () => { pronto = true; $('#sugg').textContent = 'Tocca l’elastico per aprire'; };
+  // «Tocca l'elastico»: compare quando le pagine sono pronte, resta qualche secondo e se ne va
+  const via = () => { pronto = true; const s = $('#sugg'); s.textContent = 'Tocca l’elastico per aprire'; s.classList.add('mostra'); setTimeout(() => s.classList.remove('mostra'), 3800); };
   (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(via, via);
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
