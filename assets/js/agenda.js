@@ -231,20 +231,33 @@
     if (S.fase === 'chiusa') { if (dx < -40 && Math.abs(dx) > Math.abs(dy)) { ptr = null; sopprimi(); apri(); } return; }
     if (S.fase !== 'aperta') return;
     if (!P.drag) {
-      if (flip || Math.abs(dx) < 12 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+      if (flip || Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
       const to = S.pos + (dx < 0 ? 1 : -1); if (to < 0 || to > maxPos()) { ptr = null; return; }
       P.drag = true; avviaFlip(to); try { libro.setPointerCapture(e.pointerId); } catch (_) {}
     }
     if (!flip) return;
-    flip.p = Math.max(0, Math.min(1, (-dx * flip.dir) / (S.pw * 1.1))); applicaFlip(); P.dx = dx;
+    // velocità del dito (px/ms), smussata sugli ultimi movimenti: decide il rilascio
+    const t = performance.now(); if (P.lt) P.v = 0.6 * ((dx - P.lx) / Math.max(1, t - P.lt)) + 0.4 * (P.v || 0); P.lx = dx; P.lt = t;
+    flip.p = Math.max(0, Math.min(1, (-dx * flip.dir) / S.pw)); applicaFlip(); P.dx = dx;
   });
   const suSu = () => {
     const P = ptr; ptr = null; if (!P || !P.drag || !flip) return;
     sopprimi(); cancelAnimationFrame(raf);
-    // basta un trascinamento corto (un quinto della pagina) o un gesto veloce per girarla
-    const svelto = performance.now() - P.t < 450 && Math.abs(P.dx || 0) > 30, ok = flip.p > 0.2 || svelto;
-    animaA(ok ? 1 : 0, () => fineFlip(ok));
+    // un colpo veloce decide da solo (anche all'indietro); se no basta un quarto di pagina
+    const v = (P.lt && performance.now() - P.lt < 90 ? P.v || 0 : 0) * -flip.dir, ok = Math.abs(v) > 0.3 ? v > 0 : flip.p > 0.25;
+    rilascia(ok ? 1 : 0, Math.abs(v), () => fineFlip(ok));
   };
+  // dopo il dito la pagina continua con la sua velocità e rallenta fino a posarsi (niente ripartenza lenta)
+  function rilascia(target, v, fatto) {
+    const da = flip.p, strada = Math.abs(target - da) * S.pw, dur = Math.max(140, Math.min(520, strada / Math.max(0.7, v) * 1.6));
+    let t0 = null;
+    const passo = now => {
+      if (!flip) return; if (t0 === null) t0 = now;
+      const k = Math.min(1, (now - t0) / dur); flip.p = da + (target - da) * (1 - Math.pow(1 - k, 3)); applicaFlip();
+      if (k < 1) raf = requestAnimationFrame(passo); else fatto && fatto();
+    };
+    raf = requestAnimationFrame(passo);
+  }
   libro.addEventListener('pointerup', suSu); libro.addEventListener('pointercancel', suSu);
 
   // la barra in fondo al libro: «Oggi» apre la pagina di oggi, il sigillo «＋» la apre pronta per scrivere,
@@ -348,7 +361,7 @@
   // gli sticker della stagione stanno in fila: ogni settimana ne prende due nuovi (uno in testa, uno su un giorno senza
   // busta, biglietto né festa), così nessuno torna finché non sono passati tutti; mai lo stesso due volte nella stessa settimana
   const STK = window.STICKER || {};
-  const stImg = (st, n, cls, r) => { const m = STK[st] && STK[st][n]; return m ? `<img class="${cls}" src="assets/img/sticker/${st}/${n}.webp" alt="" width="${m[0]}" height="${m[1]}" style="--r:${r}deg" loading="lazy" decoding="async">` : ''; };
+  const stImg = (st, n, cls, r) => { const m = STK[st] && STK[st][n]; return m ? `<img class="${cls}" src="assets/img/sticker/${st}/${n}.webp" alt="" width="${m[0]}" height="${m[1]}" style="--r:${r}deg">` : ''; };
   const giro = (st, i) => { const v = Object.keys(STK[st] || {}); return v.length > 1 ? v[i % v.length] : null; };
   // un giorno è libero per uno sticker se non ha busta, biglietto, festa né cose scritte (lo sticker non copre mai la scrittura)
   const liberiDi = (w, js) => js.filter(j => { const g = giorni[w * 7 + j], n = S.note[g.key]; return g.dentro && !g.biglietto && !g.tema && !(n && (n.text || '').split('\n').some(x => x.replace(CASELLA, '').trim())); });
@@ -539,7 +552,11 @@
     else if (!f) slot = [pagina(c, 'sx', 'L'), pagina(c, 'dx', 'R')];
     else if (f.dir > 0) slot = [pagina(c, 'sx', 'L'), pagina(f.to, 'dx', 'R'), pagina(c, 'dx', 'F'), pagina(f.to, 'sx', 'B')];
     else slot = [pagina(f.to, 'sx', 'L'), pagina(c, 'dx', 'R'), pagina(f.to, 'dx', 'F'), pagina(c, 'sx', 'B')];
+    // le immagini già sulle pagine (sticker, polaroid) si riusano: ricreate da zero su iPhone restano vuote per un attimo
+    // e allo sfogliare «scattano»
+    const vecchie = {}; pagineEl.querySelectorAll('img').forEach(i => { (vecchie[i.getAttribute('src')] = vecchie[i.getAttribute('src')] || []).push(i); });
     pagineEl.innerHTML = slot.join('');
+    pagineEl.querySelectorAll('img').forEach(n => { const o = (vecchie[n.getAttribute('src')] || []).shift(); if (!o) return; o.className = n.className; o.style.cssText = n.style.cssText; o.alt = n.alt; n.replaceWith(o); });
     // se la scrittura non ci sta: si taglia a righe intere e finisce con «…» (aprendo il giorno si legge tutta)
     pagineEl.querySelectorAll('.g-corpo').forEach(c => {
       if (!c.firstElementChild) return;
